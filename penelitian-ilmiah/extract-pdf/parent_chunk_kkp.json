@@ -1,0 +1,163 @@
+[
+  {
+    "parent_id": "parent-kkp-001",
+    "title": "Front Matter",
+    "content": "Puji syukur kami panjatkan ke hadirat Tuhan Yang Maha Esa atas Rahmat dan Karunia-Nya sehingga Buku Panduan Penyusunan Kuliah Kerja Praktik ini dapat diselesaikan dengan baik. Buku panduan ini disusun sebagai acuan bagi seluruh civitas akademika dalam pelaksanaan penyusunan Kuliah Kerja Praktik yang digunakan sebagai syarat akademik yang harus dipenuhi oleh mahasiswa dalam menyelesaikan studi jenjang program sarjana.\n\nPanduan ini dirancang dengan memperhatikan setiap ketentuan dan prosedur yang telah disesuaikan dengan Buku Pedoman Akademik STMIK Widya Cipta Dharma tahun 2025. Dengan adanya panduan ini diharapkan mahasiswa mendapatkan keterampilan dalam melakukan Kuliah Kerja Praktik.\n\nSasaran utama Kuliah Kerja Praktik adalah agar mahasiswa mendapatkan pengalaman belajar melalui pengalaman di bidang: Sistem Informasi Manajemen, Teknik Komputer, Teknik Pemrograman, Digital Marketing, dan Entrepreneurship.\n\nKami mengucapkan terima kasih kepada semua pihak yang telah berkontribusi dalam penyusunan panduan ini, baik secara langsung maupun tidak langsung. Kami juga menyadari bahwa buku panduan ini masih jauh dari sempurna. Oleh karena itu, kami sangat mengharapkan saran dari berbagai pihak untuk penyempurnaan panduan ini di masa mendatang.\n\nAkhir kata, kami berharap semoga buku panduan ini dapat memberikan manfaat yang besar bagi seluruh civitas akademika, khususnya para mahasiswa yang tengah menempuh pendidikan di STMIK Widya Cipta Dharma.\n\nSamarinda, Maret 2025\nTim Penyusun\n\nStruktur isi panduan:\n- Kata Pengantar\n- Daftar Isi, Daftar Tabel, Daftar Gambar\n- Surat Keputusan\n- BAB I Pendahuluan (1.1 Latar Belakang, 1.2 Tujuan)\n- BAB II Ketentuan Umum (2.1 s.d. 2.7.5)\n- BAB III Sistematika Penyusunan KKP (3.1 s.d. 3.2)\n- BAB IV Penjelasan Sistematika Penulisan Laporan (4.1 s.d. 4.3)\n- BAB V Format dan Tata Cara Penulisan (5.1 s.d. 5.5)\n- Lampiran 1 sampai 25 (contoh format dan formulir)\n\nDaftar tabel yang tercantum dalam panduan:\n- Tabel 2.1 Panduan Penilaian Ujian KKP\n- Tabel 2.2 Indikator Penilaian Ujian KKP\n- Tabel 2.3 Capaian Profil Mata Kuliah\n- Tabel 3.1 Sistematika Penulisan KKP\n- Tabel 5.1 Judul Tabel\n\nDaftar gambar yang tercantum dalam panduan:\n- Gambar 5.1 Judul Gambar",
+    "child_ids": ["kkp-001", "kkp-002", "kkp-003", "kkp-004"],
+    "section": "Front Matter"
+  },
+  {
+    "parent_id": "parent-kkp-002",
+    "title": "Surat Keputusan",
+    "content": "Menimbang:\n- Bahwa dalam rangka memperlancar dan mempromosikan Penulisan Kuliah Kerja Praktik (KKP) dan Penulisan Ilmiah (PI) sebagai syarat akademik yang harus dipenuhi mahasiswa dalam penyelesaian studi jenjang program sarjana.\n- Bahwa diperlukan Buku Panduan Penulisan KKP dan PI di lingkungan STMIK Widya Cipta Dharma.\n- Bahwa untuk maksud tersebut perlu disahkan dan diterbitkan dalam Surat Keputusan Ketua STMIK Widya Cipta Dharma.\n\nMengingat:\n1. Undang-Undang Republik Indonesia Nomor 12 Tahun 2012 tentang Pendidikan Tinggi.\n2. Undang-Undang Nomor 20 Tahun 2003 tentang Sistem Pendidikan Nasional.\n3. Peraturan Pemerintah Nomor 4 Tahun 2014 tentang Penyelenggaraan Pendidikan Tinggi dan Pengelolaan Perguruan Tinggi.\n4. Peraturan Pemerintah Nomor 16 Tahun 2018 tentang Perubahan atas Peraturan Menteri Pendidikan dan Kebudayaan Nomor 47 Tahun 2016 tentang Pedoman Organisasi Perangkat Bidang Organisasi dan Kebudayaan.\n5. Keputusan Mendikbud RI Nomor 0686/U/1991 tentang Pedoman Pendirian Perguruan Tinggi.\n6. Keputusan Mendikbud RI Nomor 05/D/O/1995 tentang perubahan bentuk AMIK-WCD menjadi STMIK-WCD.\n7. Statuta STMIK Widya Cipta Dharma tahun 2024.\n\nMenetapkan:\n- Pertama: Memberlakukan buku panduan penulisan kuliah kerja praktik (KKP) dan penulisan ilmiah (PI).\n- Kedua: Buku panduan penulisan KKP dan PI di lingkungan STMIK Widya Cipta Dharma sebagaimana dalam lampiran.\n- Ketiga: Surat keputusan ini berlaku sejak ditetapkan dan apabila di kemudian hari ternyata terdapat kekeliruan dalam penetapannya, maka akan diperbaiki sebagaimana mestinya.\n\nDitetapkan di Samarinda, 20 Januari 2026.\nKetua: H. Tommy Bustomi, S.Kom., M.Kom (NIK 97.09.1.007).\nTembusan: Wakil Ketua I, II dan III; Ketua Program Studi TI, SI dan Bisdig; Pertinggal.",
+    "child_ids": ["kkp-005", "kkp-006"],
+    "section": "Surat Keputusan"
+  },
+  {
+    "parent_id": "parent-kkp-003",
+    "title": "BAB I Pendahuluan",
+    "content": "Kuliah Kerja Praktik (KKP) merupakan kegiatan penting dalam kurikulum pendidikan tinggi yang memberikan pengalaman nyata dan menghubungkan teori di kelas dengan praktik di lapangan. KKP membantu mahasiswa memahami dinamika dunia kerja, mengembangkan keterampilan, serta mengenal etika dan tanggung jawab profesional.\n\nBuku panduan KKP disusun untuk memberikan arahan komprehensif mengenai prosedur, tanggung jawab, dan hasil yang diharapkan, serta menjadi acuan bagi dosen pembimbing dan pihak instansi dalam mengelola, memantau, dan mengevaluasi KKP agar selaras dengan tujuan pendidikan tinggi.",
+    "child_ids": ["kkp-007", "kkp-008"],
+    "section": "BAB I"
+  },
+  {
+    "parent_id": "parent-kkp-004",
+    "title": "BAB II Dosen Pembimbing dan Penguji",
+    "content": "Ketentuan Dosen Pembimbing mencakup tanggung jawab pembimbingan, kepatuhan pada peraturan kampus, peran sebagai Dosen Wali, dan kewenangan Ketua Program Studi untuk memberi saran serta menunjuk pengganti jika diperlukan. Syarat Dosen Pembimbing meliputi status dosen STMIK Widya Cipta Dharma, jabatan fungsional minimal asisten ahli atau lektor dengan kualifikasi S2/S3, dan pengangkatan melalui SK Ketua STMIK.\n\nKetentuan Dosen Penguji mengatur tugas menguji, tanggung jawab, kepatuhan pada peraturan kampus, serta hak memberi masukan terhadap naskah. Syarat Dosen Penguji mencakup status dosen, jabatan fungsional minimal asisten ahli atau lektor, kompetensi relevan, dan pengangkatan melalui SK Ketua STMIK.\n\nPenggantian Dosen Pembimbing dan Dosen Penguji dapat diajukan oleh mahasiswa atau dosen dalam kondisi tertentu (meninggal dunia, sakit, cuti, pindah tugas, atau alasan lain), dengan keputusan akhir di tangan Ketua Program Studi yang menerbitkan surat tugas pengganti.",
+    "child_ids": ["kkp-009", "kkp-010", "kkp-011", "kkp-012", "kkp-013"],
+    "section": "BAB II"
+  },
+  {
+    "parent_id": "parent-kkp-005",
+    "title": "BAB II Mahasiswa Bimbingan",
+    "content": "Hak mahasiswa bimbingan mencakup bimbingan yang proporsional, tanda tangan persetujuan pembimbing, perlakuan yang baik, dan penilaian yang adil. Bukti pembimbingan diwujudkan melalui lembar bimbingan yang diisi setiap pertemuan dan jadwal bimbingan minimal 8 kali.\n\nMekanisme pembimbingan mengatur lokasi bimbingan (kampus atau daring), durasi maksimal 6 bulan, kewajiban membawa lembar bimbingan, penekanan standar penulisan KKP, kemungkinan penyempurnaan atau perubahan judul, serta pengawasan oleh Ketua Program Studi.",
+    "child_ids": ["kkp-014", "kkp-015", "kkp-016"],
+    "section": "BAB II"
+  },
+  {
+    "parent_id": "parent-kkp-006",
+    "title": "BAB II Syarat dan Tempat KKP",
+    "content": "Syarat KKP meliputi SKS minimal 100, IP Kumulatif minimal 2.00, pembimbing 1 dosen, dan penguji 2 dosen, serta sasaran pembelajaran sesuai capaian profil mata kuliah.\n\nTempat KKP adalah instansi resmi yang relevan dengan bidang keilmuan, memiliki aktivitas operasional aktif, menyediakan pembimbing lapangan, dan mendukung tujuan KKP. Kriteria tempat KKP mencakup jenis instansi, relevansi bidang, aktivitas operasional, rekomendasi melalui BKK, dan kuota maksimal mahasiswa per instansi.",
+    "child_ids": ["kkp-017", "kkp-018", "kkp-019"],
+    "section": "BAB II"
+  },
+  {
+    "parent_id": "parent-kkp-007",
+    "title": "BAB II Proses Penyusunan",
+    "content": "Tahap awal pengajuan KKP meliputi pendaftaran mata kuliah, penetapan Dosen Wali sebagai pembimbing, konsultasi dengan BKK, persetujuan instansi dan pembimbing, pengajuan form ke BAAK, penerbitan surat pengantar, serta unggah surat balasan untuk lembar kehadiran. KKP dilaksanakan minimal 30 hari kerja atau 1 bulan.\n\nSelama KKP, mahasiswa melapor ke instansi, berdiskusi dengan pembimbing lapangan, melapor kegiatan ke dosen pembimbing minimal 8 kali, dan menyiapkan dokumentasi foto. Setelah KKP, mahasiswa menyusun laporan, memprogramkan mata kuliah KKP, dan mengikuti seminar sesuai ketentuan Program Studi.",
+    "child_ids": ["kkp-020", "kkp-021", "kkp-022"],
+    "section": "BAB II"
+  },
+  {
+    "parent_id": "parent-kkp-008",
+    "title": "BAB II Prosedur Ujian dan Tahap Akhir",
+    "content": "Pendaftaran ujian KKP mewajibkan kelengkapan berkas administrasi seperti form pendaftaran, persetujuan ujian, form bimbingan, transkrip, KRS, kuitansi BPP/SKS, surat keterangan penelitian, presensi dan nilai dari tempat penelitian, daftar rincian kegiatan, daftar wawancara, draf laporan, persetujuan waktu ujian, dan bukti anti-plagiarisme.\n\nSetelah berkas lengkap, Ketua Program Studi menunjuk Ketua dan Anggota Penguji; mahasiswa menyerahkan naskah ke tim dosen; seminar KKP menjadi forum presentasi. Mekanisme ujian mengatur jadwal maksimal 15 hari setelah persetujuan pembimbing, durasi ujian 60 menit, ketentuan pakaian, serta mekanisme tanya jawab dan penilaian.\n\nTahap akhir menekankan perbaikan naskah sesuai saran pembimbing dan penguji hingga penandatanganan halaman pengesahan, serta penyerahan jilid KKP ke perpustakaan agar nilai tercantum pada transkrip.",
+    "child_ids": ["kkp-023", "kkp-024", "kkp-025", "kkp-026"],
+    "section": "BAB II"
+  },
+  {
+    "parent_id": "parent-kkp-009",
+    "title": "BAB II Sistem Penilaian dan Kelulusan",
+    "content": "Nilai akhir KKP menggunakan skala 100 dengan predikat A sampai E. Penilaian berasal dari dosen internal dan pembimbing lapangan dengan komponen orisinalitas, sistematika penulisan, penguasaan materi, kemampuan argumentasi/presentasi, dan penampilan/etika.\n\nCapaian pembelajaran dijabarkan untuk Program Studi Sistem Informasi, Teknik Informatika, dan Bisnis Digital. Mahasiswa dinyatakan lulus jika karya otentik, nilai minimal C, perbaikan naskah disetujui, dan jilid KKP diserahkan ke perpustakaan sesuai kalender akademik.",
+    "child_ids": ["kkp-027", "kkp-028", "kkp-029", "kkp-030", "kkp-031", "kkp-032"],
+    "section": "BAB II"
+  },
+  {
+    "parent_id": "parent-kkp-010",
+    "title": "BAB III Sistematika Penulisan KKP",
+    "content": "KKP merupakan mata kuliah praktik untuk memberikan pengalaman kerja nyata, mengintegrasikan hard skills dan soft skills, serta menuntut penyusunan laporan akademik sebagai pertanggungjawaban kegiatan.\n\nSistematika penulisan terdiri atas Bagian Awal, Bagian Utama, dan Bagian Akhir. Bagian Utama mencakup BAB I hingga BAB V dengan rincian sub-bab sesuai panduan, sedangkan Bagian Akhir memuat Daftar Pustaka dan Lampiran.",
+    "child_ids": ["kkp-033", "kkp-034"],
+    "section": "BAB III"
+  },
+  {
+    "parent_id": "parent-kkp-011",
+    "title": "BAB IV Bagian Awal",
+    "content": "Bagian awal menjelaskan Sampul Depan, Halaman Pengesahan, Kata Pengantar, dan daftar-daftar pendukung. Sampul Depan memuat judul, jenis usulan, identitas mahasiswa, lambang, program studi, nama institusi, dan tahun terbit. Halaman Pengesahan berisi data mahasiswa dan tanda tangan pembimbing, penguji, serta pimpinan. Kata Pengantar ringkas memuat ucapan terima kasih dan ditutup kota serta tanggal penulisan. Daftar Isi, Daftar Tabel, Daftar Gambar, dan Daftar Lampiran menjelaskan urutan naskah dan daftar dokumen pendukung.",
+    "child_ids": ["kkp-035", "kkp-036", "kkp-037", "kkp-038"],
+    "section": "BAB IV"
+  },
+  {
+    "parent_id": "parent-kkp-012",
+    "title": "BAB IV Bagian Utama dan Akhir",
+    "content": "Bagian Utama meliputi BAB I Pendahuluan (deskripsi tempat, waktu, lokasi KKP), BAB II Sejarah dan Profil Tempat KKP, BAB III Narasi Kegiatan, BAB IV Analisis Hasil Kegiatan, dan BAB V Penutup (kesimpulan dan saran).\n\nBagian Akhir memuat lampiran-lampiran pendukung seperti surat pengantar, surat balasan, form penilaian, serta dokumen lain yang diperlukan.",
+    "child_ids": ["kkp-039", "kkp-040", "kkp-041", "kkp-042", "kkp-043", "kkp-044"],
+    "section": "BAB IV"
+  },
+  {
+    "parent_id": "parent-kkp-013",
+    "title": "BAB V Format Penulisan Naskah",
+    "content": "Format penulisan KKP mengatur jenis dan ukuran kertas, margin, jenis huruf, spasi, pengetikan alinea, serta penomoran bab. Aturan angka dan penomoran halaman juga ditetapkan untuk bagian awal, utama, dan akhir laporan.",
+    "child_ids": ["kkp-045", "kkp-046", "kkp-047", "kkp-048"],
+    "section": "BAB V"
+  },
+  {
+    "parent_id": "parent-kkp-014",
+    "title": "BAB V Tabel dan Gambar",
+    "content": "Aturan tabel mencakup format penomoran, posisi judul, ketentuan tabel tidak terpotong, penggunaan spasi, dan penulisan sumber. Aturan gambar mencakup relevansi, posisi judul, ukuran, dan sumber pustaka.",
+    "child_ids": ["kkp-049", "kkp-050"],
+    "section": "BAB V"
+  },
+  {
+    "parent_id": "parent-kkp-015",
+    "title": "BAB V Bahasa dan Huruf Miring",
+    "content": "Bahasa yang digunakan mengikuti EYD Edisi Kelima dengan bentuk kalimat pasif. Istilah asing dicetak miring dan konsisten. Penggunaan huruf miring pada bagian isi dan daftar pustaka mengikuti aturan yang ditetapkan.",
+    "child_ids": ["kkp-051", "kkp-052"],
+    "section": "BAB V"
+  },
+  {
+    "parent_id": "parent-kkp-016",
+    "title": "BAB V Daftar Pustaka",
+    "content": "Aturan daftar pustaka mengikuti APA, jumlah referensi minimal 5 dengan 80% dari buku dan jurnal, serta ketentuan penulisan nama penulis, tahun, judul, informasi publikasi, urutan abjad, hanging indent, dan penggunaan DOI/URL.\n\nBentuk daftar pustaka mencakup contoh artikel jurnal, buku, artikel website, bab buku, skripsi/tesis/disertasi, serta media online tanpa penulis.",
+    "child_ids": ["kkp-053", "kkp-054", "kkp-055", "kkp-056", "kkp-057", "kkp-058", "kkp-059"],
+    "section": "BAB V"
+  },
+  {
+    "parent_id": "parent-kkp-017",
+    "title": "Lampiran Contoh Halaman Awal",
+    "content": "Contoh lampiran halaman awal mencakup format sampul depan, halaman pengesahan, dan kata pengantar KKP, termasuk elemen-elemen wajib, format penulisan, serta penutup kata pengantar.",
+    "child_ids": ["kkp-060", "kkp-061", "kkp-062"],
+    "section": "Lampiran"
+  },
+  {
+    "parent_id": "parent-kkp-018",
+    "title": "Lampiran Contoh Daftar",
+    "content": "Contoh lampiran daftar mencakup format Daftar Isi, Daftar Tabel, Daftar Gambar, Daftar Lampiran, dan contoh Daftar Pustaka sesuai gaya APA.",
+    "child_ids": ["kkp-063", "kkp-064", "kkp-065", "kkp-066", "kkp-067"],
+    "section": "Lampiran"
+  },
+  {
+    "parent_id": "parent-kkp-019",
+    "title": "Lampiran Tugas dan Bimbingan",
+    "content": "Lampiran ini memuat contoh rincian tugas KKP, form daftar hadir KKP, form penilaian tingkat kepuasan pengguna, serta form bimbingan laporan KKP.",
+    "child_ids": ["kkp-068", "kkp-069", "kkp-070", "kkp-071"],
+    "section": "Lampiran"
+  },
+  {
+    "parent_id": "parent-kkp-020",
+    "title": "Lampiran Administrasi Ujian",
+    "content": "Lampiran administrasi ujian mencakup form daftar hadir menyaksikan ujian, form pengecekan syarat administrasi, form permohonan ujian KKP, dan form pendaftaran ujian KKP.",
+    "child_ids": ["kkp-072", "kkp-073", "kkp-074", "kkp-075"],
+    "section": "Lampiran"
+  },
+  {
+    "parent_id": "parent-kkp-021",
+    "title": "Lampiran Persetujuan dan Perbaikan",
+    "content": "Lampiran persetujuan dan perbaikan mencakup lembar persetujuan ujian KKP, lembar persetujuan waktu ujian KKP, serta lembar perbaikan ujian KKP.",
+    "child_ids": ["kkp-076", "kkp-077", "kkp-078"],
+    "section": "Lampiran"
+  },
+  {
+    "parent_id": "parent-kkp-022",
+    "title": "Lampiran Berita Acara dan Penilaian",
+    "content": "Lampiran ini memuat berita acara ujian KKP, form penilaian ujian KKP, serta form rekapitulasi penilaian ujian KKP.",
+    "child_ids": ["kkp-079", "kkp-080", "kkp-081"],
+    "section": "Lampiran"
+  },
+  {
+    "parent_id": "parent-kkp-023",
+    "title": "Lampiran Perubahan Pembimbing/Judul",
+    "content": "Lampiran perubahan memuat form permohonan penggantian dosen pembimbing, surat penugasan dosen pengganti, serta form permohonan penggantian judul KKP.",
+    "child_ids": ["kkp-082", "kkp-083", "kkp-084"],
+    "section": "Lampiran"
+  }
+]

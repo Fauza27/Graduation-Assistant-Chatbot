@@ -1,0 +1,357 @@
+# Pemetaan keyword → section dokumen panduan KKP/PI.
+#
+# Format: setiap key adalah nama section, value adalah list keyword yang
+# menandai section tersebut. Keyword yang mengandung spasi dianggap frasa
+# (substring match), keyword satu kata dimatch dengan word boundary.
+#
+# CATATAN PEMELIHARAAN:
+# - Hindari keyword yang muncul di banyak section (loader akan memberi warning).
+# - Logika di self_query.py mensyaratkan minimal 2 keyword match agar filter
+#   section diaplikasikan (confidence high). Jadi keyword tidak perlu eksklusif
+#   100%, tapi sebaiknya minim overlap.
+
+Front Matter:
+  - kata pengantar
+  - daftar isi
+  - daftar tabel
+  - daftar gambar
+  - daftar lampiran
+  - struktur isi
+  - struktur panduan
+
+Surat Keputusan:
+  - surat keputusan
+  - sk ketua
+  - menimbang
+  - mengingat
+  - menetapkan
+  - pemberlakuan panduan
+  - statuta
+  - undang-undang pendidikan
+  - peraturan pemerintah
+
+BAB I:
+  - latar belakang panduan
+  - tujuan panduan
+  - pendahuluan panduan
+  - pentingnya panduan
+  - fokus panduan
+  - manfaat panduan
+
+BAB II:
+  # Dosen
+  - dosen pembimbing
+  - dosen penguji
+  - ketentuan dosen
+  - syarat dosen
+  - penggantian dosen
+  - dosen wali
+  - jabatan fungsional
+  - asisten ahli
+  - lektor
+  # Mahasiswa
+  - hak mahasiswa
+  - mahasiswa bimbingan
+  - mekanisme pembimbingan
+  - lembar bimbingan
+  - masa bimbingan
+  - bukti pembimbingan
+  # Syarat
+  - syarat pi
+  - syarat kkp
+  - sks minimal
+  - ipk minimal
+  - ip kumulatif
+  - 100 sks
+  # Tempat
+  - tempat penelitian
+  - tempat kkp
+  - instansi
+  - organisasi
+  - kriteria tempat
+  - pembimbing lapangan
+  - bursa kerja khusus
+  - kuota mahasiswa
+  # Proses
+  - pengajuan judul
+  - pengajuan pi
+  - pengajuan kkp
+  - proses penyusunan
+  - tahap awal
+  - pendaftaran mata kuliah
+  - surat pengantar
+  - surat balasan
+  - lembar kehadiran
+  - durasi penelitian
+  - durasi kkp
+  # Ujian
+  - prosedur ujian
+  - pendaftaran ujian
+  - berkas administrasi
+  - form pendaftaran
+  - persetujuan ujian
+  - tanya jawab
+  - pakaian ujian
+  - dress code
+  - ketentuan pakaian
+  - seragam ujian
+  - berkas ujian
+  - dokumen ujian
+  - syarat ujian
+  - administrasi ujian
+  - kelengkapan ujian
+  - menghadiri seminar
+  - menyaksikan seminar
+  - hadir seminar
+  - daftar hadir
+  - kehadiran seminar
+  # Penilaian
+  - sistem penilaian
+  - komponen penilaian
+  - nilai akhir
+  - skala 100
+  - predikat nilai
+  - orisinalitas
+  - sistematika penulisan
+  - penguasaan materi
+  - kemampuan argumentasi
+  # Kelulusan
+  - kelulusan
+  - syarat lulus
+  - karya otentik
+  - perbaikan naskah
+  - jilid
+  - perpustakaan
+  - transkrip
+  - plagiarisme
+  - anti-plagiarisme
+  - kemiripan
+  # Capaian
+  - capaian pembelajaran
+  - capaian profil
+  - sistem informasi
+  - teknik informatika
+  - bisnis digital
+
+BAB III:
+  - sistematika penyusunan
+  - gambaran umum laporan
+  - struktur laporan
+  - bagian awal laporan
+  - bagian utama laporan
+  - bagian akhir laporan
+  - sistematika pi
+  - sistematika kkp
+  - sistematika laporan
+
+BAB IV:
+  # Bagian Awal
+  - sampul depan
+  - cover
+  - halaman pengesahan
+  - elemen sampul
+  - isi sampul
+  - komponen sampul
+  - halaman judul
+  - judul laporan
+  - isi abstrak
+  - komponen abstrak
+  - elemen abstrak
+  - struktur abstrak
+  - format abstrak
+  - kata kunci
+  - keywords
+  - bahasa indonesia dan inggris
+  - dua bahasa
+  - pengesahan
+  - form pengesahan
+  - lembar pengesahan
+  - elemen pengesahan
+  - komponen pengesahan
+  - tanda tangan pengesahan
+  # Bagian Utama PI
+  - latar belakang masalah
+  - rumusan masalah
+  - batasan masalah
+  - tujuan penelitian
+  - manfaat penelitian
+  - sistematika penulisan bab
+  - tinjauan pustaka
+  - kajian empiris
+  - landasan teori
+  - metode penelitian
+  - tempat dan waktu penelitian
+  - teknik pengumpulan data
+  - metode pengembangan sistem
+  - jadwal penelitian
+  - hasil penelitian
+  - pembahasan
+  - penutup
+  - kesimpulan
+  - saran
+  # Bagian Utama KKP
+  - deskripsi tempat kkp
+  - waktu kkp
+  - lokasi kkp
+  - sejarah tempat
+  - profil tempat
+  - narasi kegiatan
+  - deskripsi kegiatan
+  - analisis hasil kegiatan
+  # Bagian Akhir
+  - lampiran pendukung
+  - isi lampiran
+  - dokumen lampiran
+
+BAB V:
+  # Format Naskah
+  - format penulisan
+  - format naskah
+  - hvs a4
+  - margin
+  - jenis huruf
+  - font
+  - times new roman
+  - spasi
+  - alinea
+  - menjorok
+  - pengetikan alinea
+  - bab dan sub-bab
+  - nama bab
+  - huruf kapital
+  - tepi atas
+  - tepi kiri
+  - spesifikasi kertas
+  - jenis kertas
+  - ukuran kertas
+  - berat kertas
+  - warna kertas
+  - kertas hvs
+  # Angka dan Penomoran
+  - aturan angka
+  - bilangan desimal
+  - satuan
+  - singkatan
+  - penomoran halaman
+  - angka romawi
+  - angka arab
+  - tengah bawah
+  - kanan atas
+  - nomor halaman
+  # Tabel dan Gambar
+  - aturan tabel
+  - format tabel
+  - nomor tabel
+  - judul tabel
+  - tabel tidak terpotong
+  - header tabel
+  - landscape
+  - sumber tabel
+  - aturan gambar
+  - format gambar
+  - nomor gambar
+  - judul gambar
+  - grafik
+  - diagram
+  - bagan
+  - peta
+  - foto
+  - ukuran gambar
+  - letak gambar
+  - sumber gambar
+  # Bahasa
+  - bahasa indonesia
+  - eyd
+  - kalimat pasif
+  - orang pertama
+  - orang kedua
+  - istilah asing
+  - istilah indonesia
+  - huruf miring
+  # Daftar Pustaka
+  - daftar pustaka
+  - referensi
+  - apa
+  - american psychological
+  - mendeley
+  - tools reference
+  - jumlah referensi
+  - urutan abjad
+  - hanging indent
+  - artikel jurnal
+  - format buku
+  - artikel website
+  - bab buku
+  - skripsi
+  - tesis
+  - disertasi
+  - media online
+  - sumber elektronik
+  - tidak dipublikasikan
+  - format referensi
+  - cara menulis referensi
+  - penulisan referensi
+
+Lampiran:
+  # Umum
+  - contoh
+  - lampiran
+  - formulir
+  - contoh format
+  - contoh formulir
+  # Halaman Awal
+  - contoh sampul
+  - contoh cover
+  - contoh pengesahan
+  - contoh abstrak
+  - contoh kata pengantar
+  - contoh daftar isi
+  - contoh daftar tabel
+  - contoh daftar gambar
+  - contoh daftar lampiran
+  - contoh daftar pustaka
+  # Tugas dan Bimbingan
+  - rincian tugas
+  - daftar hadir kkp
+  - daftar hadir pi
+  - penilaian kepuasan
+  - tingkat kepuasan pengguna
+  - form bimbingan
+  - dokumen bimbingan
+  - berkas bimbingan
+  # Jadwal dan Wawancara
+  - jadwal kegiatan
+  - daftar wawancara
+  - pertanyaan wawancara
+  - responden
+  - pewawancara
+  # Administrasi Ujian
+  - daftar hadir menyaksikan
+  - daftar hadir ujian
+  - pengecekan syarat
+  - syarat administrasi
+  - form permohonan ujian
+  - form pendaftaran ujian
+  - lembar persetujuan ujian
+  - persetujuan waktu ujian
+  - lembar perbaikan
+  - perbaikan ujian
+  - syarat mendaftar ujian
+  - persyaratan ujian
+  - administrasi pendaftaran
+  - dokumen pendaftaran
+  # Berita Acara dan Penilaian
+  - berita acara
+  - berita acara ujian
+  - form penilaian
+  - penilaian ujian
+  - rekapitulasi penilaian
+  - dewan penguji
+  - susunan penguji
+  # Perubahan
+  - penggantian pembimbing
+  - surat tugas pengganti
+  - penugasan dosen
+  - penggantian judul
+  - perubahan judul
+  - revisi judul

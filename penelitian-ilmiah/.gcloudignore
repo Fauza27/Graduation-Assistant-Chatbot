@@ -1,0 +1,66 @@
+# This file specifies files that are *not* uploaded to Google Cloud
+# using gcloud. It follows the same syntax as .gitignore.
+
+# Python
+__pycache__/
+*.py[cod]
+*.so
+venv/
+env/
+.eggs/
+*.egg-info/
+dist/
+build/
+
+# Virtual Environment
+venv/
+env/
+ENV/
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment (will be set via --set-env-vars)
+.env
+.env.local
+.env.example
+
+# Testing & evaluation (large files)
+.pytest_cache/
+.coverage
+htmlcov/
+tests/
+evaluation_results_*.json
+manual_review_*.json
+results/
+
+# Documentation & non-essential
+docs/
+ADR/
+personal_docs/
+README.md
+kode_naskah_pi
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker compose (not needed in Cloud Run)
+docker-compose.yml
+
+# Dev requirements (Dockerfile uses requirements-dev.txt, keep it)
+
+# Temporary files
+*.log
+*.tmp
+*.temp
+
+# Gemini
+.gemini/

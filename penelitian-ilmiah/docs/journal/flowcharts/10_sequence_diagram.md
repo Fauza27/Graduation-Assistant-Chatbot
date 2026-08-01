@@ -1,0 +1,110 @@
+# Sequence Diagram — Urutan Panggilan Fungsi
+
+Diagram ini menunjukkan **siapa memanggil siapa dan kapan**, secara kronologis untuk satu siklus pertanyaan-jawaban.
+
+---
+
+## Sequence: NEEDS_RETRIEVAL (Kasus Paling Umum)
+
+```
+User/Telegram   chat_handler   ai_services    intent_clf   retrieval     chain.py    OpenAI    Supabase
+     │               │              │              │            │             │           │          │
+     │──pesan teks──►│              │              │            │             │           │          │
+     │               │─cek kuota──────────────────────────────────────────────────────────────────►│
+     │               │◄─ True ────────────────────────────────────────────────────────────────────│
+     │               │─chat(q, sid)─►│              │            │             │           │          │
+     │               │              │─get_memory()  │            │             │           │          │
+     │               │              │─add_user_turn │            │             │           │          │
+     │               │              │─classify()───►│            │             │           │          │
+     │               │              │               │─ConvDetect │             │           │          │
+     │               │              │               │─has_prior? │             │           │          │
+     │               │              │◄─NEEDS_RETR── │            │             │           │          │
+     │               │              │─reformulate() │            │             │           │          │
+     │               │              │─run_retrieval()────────────►│             │           │          │
+     │               │              │               │            │─extract_qc()│           │          │
+     │               │              │               │            │─expand_q()  │           │          │
+     │               │              │               │            │─embed_q()───────────────►│          │
+     │               │              │               │            │◄─vector─────────────────│          │
+     │               │              │               │            │─hybrid_search()──────────────────►│
+     │               │              │               │            │◄─30 child results────────────────│
+     │               │              │               │            │─fetch_parents()──────────────────►│
+     │               │              │               │            │◄─12 parent docs──────────────────│
+     │               │              │               │            │─rerank()    │           │          │
+     │               │              │◄─RetrievalResult──────────│             │           │          │
+     │               │              │─invoke_with_history()──────────────────►│           │          │
+     │               │              │               │            │             │─LLM call─►│          │
+     │               │              │               │            │             │◄─answer───│          │
+     │               │              │◄─{answer,sources}──────────────────────│           │          │
+     │               │              │─add_asst_turn │            │             │           │          │
+     │               │◄─result ─────│              │            │             │           │          │
+     │               │─format HTML  │              │            │             │           │          │
+     │               │─edit_message │              │            │             │           │          │
+     │◄──jawaban─────│              │              │            │             │           │          │
+     │               │─log_to_db()─────────────────────────────────────────────────────────────────►│
+```
+
+---
+
+## Sequence: CONVERSATIONAL (Sapaan/Ucapan)
+
+```
+User         chat_handler    ai_services    intent_clf    chain.py    OpenAI
+  │               │               │              │             │          │
+  │──"Halo!"─────►│               │              │             │          │
+  │               │─chat("Halo!")─►│              │             │          │
+  │               │               │─classify()──►│             │          │
+  │               │               │              │─ConvDetect: │          │
+  │               │               │              │  "Halo" = pattern      │
+  │               │               │◄─CONVERSATIONAL, 0.95──────│          │
+  │               │               │─invoke_conversational()────►│          │
+  │               │               │              │             │─LLM call─►│
+  │               │               │              │             │◄─sapaan──│
+  │               │◄─result───────│              │             │          │
+  │◄──"Halo! Selamat datang..."───│              │             │          │
+```
+
+---
+
+## Sequence: CLARIFICATION (Pertanyaan Lanjutan)
+
+```
+User           ai_services    intent_clf    chain.py        retrieval
+  │                │               │             │               │
+  │─"jelaskan lebih lanjut"──────►│              │               │
+  │                │─classify()──►│              │               │
+  │                │              │─SwitchDetect │               │
+  │                │              │  → no switch │               │
+  │                │              │─ClarifDetect │               │
+  │                │              │  → "jelaskan" = signal       │
+  │                │              │  → no switch → TRUE          │
+  │                │◄─CLARIFICATION, 0.90────────│               │
+  │                │─invoke_clarification()──────►│               │
+  │                │              │              │─cek_relevance()         │
+  │                │              │              │ score = 0.65 ≥ 0.3 ✓   │
+  │                │              │              │─LLM dengan konteks lama │
+  │                │◄─answer──────────────────── │               │
+```
+
+---
+
+## Sequence: Ingestion (Setup Awal)
+
+```
+Developer        main.py        embedder.py      loader.py      OpenAI     Supabase
+    │                │               │               │             │           │
+    │─--ingest──────►│               │               │             │           │
+    │                │─run_ingest()─►│               │             │           │
+    │                │               │─load_child()─►│             │           │
+    │                │               │◄─list dicts───│             │           │
+    │                │               │─load_parent()►│             │           │
+    │                │               │◄─list dicts───│             │           │
+    │                │               │─validate()───►│             │           │
+    │                │               │◄─True─────────│             │           │
+    │                │               │─get_embeddings()────────────►│           │
+    │                │               │◄─vectors[2000dim]───────────│           │
+    │                │               │─upsert_parents()────────────────────────►│
+    │                │               │◄─n inserted─────────────────────────────│
+    │                │               │─upsert_children()───────────────────────►│
+    │                │               │◄─n inserted─────────────────────────────│
+    │◄─stats printed─│               │               │             │           │
+```
