@@ -1,0 +1,28 @@
+# Python Virtual Environments
+venv/
+.venv/
+marker_workspace/Include/
+marker_workspace/Lib/
+marker_workspace/Scripts/
+marker_workspace/pyvenv.cfg
+marker_workspace/share/
+marker_workspace/etc/
+
+# Python Cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment variables
+.env
+
+# Node
+node_modules/
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Large PDFs in root (if any)
+*.pdf
+!backend/extract-pdf/**/*.pdf
