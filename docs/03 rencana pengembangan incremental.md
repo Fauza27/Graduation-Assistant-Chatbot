@@ -42,7 +42,7 @@ graph LR
 
 | | |
 |---|---|
-| **Lingkup masuk** | Restrukturisasi repo jadi `frontend/` dan `backend/` (pindahkan kode existing ke `backend/src/`, `Dockerfile` ikut pindah ke `backend/`); migrasi skema DB (`domain`, `channel`, `mahasiswa_id`; tabel `mahasiswa_accounts`, `admin_users`, `chunk_edit_logs`); setup Google Cloud OAuth Client; setup GCP project + deploy percobaan pertama ke **Cloud Run** dari `backend/Dockerfile`, ukur durasi cold start; scaffold `frontend/` (Next.js); siapkan dokumen Panduan Skripsi & Non-Skripsi jadi format siap-ingest |
+| **Lingkup masuk** | Restrukturisasi repo jadi `frontend/` dan `backend/` (pindahkan kode existing ke `backend/src/`, `Dockerfile` ikut pindah ke `backend/`); migrasi skema DB (`domain`, `channel`, `mahasiswa_id`; tabel `mahasiswa_accounts`, `admin_users`, `chunk_edit_logs`); scaffold `frontend/` (Next.js); siapkan dokumen Panduan Skripsi & Non-Skripsi jadi format siap-ingest |
 | **Lingkup keluar** | Belum ada fitur baru yang user-facing |
 | **Definition of Done** | Repo terstruktur `frontend/`+`backend/`; migrasi SQL berjalan tanpa error; deploy percobaan ke Cloud Run berhasil diakses lewat URL `*.run.app` (halaman placeholder cukup), durasi cold start sudah terukur; sistem Telegram existing tetap berfungsi normal setelah migrasi & pindah folder |
 | **Estimasi durasi** | 1–1.5 minggu |

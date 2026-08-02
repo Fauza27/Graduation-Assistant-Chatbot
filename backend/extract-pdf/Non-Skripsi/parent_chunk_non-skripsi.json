@@ -1,0 +1,439 @@
+[
+  {
+    "parent_id": "parent-non-skripsi-001",
+    "title": "Front Matter",
+    "content": "**STMIK Widya Cipta Dharma** **CENTER OF EXCELLENCE** **REKTORAT**... \n**SEKOLAH TINGGI MANAJEMEN INFORMATIKA DAN KOMPUTER WIDYA CIPTA DHARMA**... \nPuji syukur kami panjatkan ke hadirat Tuhan Yang Maha Esa atas Rahmat dan Karunia-Nya sehingga buku panduan penulisan laporan Tugas Akhir Non Skripsi ini dapat diselesaikan dengan baik. Buku panduan i... \n- KATA PENGANTAR - DAFTAR ISI - DAFTAR TABEL - DAFTAR GAMBAR - SURAT KEPUTUSAN - BAB I PENDAHULUAN   - 1.1. LATAR BELAKANG   - 1.2. TUJUAN PEMBUATAN BUKU PANDUAN TUGAS AKHIR NON SKRIPSI - BAB II KETEN... \n- Tabel 3.1 Kategori Kualitas Jurnal dan Prosiding - Tabel 3.2 Sistematika Penulisan Proposal Jalur Karya Ilmiah - Tabel 3.3 Sistematika Penulisan Jalur Karya Ilmiah - Tabel 3.4 Aturan Penilaian - Tab... \n- Gambar 1. Alur Pelaksanaan Proposal - Gambar 2. Alur Pelaksanaan Seminar Hasil - Gambar 3. Alur Pelaksanaan Ujian Pendadaran...",
+    "child_ids": [
+      "non-skripsi-002",
+      "non-skripsi-003",
+      "non-skripsi-004",
+      "non-skripsi-005",
+      "non-skripsi-006",
+      "non-skripsi-007"
+    ],
+    "section": "Front Matter"
+  },
+  {
+    "parent_id": "parent-non-skripsi-002",
+    "title": "Surat Keputusan",
+    "content": "Status Terakreditasi Badan Akreditasi Nasional Perguruan Tinggi   Jl. M. Yamin No. 25 Samarinda - Kalimantan Timur 75123 Telp. 0541 - 736071 Fax. 203492,734468   E-mail : wicida@wicida.ac.id... \nNomor : 082/SK-KT/ST.WCD/XII/2024... \nMenimbang : a. Bahwa dalam rangka meningkatkan kelancaran studi mahasiswa diperlukan kebijakan jalur non skripsi sebagai alternatif penyelesaian studi.   b. Bahwa berdasarkan evaluasi akademik, mahasi... \nMenetapkan :  Pertama : Memberlakukan tugas akhir jalur non skripsi sebagai salah satu syarat kelulusan mahasiswa.  Kedua : Jalur non skripsi berupa tugas akhir dalam bentuk Karya Ilmiah, Profesional,... \n1. 1. Wakil Ketua I, II dan III 2. 2. Ketua Program Studi TI, SI dan Bisdig 3. 3. Pertinggal...",
+    "child_ids": [
+      "non-skripsi-009",
+      "non-skripsi-010",
+      "non-skripsi-013",
+      "non-skripsi-014",
+      "non-skripsi-015"
+    ],
+    "section": "Surat Keputusan"
+  },
+  {
+    "parent_id": "parent-non-skripsi-003",
+    "title": "BAB I PENDAHULUAN",
+    "content": "Penulisan karya tulis ilmiah merupakan bagian integral dari proses pendidikan tinggi, termasuk pula Tugas Akhir Non Skripsi dengan jalur Karya Ilmiah, Profesional, dan Wirausaha. Tugas Akhir ini memil... \nPanduan ini bertujuan untuk membantu mahasiswa mengembangkan keterampilan menulis yang baik dan benar. Dengan adanya panduan yang sistematis, mahasiswa dapat lebih mudah memahami langkah-langkah yang ...",
+    "child_ids": [
+      "non-skripsi-017",
+      "non-skripsi-018"
+    ],
+    "section": "BAB I PENDAHULUAN"
+  },
+  {
+    "parent_id": "parent-non-skripsi-004",
+    "title": "BAB II KETENTUAN UMUM (Bagian 1)",
+    "content": "Dosen Pembimbing adalah dosen yang bertugas membimbing mahasiswa mulai dari pengajuan judul hingga menyelesaikan Tugas Akhir Non Skripsi.... \n- 1. Dosen Pembimbing harus membimbing mahasiswa dengan penuh tanggung jawab, menunjukkan loyalitas, dan dedikasi yang baik selama proses pembimbingan. - 2. Dosen Pembimbing harus memenuhi segala pera... \n- 1. Terdaftar sebagai dosen STMIK Widya Cipta Dharma. - 2. Telah memiliki jabatan fungsional minimal asisten ahli atau lektor dengan kualifikasi pendidikan S2 atau kualifikasi pendidikan S3, dan memi... \n- 1. Dosen Penguji adalah dosen yang bertugas menguji mahasiswa pada saat ujian tugas akhir. - 2. Dosen penguji harus bertanggung jawab, menunjukkan loyalitas, dan dedikasi yang baik selama ujian berl... \n- 1. Terdaftar sebagai dosen STMIK Widya Cipta Dharma - 2. Telah memiliki jabatan fungsional minimal asisten ahli atau lektor dengan kualifikasi pendidikan minimal S2, dan memiliki kompetensi yang rel...",
+    "child_ids": [
+      "non-skripsi-020",
+      "non-skripsi-021",
+      "non-skripsi-022",
+      "non-skripsi-024",
+      "non-skripsi-025",
+      "non-skripsi-026",
+      "non-skripsi-028",
+      "non-skripsi-029"
+    ],
+    "section": "BAB II KETENTUAN UMUM"
+  },
+  {
+    "parent_id": "parent-non-skripsi-005",
+    "title": "BAB II KETENTUAN UMUM (Bagian 2)",
+    "content": "- 1. Bimbingan pada prinsipnya dilaksanakan di kampus, selain dari ketentuan ini dapat dilakukan atas kesepakatan antara mahasiswa dan Dosen Pembimbing. - 2. Maksimal masa bimbingan berlangsung selama... \n- 1. Mahasiswa yang berhak mengambil Tugas Akhir Non Skripsi adalah mahasiswa yang telah menyelesaikan mata kuliah dengan jumlah SKS minimal 138 SKS dengan IP Kumulatif minimal 2,00 - 2. Mahasiswa yan... \nMekanisme pengajuan judul dan penetapan pembimbing dilakukan dengan prosedur sebagai berikut:  - 1) Mahasiswa dapat mengajukan judul dan mengusulkan calon Dosen Pembimbing kepada Ketua Program Studi, ... \nMekanisme bimbingan proposal dilakukan dengan prosedur sebagai berikut:  - 1) Mahasiswa wajib menemui Dosen Pembimbing paling lambat satu minggu setelah penetapan Dosen Pembimbing. - 2) Ketika berkons...",
+    "child_ids": [
+      "non-skripsi-030",
+      "non-skripsi-031",
+      "non-skripsi-034",
+      "non-skripsi-035",
+      "non-skripsi-036",
+      "non-skripsi-037",
+      "non-skripsi-039",
+      "non-skripsi-040"
+    ],
+    "section": "BAB II KETENTUAN UMUM"
+  },
+  {
+    "parent_id": "parent-non-skripsi-006",
+    "title": "BAB II KETENTUAN UMUM (Bagian 3)",
+    "content": "- 1. Ukuran: A2/Tipe Art Paper (layout kertas potrait) - 2. Isi Poster:   - 1) Bagian judul:     - (1) Lambang STMIK Widya Cipta Dharma, lambang kampus merdeka, lambang program studi     - (2) Judul p... \n- 1. Durasi video maksimal 5 menit - 2. Pada opening video wajib ada:   - 1) Judul penelitian   - 2) Nama mahasiswa dan NIM   - 3) Nama Dosen Pembimbing Utama dan Dosen Pembimbing Pendamping beserta N... \n![](_page_20_Diagram_1.jpeg)  Gambar 2. Alur Pelaksanaan Seminar Hasil... \nMekanisme pendaftaran pendadaran sebagai berikut:  - 1) Naskah Tugas Akhir Non Skripsi telah disetujui oleh Dosen Pembimbing dan Dosen Penguji. - 2) Mahasiswa mendaftar dan melengkapi berkas di laman ... \n![](_page_22_Diagram_1.jpeg)  Gambar 3. Alur Pelaksanaan Ujian Pendadaran... \nMekanisme perbaikan naskah Tugas Akhir Non Skripsi dilakukan dengan prosedur sebagai berikut:  - 1) Mahasiswa memperbaiki naskah Tugas Akhir Non Skripsi berdasarkan saran atau revisi dari Dosen Pembim...",
+    "child_ids": [
+      "non-skripsi-041",
+      "non-skripsi-042",
+      "non-skripsi-043",
+      "non-skripsi-045",
+      "non-skripsi-046",
+      "non-skripsi-048"
+    ],
+    "section": "BAB II KETENTUAN UMUM"
+  },
+  {
+    "parent_id": "parent-non-skripsi-007",
+    "title": "BAB III BENTUK TUGAS AKHIR (Bagian 1)",
+    "content": "Jalur Karya Ilmiah merupakan salah satu jalur pada Tugas Akhir Non Skripsi yang dapat diakui sebagai syarat kelulusan bagi mahasiswa dalam memperoleh gelar Sarjana. Jalur ini juga menjadi opsi bagi ma... \nMahasiswa yang akan memilih jalur Karya Ilmiah sebagai syarat kelulusan diwajibkan memperhatikan ketentuan sebagai berikut:  - 1. Naskah Karya Ilmiah yang diusulkan harus memuat Nama dan Identitas Ema... \nBagian Kategori Kualitas Karya Ilmiah memuat informasi mengenai standar kualifikasi Jurnal maupun Prosiding yang dapat digunakan melalui jalur Karya Ilmiah yang dapat dilihat pada tabel 3.1.  Tabel 3.... \nSistematika Penulisan Proposal dapat dilihat pada tabel 3.2 berikut ini.  Tabel 3. 2 Sistematika Penulisan Proposal Jalur Karya Ilmiah    | Bagian       | Keterangan Isi                               ...",
+    "child_ids": [
+      "non-skripsi-051",
+      "non-skripsi-052",
+      "non-skripsi-053",
+      "non-skripsi-054",
+      "non-skripsi-055",
+      "non-skripsi-056",
+      "non-skripsi-057",
+      "non-skripsi-058"
+    ],
+    "section": "BAB III BENTUK TUGAS AKHIR"
+  },
+  {
+    "parent_id": "parent-non-skripsi-008",
+    "title": "BAB III BENTUK TUGAS AKHIR (Bagian 2)",
+    "content": "Kriteria Penguasaan Materi berdasarkan pada kemampuan Mahasiswa dalam menyampaikan dan mengkomunikasikan hasil penelitian yang dilakukan berdasarkan Karya Ilmiah yang dibuat. Pada komponen ini, aspek ... \nJalur Profesional merupakan jalur yang memperbolehkan mahasiswa lulus melalui keahlian yang telah mendapatkan pengakuan dari perusahaan/instansi dalam berbagai bidang teknologi informasi/bisnis digita... \nAdapun syarat dan ketentuan dari jalur Profesional ini yaitu:  - 1. Telah bekerja sebagai seorang IT Profesional di Perusahaan/Instansi. - 2. Menghasilkan Produk IT yang digunakan di Perusahaan/Instan... \nBagian kualifikasi dan kelayakan memuat informasi yang mencakup tentang standar kualifikasi dari pekerjaan yang diajukan. Adapun contoh pekerjaan yang diperbolehkan mengambil jalur ini adalah sebagai ...",
+    "child_ids": [
+      "non-skripsi-059",
+      "non-skripsi-061",
+      "non-skripsi-062",
+      "non-skripsi-063",
+      "non-skripsi-064",
+      "non-skripsi-065",
+      "non-skripsi-066",
+      "non-skripsi-067"
+    ],
+    "section": "BAB III BENTUK TUGAS AKHIR"
+  },
+  {
+    "parent_id": "parent-non-skripsi-009",
+    "title": "BAB III BENTUK TUGAS AKHIR (Bagian 3)",
+    "content": "Kriteria penilaian Produk/Luaran berdasarkan pada Fungsionalitas dan Kompleksitas dalam pembuatan dan penggunaan Produk Teknologi Informasi. Pada kriteria ini, nilai maksimal yang disarankan adalah 50... \nKriteria Penguasaan Materi berdasarkan pada Kemampuan Mahasiswa dalam menyampaikan dan mengkomunikasikan hasil kegiatan yang dilakukan berdasarkan laporan yang disusun. Pada komponen ini, aspek yang d... \nSkema Tugas Akhir Non Skripsi jalur Wirausaha merupakan Jalur Kelulusan bagi mahasiswa yang memiliki usaha dalam bentuk produk atau jasa baik berupa Startup, UD, CV, PT, dan sejenisnya yang berkaitan ... \nAdapun syarat dan ketentuan dari jalur ini adalah sebagai berikut:  - 1. Memiliki Produk/Jasa yang ditawarkan kepada Konsumen - 2. Tersedianya Sumber Daya yang digunakan dalam Usaha baik berupa Sumber...",
+    "child_ids": [
+      "non-skripsi-068",
+      "non-skripsi-069",
+      "non-skripsi-071",
+      "non-skripsi-072",
+      "non-skripsi-073",
+      "non-skripsi-074",
+      "non-skripsi-075",
+      "non-skripsi-076"
+    ],
+    "section": "BAB III BENTUK TUGAS AKHIR"
+  },
+  {
+    "parent_id": "parent-non-skripsi-010",
+    "title": "BAB III BENTUK TUGAS AKHIR (Bagian 4)",
+    "content": "Kriteria penilaian Laporan Tugas Akhir Non Skripsi jalur Wirausaha berdasarkan pada tata cara penulisan laporan, sistematika penulisan, dan bukti kelengkapan lampiran. Pada kriteria ini, nilai maksima... \nKriteria penilaian Produk/Luaran pada Jalur Wirausaha berdasarkan pada Inovasi dan Keunikan (Kreativitas dan Orisinalitas), Kualitas dan Fungsi (Penggunaan Teknologi Informasi dalam Proses Bisnis, Kua... \nKriteria Penguasaan Materi pada jalur Wirausaha berdasarkan pada Kemampuan Mahasiswa dalam menyampaikan dan mengkomunikasikan hasil kegiatan yang dilakukan berdasarkan laporan yang disusun. Pada kompo...",
+    "child_ids": [
+      "non-skripsi-077",
+      "non-skripsi-078",
+      "non-skripsi-079"
+    ],
+    "section": "BAB III BENTUK TUGAS AKHIR"
+  },
+  {
+    "parent_id": "parent-non-skripsi-011",
+    "title": "BAB IV PENJELASAN SISTEMATIKA PENULISAN LAPORAN (Bagian 1)",
+    "content": "Halaman ini merupakan halaman identitas yang memuat judul, jenis usulan, identitas mahasiswa, lambang, program studi, nama institusi, dan tahun diterbitkan.  - 1) **Judul** yang baik dibuat dengan jel... \n*(Contoh Terlampir)*... \nPada halaman ini memuat Judul, Nama, Nim, Jenjang, Program Studi, Tanda Tangan Dosen Pembimbing dan Dosen Penguji, mengetahui Ketua Program Studi, dan Ketua STMIK Widya Cipta Dharma.  *(Contoh Terlamp... \nPada halaman ini berisi pernyataan yang menjelaskan bahwa karya Tugas Akhir Non Skripsi tersebut asli karya sendiri, tidak merupakan hasil jiplakan, dan bukan berupa karya orang lain. Halaman ini memu... \nPada umumnya abstrak terdiri dari 3 alinea, dan panjangnya tidak lebih dari satu halaman, ditulis dengan jarak 1 spasi, dan dibuat dalam 2 bahasa yaitu Bahasa Indonesia dan Bahasa Inggris. *(Contoh Te...",
+    "child_ids": [
+      "non-skripsi-082",
+      "non-skripsi-084",
+      "non-skripsi-085",
+      "non-skripsi-086",
+      "non-skripsi-087",
+      "non-skripsi-088",
+      "non-skripsi-089",
+      "non-skripsi-090"
+    ],
+    "section": "BAB IV PENJELASAN SISTEMATIKA PENULISAN LAPORAN"
+  },
+  {
+    "parent_id": "parent-non-skripsi-012",
+    "title": "BAB IV PENJELASAN SISTEMATIKA PENULISAN LAPORAN (Bagian 2)",
+    "content": "Daftar tabel memuat nomor urut, judul dan nomor halaman tabel. *(Contoh Terlampir)*... \nDaftar tabel memuat nomor urut, judul dan nomor halaman gambar. *(Contoh Terlampir)*... \nDaftar lampiran berisi seluruh lampiran-lampiran dokumen yang ditulis pada naskah. *(Contoh Terlampir)*... \nBerisi penjelasan terkait dengan identitas luaran karya ilmiah, berupa Nama Jurnal/Prosiding, URL Jurnal/Prosiding, Nomor Terbitan, Volume, Tahun Terbit, ISSN, Terindeks, dan URL Artikel *(Contoh Terl... \nMerupakan isi dari karya ilmiah yang terdiri dari Abstrak, Pendahuluan, Metode, Hasil dan Pembahasan, Kesimpulan, Referensi. *(Contoh Terlampir)*... \nMemuat Lembar Hasil Review, Lembar Persetujuan (LoA), dan khusus Prosiding wajib menyertakan sertifikat authors atau presenter. *(Contoh Terlampir)*... \nBagian ini menceritakan hal-hal yang melatar belakangi mengapa membuat produk pada kegiatan tersebut dan manfaat dari produk yang dihasilkan. Latar belakang wajib disertai referensi data dan fakta pen...",
+    "child_ids": [
+      "non-skripsi-091",
+      "non-skripsi-092",
+      "non-skripsi-093",
+      "non-skripsi-096",
+      "non-skripsi-097",
+      "non-skripsi-098",
+      "non-skripsi-101",
+      "non-skripsi-102"
+    ],
+    "section": "BAB IV PENJELASAN SISTEMATIKA PENULISAN LAPORAN"
+  },
+  {
+    "parent_id": "parent-non-skripsi-013",
+    "title": "BAB IV PENJELASAN SISTEMATIKA PENULISAN LAPORAN (Bagian 3)",
+    "content": "Tuliskan batasan masalah yang ada pada pengembangan produk. Batasan masalah menerangkan tentang berbagai hal yang disengaja tidak dimasukkan ke dalam pengembangan produk, karena diperkirakan tidak ber... \nTujuan berisi tentang tujuan pengembangan produk. Tujuan ini harus sinkron dengan rumusan masalah yang diangkat. Contoh tujuan:  *Tujuan yang akan dicapai pada pengembangan back end dengan metode scru... \nBagian ini ditulis dalam bentuk deskripsi Sub Bab Profil yang diisi menyesuaikan spesifik jalur yang dipilih.  *Profesional,* yaitu: Profil Perusahaan, Lokasi Kerja, Struktur Organisasi, Bidang Pekerj... \nBerisi tentang uraian teori yang diperlukan untuk membuat/ melaksanakan kegiatan tersebut. Dasar teori dapat berupa penjelasan mengenai *software* **yang digunakan, teknik, teori mengenai definisi per...",
+    "child_ids": [
+      "non-skripsi-103",
+      "non-skripsi-104",
+      "non-skripsi-105",
+      "non-skripsi-107",
+      "non-skripsi-108",
+      "non-skripsi-109",
+      "non-skripsi-110",
+      "non-skripsi-111"
+    ],
+    "section": "BAB IV PENJELASAN SISTEMATIKA PENULISAN LAPORAN"
+  },
+  {
+    "parent_id": "parent-non-skripsi-014",
+    "title": "BAB IV PENJELASAN SISTEMATIKA PENULISAN LAPORAN (Bagian 4)",
+    "content": "Berisi penjabaran hasil pengerjaan langkah 2 yang sudah dilakukan disertai bukti. Tahapan ini berisi penjelasan dari sub bab langkah selanjutnya yang ada pada alur.... \nBerisi penjelasan peran apa saja yang diperlukan dalam pengembangan produk tersebut, dan uraikan apa kontribusi peneliti dalam peran tersebut.  Tabel 4. 2 Contoh Template untuk Tabel Peran dan Kontrib... \nKesimpulan berisi ringkasan pembahasan berdasarkan masalah dan solusi yang telah diuraikan pada Bab III. Kesimpulan boleh diberi nomor atau boleh juga tidak menggunakan nomor.... \nBerisi hal-hal yang dapat dikembangkan lebih lanjut.... \nBerisi lampiran-lampiran yang memuat:  - 1. Naskah publikasi original yang telah terbit / published (dalam format PDF) - 2. Dataset (opsional) - 3. Hasil seluruh eksperimen yang telah dilakukan - 4. L...",
+    "child_ids": [
+      "non-skripsi-112",
+      "non-skripsi-113",
+      "non-skripsi-115",
+      "non-skripsi-116",
+      "non-skripsi-118",
+      "non-skripsi-119",
+      "non-skripsi-120"
+    ],
+    "section": "BAB IV PENJELASAN SISTEMATIKA PENULISAN LAPORAN"
+  },
+  {
+    "parent_id": "parent-non-skripsi-015",
+    "title": "BAB V FORMAT DAN TATA CARA PENULISAN (Bagian 1)",
+    "content": "Spesifikasi kertas yang digunakan dalam penyajian laporan Hardcover Tugas Akhir Non Skripsi adalah jenis HVS-A4 (21 cm x 29,7 cm) dengan berat 80 gram berwarna putih polos. Untuk halaman judul hardcov... \nNaskah diketik rata kiri dan kanan dengan batas margin pengetikan naskah ditentukan sebagai berikut: Margin atas: 3 cm Margin Bawah: 3 cm Margin Kiri: 4 cm Margin Kanan: 3 cm... \nNaskah skripsi diketik dengan huruf standar (*Times New Roman*) dan ukuran (*font size*) yang sama, untuk seluruh naskah *font size* 12, kecuali bila didalam tabel ukuran huruf tersebut dapat dikecilk... \nJarak antara baris satu dengan yang lain dibuat 1,5 spasi, kecuali daftar isi, daftar tabel, daftar gambar, daftar lampiran, judul tabel, judul gambar dan daftar pustaka menggunakan spasi tunggal atau... \nTiap-tiap baris dari suatu alinea dimulai dengan ketukan huruf pertama agak menjorok kedalam (ke arah kanan) sebanyak 6 ketukan huruf dari *margin*/batas kiri atau + 1,2 cm....",
+    "child_ids": [
+      "non-skripsi-122",
+      "non-skripsi-124",
+      "non-skripsi-125",
+      "non-skripsi-126",
+      "non-skripsi-127",
+      "non-skripsi-128",
+      "non-skripsi-129",
+      "non-skripsi-130"
+    ],
+    "section": "BAB V FORMAT DAN TATA CARA PENULISAN"
+  },
+  {
+    "parent_id": "parent-non-skripsi-016",
+    "title": "BAB V FORMAT DAN TATA CARA PENULISAN (Bagian 2)",
+    "content": "- (1) Tabel dan gambar diberi nomor urut dengan angka Arab dengan format berupa 2 angka. Angka pertama menunjukkan bab dan angka kedua menunjukkan urutan nomor tabel/gambar (Contoh: Gambar 2.1 artinya... \n- (1) Pemilihan sajian data hasil penelitian dalam bentuk grafik, diagram alir, bagan, peta, foto, atau gambar perlu dipertimbangkan dengan memperhatikan relevansinya sesuai dengan topik penelitian ya... \n- 1. Bahasa yang digunakan mengikuti Pedoman Umum Ejaan Bahasa Indonesia (PUEBI). - 2. Bentuk dalam kalimat tidak boleh menampilkan orang pertama atau orang kedua (contoh: saya, aku, kita, engkau, pen... \nPenggunaan huruf miring dalam bagian isi Tugas Akhir Non Skripsi mengikuti aturan yang ditetapkan dalam PUEBI. Penggunaan huruf miring dalam penulisan daftar pustaka, mengikuti aturan tersendiri seper...",
+    "child_ids": [
+      "non-skripsi-132",
+      "non-skripsi-133",
+      "non-skripsi-134",
+      "non-skripsi-135",
+      "non-skripsi-137",
+      "non-skripsi-139",
+      "non-skripsi-140",
+      "non-skripsi-141"
+    ],
+    "section": "BAB V FORMAT DAN TATA CARA PENULISAN"
+  },
+  {
+    "parent_id": "parent-non-skripsi-017",
+    "title": "BAB V FORMAT DAN TATA CARA PENULISAN (Bagian 3)",
+    "content": "Sugiyono. (2016). *Metode penelitian kuantitatif, kualitatif, dan R&D*. Alfabeta: Bandung.... \nSmith, J. A., & Brown, P. L. (2020). *Introduction to database systems*. Pearson Education: London.... \nPenulis, A. A. (Tahun, Tanggal). Judul artikel. *Nama Situs Web*. URL... \nWorld Health Organization. (2021, March 25). Mental health and COVID-19. *WHO*. <https://www.who.int/news-room/mental-health>... \nPenulis, A. A. (Tahun). Judul bab. Dalam A. Editor & B. Editor (Ed.), *Judul Buku* (hal. xx–xx). Penerbit.... \nJones, G. R. (2019). Organizational design. Dalam J. R. Schermerhorn, *Management Foundations* (hal. 145–172). Wiley.... \nPenulis, A. A. (Tahun). *Judul disertasi atau tesis* (Disertasi/Tesis tidak dipublikasikan). Institusi.... \nPratama, R. F. (2020). *Pengaruh media pembelajaran berbasis teknologi terhadap hasil belajar siswa* (Skripsi tidak dipublikasikan). STMIK Widya Cipta Dharma....",
+    "child_ids": [
+      "non-skripsi-142",
+      "non-skripsi-143",
+      "non-skripsi-144",
+      "non-skripsi-145",
+      "non-skripsi-146",
+      "non-skripsi-147",
+      "non-skripsi-148",
+      "non-skripsi-149"
+    ],
+    "section": "BAB V FORMAT DAN TATA CARA PENULISAN"
+  },
+  {
+    "parent_id": "parent-non-skripsi-018",
+    "title": "BAB V FORMAT DAN TATA CARA PENULISAN (Bagian 4)",
+    "content": "Nama Organisasi atau Judul Artikel. (Tahun, Tanggal). Judul artikel. *Nama Situs Web*. URL... \nKementerian Pendidikan dan Kebudayaan. (2021, 15 Mei). Peningkatan kompetensi guru di era digital. *Kemendikbud*. https://www.kemendikbud.go.id...",
+    "child_ids": [
+      "non-skripsi-150",
+      "non-skripsi-151"
+    ],
+    "section": "BAB V FORMAT DAN TATA CARA PENULISAN"
+  },
+  {
+    "parent_id": "parent-non-skripsi-019",
+    "title": "LAMPIRAN (Bagian 1)",
+    "content": "**JUDUL TUGAS AKHIR NON SKRIPSI** *(Times New Roman, Uppercase, Size 14, Bold, Spasi 1,5, Center*  **TUGAS AKHIR**  **KARYA ILMIAH / PROFESIONAL / WIRAUSAHA[<sup>1</sup>](#page-47-1)** *(Times New Rom... \n*(Times New Roman, Capitalize Each Word, Italic, Size 12, Bold, Center)*  oleh:  **NAMA MAHASISWA**  **NIM**  *(Times New Roman, Uppercase, Size 12, Bold, Spasi Single, Center)*... \n*(Times New Roman, Uppercase, Size 12, Bold, Spasi 1, Center)*  <sup>1,3</sup> Pilih salah satu dan nama prodi tidak disingkat  <sup>2</sup> Gelar Sarjana pilih salah satu... \n*(Times New Roman, Uppercase, Size 12, Bold, Spasi 1,5, Center)*... \n*(Times New Roman, Uppercase, Size 12, Bold, Spasi 1,5, Center)*  yang disusun dan diajukan oleh:  **Nama Mahasiswa**  **NIM. xxxxxxxx**  Telah dipertahankan di depan Dewan Penguji  Pada tanggal *<tan...",
+    "child_ids": [
+      "non-skripsi-152",
+      "non-skripsi-153",
+      "non-skripsi-154",
+      "non-skripsi-156",
+      "non-skripsi-158",
+      "non-skripsi-160",
+      "non-skripsi-161",
+      "non-skripsi-162"
+    ],
+    "section": "LAMPIRAN"
+  },
+  {
+    "parent_id": "parent-non-skripsi-020",
+    "title": "LAMPIRAN (Bagian 2)",
+    "content": "NIDN/NUPTK.  Mengetahui, Mengesahkan, Ketua STMIK Widya Cipta Dharma  Ketua Program Studi (SI/TI/BisDig) **[<sup>5</sup>](#page-48-2)**... \nNIK.  **Nama dan Gelar** NIK.  *(Font Times New Roman, Capitalize Each Word, Size 12, Spasi Single)*  *Tanda Tangan*  *Tanda Tangan*  *Tanda Tangan*  *Tanda Tangan*  <sup>4</sup> Pilih salah satu  <su... \n*(Font Times New Roman, Uppercase, Size 12, Bold, Spasi 1,5, Center)*  Saya yang bertandatangan berikut ini:  Nama : ………………….  Nim : ………………….  Jenjang : Sarjana  Program Studi : ………………….  Judul Tugas ... \nMenyatakan bahwa saya bertanggung jawab terhadap keaslian karya yang merupakan hasil karya saya sendiri kecuali cuplikan dan ringkasan yang masing-masing telah saya jelaskan sumbernya. Jika dikemudian... \nTuliskan abstrak karya ilmiah sesuai dengan yang tertulis pada naskah asli....",
+    "child_ids": [
+      "non-skripsi-163",
+      "non-skripsi-164",
+      "non-skripsi-166",
+      "non-skripsi-167",
+      "non-skripsi-169",
+      "non-skripsi-170",
+      "non-skripsi-171",
+      "non-skripsi-172"
+    ],
+    "section": "LAMPIRAN"
+  },
+  {
+    "parent_id": "parent-non-skripsi-021",
+    "title": "LAMPIRAN (Bagian 3)",
+    "content": "(Font: Times New Roman, Uppercase, Size 12, Bold, Spacing 1.5, Center)  Student Name, Year, Development and Implementation of a Web-Based Inventory Management System at PT XYZ, STMIK Widya Cipta Dharm... \n*(Font Times New Roman, Uppercase, Size 12, Bold, Spasi 1,5, Center)*  *Pada halaman ini ditulis riwayat hidup mahasiswa yang bersangkutan, yaitu nama, tempat tanggal lahir, pendidikan, pengalaman ker... \n*(Font Times New Roman, Uppercase, Size 12, Bold, Spasi 1,5, Center)*  Halaman ini sebaiknya dibuat ringkas dalam satu atau dua halaman. Fungsi utama kata pengantar adalah mengantarkan pembaca pada ma... \n*(Font Times New Roman, Uppercase, Size 12, Bold, Spasi 1,5, Center) (gunakan tools table of content pada menu references di Word)*  - HALAMAN JUDUL - HALAMAN PENGESAHAN - HALAMAN PERNYATAAN KEASLIAN ...",
+    "child_ids": [
+      "non-skripsi-174",
+      "non-skripsi-176",
+      "non-skripsi-178",
+      "non-skripsi-180",
+      "non-skripsi-181",
+      "non-skripsi-182",
+      "non-skripsi-183",
+      "non-skripsi-186"
+    ],
+    "section": "LAMPIRAN"
+  },
+  {
+    "parent_id": "parent-non-skripsi-022",
+    "title": "LAMPIRAN (Bagian 4)",
+    "content": "*(Font Times New Roman, Uppercase, Size 12, Bold, Spasi 1,5, Center)*  - Gambar 2.1 Simbol – simbol Flow Of Dokumen (FOD) - Gambar 2.2 Simbol – simbol Diagram Arus Data (DAD) - Gambar 2.3 Notasi simbo... \n*(Font Times New Roman, Uppercase, Size 12, Bold, Spasi 1,5, Center)*  - Lampiran 1 Naskah publikasi original - Lampiran 2 Dataset - Lampiran 3 Hasil Eksperimen - Lampiran 4 Kuisioner... \n*Beri penjelasan terkait dengan identitas luaran karya ilmiah anda.*   Nama Jurnal / Prosiding :  URL Jurnal / Prosiding :  Nomor Terbitan :  Volume :  Tahun Terbit :  ISSN :  Terindeks Oleh :  Penerb... \nTuliskan intisari karya ilmiah sesuai yang ada pada naskah asli.... \nTuliskan pendahuluan karya ilmiah sesuai yang ada pada naskah asli.... \nTuliskan metode penelitian sesuai yang ada pada naskah asli....",
+    "child_ids": [
+      "non-skripsi-188",
+      "non-skripsi-190",
+      "non-skripsi-192",
+      "non-skripsi-195",
+      "non-skripsi-196",
+      "non-skripsi-197",
+      "non-skripsi-198",
+      "non-skripsi-199"
+    ],
+    "section": "LAMPIRAN"
+  },
+  {
+    "parent_id": "parent-non-skripsi-023",
+    "title": "LAMPIRAN (Bagian 5)",
+    "content": "Tuliskan daftar Pustaka / referensi sesuai yang ada pada naskah asli.... \n*Lembar hasil review dapat berupa gambar maupun tabel.*... \n*Isian kegiatan 1*... \n*Isian kegiatan 2*... \n*Lembar persetujuan (LoA) dapat berupa gambar.*... \n*Khusus prosiding wajib menyertakan sertifikat authors atau presenter.*... \n*(Font Times New Roman, Uppercase, Size 12, Bold, Spasi 1,5, Center) (gunakan tools table of content pada menu references di Word)*  - HALAMAN JUDUL - HALAMAN PENGESAHAN - HALAMAN PERNYATAAN KEASLIAN ... \n1.1 Latar Belakang ........................................................................................................Mulai Hal 1 dst  - 1.2 Rumusan Masalah - 1.3 Batasan Masalah - 1.4 Tujuan - 1...",
+    "child_ids": [
+      "non-skripsi-200",
+      "non-skripsi-203",
+      "non-skripsi-204",
+      "non-skripsi-205",
+      "non-skripsi-206",
+      "non-skripsi-207",
+      "non-skripsi-209",
+      "non-skripsi-210"
+    ],
+    "section": "LAMPIRAN"
+  },
+  {
+    "parent_id": "parent-non-skripsi-024",
+    "title": "LAMPIRAN (Bagian 6)",
+    "content": "- 2.1 Landasan Teori - 2.2 Analisis - 2.3 Alur Pengembangan Produk... \n- 3.1 Hasil - 3.2 Pembahasan... \n- 4.1 Kesimpulan - 4.2 Saran... \n- @ = at (digunakan dalam alamat email) - # = hash atau pound (sering digunakan di media sosial sebagai tagar)... \n- CPU: Central Processing Unit - HDD: Hard Disk Drive - IoT: Internet of Things - AI: Artificial Intelligence - ML: Machine Learning - JSON: JavaScript Object Notation - XML: eXtensible Markup Languag... \n- Algorithm: Langkah-langkah logis yang disusun untuk menyelesaikan masalah - Binary: Sistem bilangan berbasis 2 yang terdiri dari dua angka, 0 dan 1.  Status Terakreditasi Badan Akreditasi Nasional P... \nNama :  NIM :  Judul Tugas Akhir :  Mengetahui, Samarinda....................................  Ketua Program Studi SI/TI/BisDig **[<sup>9</sup>](#page-64-3)** Dosen Pembimbing Utama/Pendamping **[<sup...",
+    "child_ids": [
+      "non-skripsi-211",
+      "non-skripsi-212",
+      "non-skripsi-213",
+      "non-skripsi-217",
+      "non-skripsi-218",
+      "non-skripsi-220",
+      "non-skripsi-221",
+      "non-skripsi-223"
+    ],
+    "section": "LAMPIRAN"
+  },
+  {
+    "parent_id": "parent-non-skripsi-025",
+    "title": "LAMPIRAN (Bagian 7)",
+    "content": "11,12,13 Pilih salah satu dan nama prodi tidak disingkat  Status Terakreditasi Badan Akreditasi Nasional Perguruan Tinggi Jl. M. Yamin No. 25 Samarinda – Kalimantan Timur 75123 Telp. 0541 – 736071 Fax... \n**Nama Responden : Jabatan Responden : Nama Pewawancara : Lokasi Wawancara :**  - **1.** - **2.** - **3.** - **4.** - **5.** - **6.** - **7.** - **8.** - **9.** - **10.**  Kota dilakukan wawancara, (*... \n*(Font Times New Roman, Uppercase, Size 12, Bold, Spasi 1,5, Center)*  Judul Proposal : ………………….  Nim : …………………. Nama : ………………….  Jenjang : Sarjana  Program Studi : ………………….... \nPembimbing Utama Pembimbing Pendamping  **Nama dan Gelar** NIDN/NUPTK  **Nama dan Gelar** NIDN/NUPTK.  Mengetahui, Ketua Program Studi (SI/TI/BisDig) **[<sup>14</sup>](#page-67-1)**... \n*(Font Times New Roman, Capitalize Each Word, Size 12, Spasi 1,5)*  *( Spasi Menyesuaikan)*  *( Spasi Menyesuaikan) ( Spasi Menyesuaikan)*  <sup>14</sup> : Pilih salah satu dan nama prodi tidak dising...",
+    "child_ids": [
+      "non-skripsi-224",
+      "non-skripsi-226",
+      "non-skripsi-228",
+      "non-skripsi-229",
+      "non-skripsi-230",
+      "non-skripsi-232",
+      "non-skripsi-233",
+      "non-skripsi-234"
+    ],
+    "section": "LAMPIRAN"
+  },
+  {
+    "parent_id": "parent-non-skripsi-026",
+    "title": "LAMPIRAN (Bagian 8)",
+    "content": "| Pembimbing Utama      | Pembimbing Pendamping | |-----------------------|-----------------------| | Ketua Penguji         | Anggota Penguji       | | ( Spasi Menyesuaikan) | ( Spasi Menyesuaikan) | ... \nNIK**.**  *(Font Times New Roman, Capitalize Each Word, Size 12, Spasi 1,5)*  *( Spasi Menyesuaikan)*  <sup>16</sup> : Pilih salah satu dan nama prodi tidak disingkat... \nPanitia Ujian Seminar Tugas Akhir Non Skripsi Sekolah Tinggi Manajemen Informatika dan Komputer Widya Cipta Dharma Setelah melaksanakan Seminar Proposal Tahun Akademik Ganjil/Genap ………… Pada Hari …………... \n- 1. Jawaban-jawaban dan sanggahan yang diberikan selama seminar proposal - 2. Nilai hasil seminar yang dicapai dalam seminar proposal tugas akhir non skripsi dengan susunan dewan penguji sebagai beri... \n1. Nama : ....................................................................................... 2. Nim : ....................................................................................... 3. Pr...",
+    "child_ids": [
+      "non-skripsi-235",
+      "non-skripsi-236",
+      "non-skripsi-239",
+      "non-skripsi-240",
+      "non-skripsi-242",
+      "non-skripsi-244",
+      "non-skripsi-245",
+      "non-skripsi-247"
+    ],
+    "section": "LAMPIRAN"
+  },
+  {
+    "parent_id": "parent-non-skripsi-027",
+    "title": "LAMPIRAN (Bagian 9)",
+    "content": "Panitia Ujian Seminar Tugas Akhir Non Skripsi Sekolah Tinggi Manajemen Informatika dan Komputer Widya Cipta Dharma setelah melaksanakan Seminar Pendadaran Tahun Akademik Ganjil/Genap ……… Pada Hari ………... \n- 1. Jawaban-jawaban dan sanggahan yang diberikan selama pendadaran - 2. Nilai hasil seminar yang dicapai dalam seminar pendadaran tugas akhir non skripsi dengan susunan dewan penguji sebagai berikut ... \n- 1. Nama : ....................................................................................... - 2. Nim : ....................................................................................... -... \nYang bertandatangan di bawah ini sebagai Penguji Sidang Tugas Akhir Non Skripsi bagi mahasiswa STMIK Widya Cipta Dharma sebagai berikut:  NIM : ...........................................................",
+    "child_ids": [
+      "non-skripsi-249",
+      "non-skripsi-250",
+      "non-skripsi-252",
+      "non-skripsi-254",
+      "non-skripsi-259",
+      "non-skripsi-260",
+      "non-skripsi-261",
+      "non-skripsi-262"
+    ],
+    "section": "LAMPIRAN"
+  },
+  {
+    "parent_id": "parent-non-skripsi-028",
+    "title": "LAMPIRAN (Bagian 10)",
+    "content": "Produk luaran berupa artikel yang dimuat dalam sebuah jurnal atau prosiding baik di Tingkat Nasional maupun Internasional. Berikut adalah tabel saran penilaian berdasarkan kategori jurnal.  | No | Kat... \nPenguasaan Materi berdasarkan pada kemampuan Mahasiswa dalam menyampaikan dan mengkomunikasikan hasil penelitian yang dilakukan berdasarkan Karya Ilmiah yang dibuat. Pada komponen ini, aspek yang dini... \n- (1) **Pendahuluan:** Latar Belakang, Rumusan Masalah, Batasan Masalah, Tujuan, dan Profil, - (2) **Landasan Teori dan Analisis**: Landasan Teori, Analisis, dan Alur Pengembangan Produk, - (3) **Hasi... \n- (1) Surat Pengangkatan Kerja, - (2) Produk IT yang digunakan di Perusahaan tersebut, baik secara tim ataupun individu, - (3) Dokumen evaluasi atau penilaian terhadap hasil kerja dari atasan Perusaha...",
+    "child_ids": [
+      "non-skripsi-263",
+      "non-skripsi-264",
+      "non-skripsi-267",
+      "non-skripsi-268",
+      "non-skripsi-269",
+      "non-skripsi-270",
+      "non-skripsi-273",
+      "non-skripsi-274"
+    ],
+    "section": "LAMPIRAN"
+  },
+  {
+    "parent_id": "parent-non-skripsi-029",
+    "title": "LAMPIRAN (Bagian 11)",
+    "content": "Produk luaran berdasarkan pada Inovasi dan Keunikan (Kreatifitas dan Orisinalitas), Kualitas dan Fungsi (Penggunaan Teknologi Informasi dalam Proses Bisnis, Kualitas Produk, Fungsi, Desain Produk, dan... \nPenguasaan Materi berdasarkan pada kemampuan Mahasiswa dalam menyampaikan dan mengkomunikasikan hasil kegiatan yang dilakukan berdasarkan laporan yang disusun. Pada komponen ini, aspek yang dinilai me... \nNIM : ............................................................................................ Nama : ............................................................................................ P... \nAlasan penggantian Dosen Pembimbing Tugas Akhir Non Skripsi: **[24](#page-77-2)**  - a. Meninggal dunia - b. Sakit, sehingga yang bersangkutan harus istirahat panjang - c. Cuti diluar tanggungan Negar...",
+    "child_ids": [
+      "non-skripsi-275",
+      "non-skripsi-276",
+      "non-skripsi-278",
+      "non-skripsi-279",
+      "non-skripsi-281",
+      "non-skripsi-287"
+    ],
+    "section": "LAMPIRAN"
+  }
+]

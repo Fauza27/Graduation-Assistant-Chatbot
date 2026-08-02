@@ -1,0 +1,1466 @@
+[
+  {
+    "id": "skripsi-002",
+    "title": "Panduan Penulisan Tugas Akhir Skripsi",
+    "content": "**STMIK Widya Cipta Dharma**\n**CENTER OF EXCELLENCE**\n**REKTORAT**",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "Front Matter",
+    "pages": [
+      "1"
+    ]
+  },
+  {
+    "id": "skripsi-003",
+    "title": "PANDUAN PENULISAN TUGAS AKHIR SKRIPSI",
+    "content": "**SEKOLAH TINGGI MANAJEMEN INFORMATIKA DAN KOMPUTER WIDYA CIPTA DHARMA**\n**2024**",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "Front Matter",
+    "pages": [
+      "1"
+    ]
+  },
+  {
+    "id": "skripsi-004",
+    "title": "KATA PENGANTAR",
+    "content": "Puji syukur kami panjatkan ke hadirat Tuhan Yang Maha Esa atas Rahmat dan Karunia-Nya sehingga buku panduan penulisan tugas akhir skripsi ini dapat disusun dengan baik. Buku panduan ini disusun sebagai acuan bagi seluruh civitas akademika dalam pelaksanaan penyusunan skripsi yang merupakan syarat akademik yang harus dipenuhi oleh mahasiswa dalam menyelesaikan studi pada jenjang program sarjana di STMIK Widya Cipta Dharma.\n\nPanduan ini dirancang dengan memperhatikan setiap ketentuan dan prosedur yang telah ditetapkan dalam Buku Pedoman Akademik STMIK Widya Cipta Dharma tahun 2024. Kami berharap dengan adanya panduan ini, mahasiswa dapat memahami proses penyusunan tugas akhir skripsi secara sistematis dan metodologis, sehingga dapat menyelesaikan studinya dengan baik dan tepat waktu.\n\nTugas Akhir Skripsi memiliki tujuan utama untuk memberikan kesempatan kepada mahasiswa dalam mengaplikasikan ilmu yang telah diperoleh selama masa studi ke dalam penelitian yang relevan dengan bidang keilmuannya. Selain itu, juga bertujuan untuk melatih mahasiswa dalam mengidentifikasi dan merumuskan masalah penelitian, memilih dan menerapkan metode penelitian yang sesuai, serta menyajikan hasil penelitian secara sistematis dan ilmiah sesuai dengan kaidah akademik yang berlaku.\n\nKami mengucapkan terima kasih kepada semua pihak yang telah berkontribusi dalam penyusunan panduan ini, baik secara langsung maupun tidak langsung. Kami juga menyadari bahwa buku panduan ini masih jauh dari sempurna. Oleh karena itu, kami sangat mengharapkan saran dari berbagai pihak guna penyempurnaan panduan ini di masa mendatang.\n\nAkhir kata, kami berharap semoga buku panduan ini dapat memberikan manfaat yang besar bagi seluruh civitas akademika, khususnya bagi mahasiswa yang tengah menyusun skripsi di STMIK Widya Cipta Dharma.\n\n> Samarinda, Desember 2024 **Tim Penyusun**",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "Front Matter",
+    "pages": [
+      "3"
+    ]
+  },
+  {
+    "id": "skripsi-005",
+    "title": "DAFTAR ISI",
+    "content": "- KATA PENGANTAR\n- DAFTAR ISI\n- DAFTAR TABEL\n- DAFTAR GAMBAR\n- SURAT KEPUTUSAN\n- BAB I PENDAHULUAN\n  - 1.1. LATAR BELAKANG\n  - 1.2. TUJUAN PEMBUATAN BUKU PANDUAN TUGAS AKHIR SKRIPSI\n- BAB II KETENTUAN UMUM\n  - 2.1. DOSEN PEMBIMBING\n  - 2.2. DOSEN PENGUJI\n  - 2.3. PENGGANTIAN DOSEN PEMBIMBING DAN DOSEN PENGUJI\n  - 2.4. MAHASISWA BIMBINGAN\n  - 2.5. SYARAT DAN KETENTUAN TUGAS AKHIR SKRIPSI\n  - 2.6. PROSES PENYUSUNAN TUGAS AKHIR SKRIPSI\n- BAB III BENTUK TUGAS AKHIR\n  - 3.1. PROPOSAL\n  - 3.2. TUGAS AKHIR SKRIPSI\n- BAB IV PENJELASAN SISTEMATIKA PENULISAN LAPORAN\n  - 4.1. BAGIAN AWAL\n  - 4.2. BAGIAN UTAMA\n  - 4.3. BAGIAN AKHIR\n- BAB V FORMAT DAN TATA CARA PENULISAN\n  - 5.1. JENIS DAN UKURAN KERTAS\n  - 5.2. ATURAN PENULISAN\n  - 5.3. BAHASA\n  - 5.4. HURUF MIRING\n  - 5.5. ATURAN PENULISAN PUSTAKA ATAU SUMBER RUJUKAN",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "Front Matter",
+    "pages": [
+      "4"
+    ]
+  },
+  {
+    "id": "skripsi-006",
+    "title": "DAFTAR TABEL",
+    "content": "- Tabel 2.1 Panduan Penilaian Tugas Akhir Skripsi\n- Tabel 2.2 Rekap Nilai Tugas Akhir Skripsi\n- Tabel 3.1 Sistematika Penulisan Proposal\n- Tabel 3.2 Sistematika Penulisan Tugas Akhir Skripsi",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "Front Matter",
+    "pages": [
+      "4"
+    ]
+  },
+  {
+    "id": "skripsi-007",
+    "title": "DAFTAR GAMBAR",
+    "content": "- Gambar 1. Alur Pelaksanaan Proposal\n- Gambar 2. Alur Pelaksanaan Seminar Hasil\n- Gambar 3. Alur Pelaksanaan Pendadaran",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "Front Matter",
+    "pages": [
+      "4"
+    ]
+  },
+  {
+    "id": "skripsi-008",
+    "title": "SURAT KEPUTUSAN",
+    "content": "**SEKOLAH TINGGI MANAJEMEN INFORMATIKA dan KOMPUTER**",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "Surat Keputusan",
+    "pages": [
+      "8"
+    ]
+  },
+  {
+    "id": "skripsi-009",
+    "title": "WIDYA CIPTA DHARMA",
+    "content": "Status Terakreditasi Badan Akreditasi Nasional Perguruan Tinggi  \nJl. M. Yamin No. 25 Samarinda - Kalimantan Timur 75123 Telp. 0541 - 736071 Fax. 203492,734468  \nE-mail : wicida@wicida.ac.id\n\n**Surat Keputusan  \nKetua STMIK Widya Cipta Dharma**\n\n**Nomor : 081/SK-KT/ST.WCD/XII/2024**\n\n**Tentang**\n\n**Panduan Penulisan Tugas Akhir Skripsi  \nDi lingkungan STMIK Widya Cipta Dharma**\n\n**Ketua STMIK Widya Cipta Dharma**\n\nMenimbang : a. Bahwa untuk memperlancar dan memberikan referensi kepada Mahasiswa, Dosen Pembimbing dan Dosen Penguji mengenai mekanisme, sistematika, dan teknik penulisan dalam proses penyelesaian studi melalui jalur tugas akhir skripsi.  \nb. Bahwa diperlukan panduan penulisan tugas akhir skripsi di lingkungan STMIK Widya Cipta Dharma.  \nc. Bahwa untuk maksud tersebut perlu disahkan dan diterbitkan dalam Surat Keputusan Ketua STMIK Widya Cipta Dharma.\n\nMengingat : 1. Undang-Undang Republik Indonesia Nomor 12 Tahun 2012 tentang Pendidikan Tinggi  \n2. Undang-Undang No: 20 tahun 2003 tentang Sistem Pendidikan Nasional  \n3. Peraturan Pemerintah Nomor 4 tahun 2014 tentang Penyelenggaraan Pendidikan Tinggi dan Pengelolaan Perguruan Tinggi.  \n4. Peraturan Pemerintah Nomor 16 tahun 2018 tentang Perubahan atas Peraturan Menteri Pendidikan dan Kebudayaan Nomor 47 tahun 2016 tentang Pedoman Organisasi Perangkat Bidang Organisasi dan Kebudayaan.  \n5. Keputusan Mendikbud RI Nomor : 0686/U/1991 tentang Pedoman Pendirian Perguruan Tinggi.  \n6. Keputusan Mendikbud RI Nomor : 05/D/0/1995 tentang perubahan bentuk AMIK-WCD menjadi STMIK-WCD.  \n7. Statuta STMIK Widya Cipta Dharma tahun 2024.",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "Surat Keputusan",
+    "pages": [
+      "8"
+    ]
+  },
+  {
+    "id": "skripsi-010",
+    "title": "SEKOLAH TINGGI MANAJEMEN INFORMATIKA dan KOMPUTER WIDYA CIPTA DHARMA",
+    "content": "Status Terakreditasi Badan Akreditasi Nasional Perguruan Tinggi  \nJl. M. Yamin No. 25 Samarinda - Kalimantan Timur 75123 Telp. 0541 - 736071 Fax. 203492,734468  \nE-mail : wicida@wicida.ac.id",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "Surat Keputusan",
+    "pages": [
+      "8"
+    ]
+  },
+  {
+    "id": "skripsi-011",
+    "title": "MEMUTUSKAN",
+    "content": "Menetapkan :\n\nPertama : Surat Keputusan Ketua STMIK Widya Cipta Dharma Tentang panduan penulisan tugas akhir skripsi di lingkungan STMIK Widya Cipta Dharma sebagaimana dalam lampiran.\n\nKedua : Dengan berlakunya panduan penulisan tugas akhir skripsi STMIK Widya Cipta Dharma, maka ketentuan prosedur yang bertentangan dengan keputusan ini dinyatakan tidak berlaku.\n\nKetiga : Surat Keputusan ini berlaku sejak ditetapkan dan apabila dikemudian hari ternyata terdapat kekeliruan dalam penetapannya, maka akan diperbaiki sebagaimana mestinya.\n\nDitetapkan di : Samarinda  \nPada tanggal : 31 Desember 2024  \nKetua,",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "Surat Keputusan",
+    "pages": [
+      "8"
+    ]
+  },
+  {
+    "id": "skripsi-012",
+    "title": "Tembusan disampaikan Kepada :",
+    "content": "1. 1. Wakil Ketua I, II dan III\n2. 2. Ketua Program Studi TI, SI dan Bisdig\n3. 3. Pertinggal",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "Surat Keputusan",
+    "pages": [
+      "8"
+    ]
+  },
+  {
+    "id": "skripsi-014",
+    "title": "1.1. LATAR BELAKANG",
+    "content": "Penulisan Tugas Akhir Skripsi merupakan salah satu tahapan penting dalam proses akademik mahasiswa di perguruan tinggi. Tugas Akhir Skripsi berfungsi sebagai bukti kemampuan mahasiswa dalam mengaplikasikan pengetahuan yang telah diperoleh selama masa studi, serta menunjukkan kemampuan analisis, sintesis, dan pemecahan masalah secara mandiri. Tugas Akhir Skripsi juga menjadi syarat untuk memperoleh gelar sarjana, sehingga kualitas dan tata cara penulisannya sangatlah penting.\n\nNamun, dalam praktiknya, banyak mahasiswa yang menghadapi berbagai kesulitan dalam menulis Tugas Akhir Skripsi. Kesulitan tersebut dapat berupa kurangnya pemahaman terhadap format penulisan yang benar, kekurangan referensi, serta ketidaktahuan mengenai standar akademik yang berlaku. Ketidakteraturan dalam penulisan skripsi dapat menyebabkan hasil akhir yang kurang maksimal dan berdampak pada penilaian akademis mahasiswa.\n\nOleh karena itu, diperlukan adanya panduan penulisan Tugas Akhir Skripsi yang jelas dan sistematis. Panduan ini bertujuan untuk memberikan arahan yang komprehensif kepada mahasiswa mengenai setiap aspek penulisan Tugas Akhir Skripsi, mulai dari pemilihan topik, penyusunan proposal, pengumpulan data, analisis, hingga penyusunan laporan akhir. Dengan adanya panduan yang baku, diharapkan mahasiswa dapat menyusun Tugas Akhir Skripsi dengan baik dan sesuai dengan standar akademik yang telah ditetapkan.\n\nDengan latar belakang tersebut, penyusunan panduan penulisan Tugas Akhir Skripsi ini diharapkan dapat meningkatkan kualitas skripsi mahasiswa, memperlancar proses penyusunan tugas akhir skripsi, serta membantu perguruan tinggi dalam menjaga standar akademiknya. Adanya panduan yang jelas dan mudah dipahami juga akan memberikan rasa percaya diri bagi mahasiswa dalam menyelesaikan tugas akhirnya, sehingga mereka dapat lulus dengan prestasi yang membanggakan.",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB I PENDAHULUAN",
+    "pages": [
+      "10"
+    ]
+  },
+  {
+    "id": "skripsi-015",
+    "title": "1.2. TUJUAN PEMBUATAN BUKU PANDUAN TUGAS AKHIR SKRIPSI",
+    "content": "Buku panduan ini dibuat untuk memberikan referensi kepada mahasiswa, Dosen Pembimbing, dan Dosen Penguji mengenai mekanisme, sistematika, dan teknik penulisan agar lebih terstruktur dan konsisten yang diperlukan dalam proses penyelesaian studi melalui jalur Tugas Akhir Skripsi.",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB I PENDAHULUAN",
+    "pages": [
+      "10"
+    ]
+  },
+  {
+    "id": "skripsi-017",
+    "title": "2.1. DOSEN PEMBIMBING",
+    "content": "Dosen Pembimbing adalah orang yang yang bertugas membimbing mahasiswa mulai dari pengajuan judul hingga menyelesaikan Tugas Akhir Skripsi.",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB II KETENTUAN UMUM",
+    "pages": [
+      "11"
+    ]
+  },
+  {
+    "id": "skripsi-018",
+    "title": "2.1.1.Ketentuan Dosen Pembimbing",
+    "content": "- 1. Dosen Pembimbing harus membimbing mahasiswa dengan penuh tanggung jawab, menunjukkan loyalitas dan dedikasi yang baik selama proses Pembimbingan.\n- 2. Dosen Pembimbing harus memenuhi segala peraturan yang dibuat oleh STMIK Widya Cipta Dharma\n- 3. Apabila Dosen Pembimbing tidak dapat melaksanakan tugasnya, maka Ketua Program Studi dapat menunjuk penggantinya.\n- 4. Dosen Pembimbing Utama bertanggung jawab terhadap isi tugas akhir secara keseluruhan yang sesuai dengan kompetensinya.\n- 5. Dosen Pembimbing Pendamping bertanggung jawab terhadap tulisan yang sesuai dengan bahasa Indonesia yang disempurnakan dan panduan penulisan Tugas Akhir Skripsi\n- 6. Ketua Program Studi berhak memberikan saran apabila proposal tidak sesuai dengan *roadmap* penelitian dan panduan penulisan Tugas Akhir Skripsi.",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB II KETENTUAN UMUM",
+    "pages": [
+      "11"
+    ]
+  },
+  {
+    "id": "skripsi-019",
+    "title": "2.1.2.Syarat Dosen Pembimbing",
+    "content": "- 1. Terdaftar sebagai dosen STMIK Widya Cipta Dharma\n- 2. Telah memiliki jabatan fungsional minimal asisten ahli atau lektor dengan kualifikasi pendidikan S2 atau kualifikasi pendidikan S3, dan memiliki kompetensi yang relevan dengan materi Tugas Akhir Skripsi yang ditulis mahasiswa.\n- 3. Dosen Pembimbing penyusunan proposal Tugas Akhir Skripsi ditetapkan sebagai Dosen Pembimbing setelah mahasiswa memprogramkan Tugas Akhir Skripsi pada KRS.\n- 4. Penetapan pengangkatan Dosen Pembimbing Tugas Akhir Skripsi dilakukan melalui Surat Keputusan Ketua STMIK Widya Cipta Dharma.",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB II KETENTUAN UMUM",
+    "pages": [
+      "11"
+    ]
+  },
+  {
+    "id": "skripsi-021",
+    "title": "2.2.1 Ketentuan Dosen Penguji",
+    "content": "- 1. Dosen Penguji adalah dosen yang bertugas menguji mahasiswa pada saat ujian tugas akhir.\n\n- 2. Dosen Penguji harus bertanggung jawab, menunjukkan loyalitas, dan dedikasi yang baik selama ujian berlangsung.\n- 3. Dosen Penguji harus memenuhi segala peraturan yang dibuat oleh STMIK Widya Cipta Dharma\n- 4. Dosen Penguji berhak memberikan masukan apabila naskah mahasiswa tidak sesuai dengan data yang diperoleh.",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB II KETENTUAN UMUM",
+    "pages": [
+      "11"
+    ]
+  },
+  {
+    "id": "skripsi-022",
+    "title": "2.2.2 Syarat Dosen Penguji",
+    "content": "- 1. Terdaftar sebagai dosen STMIK Widya Cipta Dharma\n- 2. Telah memiliki jabatan fungsional minimal asisten ahli atau lektor dengan kualifikasi pendidikan S2 atau kualifikasi pendidikan S3, dan memiliki kompetensi yang relevan dengan materi Tugas Akhir yang ditulis mahasiswa.\n- 3. Penetapan pengangkatan Dosen Penguji dilakukan melalui Surat Keputusan Ketua STMIK Widya Cipta Dharma.",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB II KETENTUAN UMUM",
+    "pages": [
+      "11"
+    ]
+  },
+  {
+    "id": "skripsi-023",
+    "title": "2.3 PENGGANTIAN DOSEN PEMBIMBING DAN DOSEN PENGUJI",
+    "content": "- 1. Mahasiswa dapat mengajukan penggantian Dosen Pembimbing dan Dosen Penguji dengan mengisi formulir (*Contoh Form terlampir*) permohonan kepada Ketua Program Studi, apabila terjadi salah satu dari hal-hal berikut:\n  - 1) Meninggal dunia.\n  - 2) Sakit, sehingga yang bersangkutan harus istirahat panjang.\n  - 3) Cuti di luar tanggungan.\n  - 4) Pindah tugas.\n- 2. Dosen Pembimbing dan Dosen Penguji dapat mengajukan permohonan pengunduran diri secara tertulis apabila terjadi salah satu dari hal berikut:\n  - 1) Sakit sehingga yang bersangkutan harus istirahat panjang.\n  - 2) Cuti di luar tanggungan\n  - 3) Pindah tugas.\n- 3. Penggantian Dosen Pembimbing dan Dosen Penguji dilakukan berdasarkan kebijakan Ketua Program Studi dengan pertimbangan masa studi mahasiswa.\n- 4. Ketua Program Studi mengeluarkan surat tugas Dosen Pembimbing atau Dosen Penguji pengganti.\n- 5. Mahasiswa dapat melanjutkan kembali bimbingannya di bawah bimbingan Dosen Pembimbing pengganti.",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB II KETENTUAN UMUM",
+    "pages": [
+      "11"
+    ]
+  },
+  {
+    "id": "skripsi-025",
+    "title": "2.4.1 Hak Mahasiswa Bimbingan",
+    "content": "- 1. Mendapatkan bimbingan, arahan, masukan, dan bantuan yang proporsional dari kedua Dosen Pembimbing untuk Penyusunan dan Ujian Tugas Akhir Skripsi.\n- 2. Mendapatkan tanda tangan pengesahan Dosen Pembimbing setelah segala persyaratan dan tangggung jawab terpenuhi\n- 3. Mendapat perlakuan yang baik dari semua pihak yang terlibat terkait dengan proses bimbingan\n- 4. Mendapatkan hasil penilaian yang proporsional atas usaha dan pekerjaannya.",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB II KETENTUAN UMUM",
+    "pages": [
+      "13"
+    ]
+  },
+  {
+    "id": "skripsi-026",
+    "title": "2.4.2 Bukti Pembimbingan",
+    "content": "- 1. Mahasiswa diwajibkan membawa lembar bimbingan setiap akan melakukan bimbingan dan lembar tersebut akan diisi oleh Dosen Pembimbing sesuai dengan bimbingan yang dilakukan.\n- 2. Lembar bimbingan berisi masukan untuk setiap kali pertemuan dengan Dosen Pembimbing.\n- 3. Pertemuan dengan Dosen Pembimbing Tugas Akhir Skripsi dijadwalkan minimal 8 kali, mulai dari pengajuan judul, *out line*, proposal, supervisi hingga penyusunan Tugas Akhir.",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB II KETENTUAN UMUM",
+    "pages": [
+      "13"
+    ]
+  },
+  {
+    "id": "skripsi-027",
+    "title": "2.4.3 Mekanisme Pembimbingan Tugas Akhir",
+    "content": "- 1. Bimbingan pada prinsipnya dilaksanakan di kampus, selain dari ketentuan ini dapat dilakukan atas kesepakatan antara mahasiswa dan Dosen Pembimbing.\n- 2. Maksimal masa bimbingan berlangsung selama 6 bulan (1 semester). Perpanjangan masa bimbingan dapat diberikan kepada mahasiswa dengan persetujuan Ketua Program Studi setelah mendengar pertimbangan (rekomendasi) dari Dosen Pembimbing Utama dan Dosen Pembimbing Pendamping.\n- 3. Pada setiap kegiatan pembimbingan, mahasiswa wajib membawa lembar bimbingan yang harus diisi materi bimbingan, tanggal bimbingan, dan ditandatangani oleh Dosen Pembimbing.\n- 4. Dosen Pembimbing dalam memberikan bimbingan kepada mahasiswa menekankan kepada standar karya tulis ilmiah (menyangkut kriteria, syarat, dan metodologi penulisan) sedangkan substansi (materi) Tugas Akhir Skripsi kepada mahasiswa bersangkutan.\n- 5. Dosen Pembimbing dapat menyempurnakan judul sepanjang tidak merubah inti permasalahannya.\n- 6. Apabila mahasiswa mengalami kesulitan dalam menyelesaikan penulisan Tugas Akhir, mahasiswa yang bersangkutan dapat mengubah judul dengan mengajukan permohonan judul baru kepada Ketua Program Studi.\n- 7. Ketua Program Studi mengawasi pelaksanaan pembimbingan dari aspek tanggung jawab, efisiensi, dan efektivitas bimbingan.",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB II KETENTUAN UMUM",
+    "pages": [
+      "13"
+    ]
+  },
+  {
+    "id": "skripsi-028",
+    "title": "2.5 SYARAT DAN KETENTUAN TUGAS AKHIR SKRIPSI",
+    "content": "- 1. Mahasiswa yang berhak mengambil Tugas Akhir Skripsi adalah mahasiswa yang telah menyelesaikan mata kuliah dengan jumlah SKS minimal 138 SKS dengan IP Kumulatif minimal 3,25\n- 2. Tujuan Tugas Akhir Skripsi adalah:\n  - 1) Mengidentifikasi dan merumuskan masalah yang dijadikan objek penulisan,\n  - 2) Menentukan jenis penelitian yang sesuai dengan tujuan penelitian,\n  - 3) Menggunakan teori yang relevan dengan permasalahan dan mengoperasionalisasikan konsep\n  - 4) Memilih dan menggunakan metode penelitian yang relevan dengan permasalahan,\n  - 5) Menyajikan dan menganalisis data secara cermat, tepat, dan benar, dan\n  - 6) Menuliskan hasil penelitian secara sistematis dan logis, sesuai dengan format dan etika ilmu pengetahuan.",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB II KETENTUAN UMUM",
+    "pages": [
+      "14"
+    ]
+  },
+  {
+    "id": "skripsi-031",
+    "title": "1. Pengajuan Judul dan Dosen Pembimbing",
+    "content": "- Mekanisme pengajuan judul dan penetapan Dosen Pembimbing dilakukan dengan prosedur sebagai berikut:\n- 1) Mahasiswa dapat mengajukan judul dan mengusulkan calon Dosen Pembimbing kepada Ketua Program Studi, yang dilakukan pada awal semester VII.\n- 2) Ketua Program Studi menelaah dan mewawancarai mahasiswa mengenai judul yang diajukan, selanjutnya Ketua Program Studi menetapkan 2 orang Dosen Pembimbing yaitu sebagai Dosen Pembimbing Utama dan Dosen Pembimbing Pendamping\n- 3) Berdasarkan pengajuan dari Ketua Program Studi maka, Ketua STMIK Widya Cipta Dharma menerbitkan Surat Keputusan Pengangkatan Dosen Pembimbing dan Dosen Penguji Tugas Akhir.",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB II KETENTUAN UMUM",
+    "pages": [
+      "14"
+    ]
+  },
+  {
+    "id": "skripsi-032",
+    "title": "2. Bimbingan Proposal",
+    "content": "Mekanisme bimbingan proposal dilakukan dengan prosedur sebagai berikut:\n\n- 1) Mahasiswa wajib menemui Dosen Pembimbing paling lambat satu minggu setelah penetapan Dosen Pembimbing.\n- 2) Ketika berkonsultasi dengan Dosen Pembimbing, mahasiswa diwajibkan menyusun proposal yang memuat Bab I Pendahuluan, Bab II Tinjauan Pustaka, dan Bab III Metode Penelitian.\n- 3) Untuk setiap kali melaksanakan bimbingan, mahasiswa wajib membawa lembar bimbingan yang harus diisi materi bimbingan, tanggal bimbingan, dan ditandatangani oleh Dosen Pembimbing.",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB II KETENTUAN UMUM",
+    "pages": [
+      "14"
+    ]
+  },
+  {
+    "id": "skripsi-033",
+    "title": "3. Prosedur Pendaftaran dan Seminar Proposal",
+    "content": "- Mekanisme pendaftaran seminar proposal sebagai berikut:\n- 1) Naskah Proposal telah disetujui oleh kedua Dosen Pembimbing\n- 2) Mahasiswa mendaftar dan melengkapi berkas di laman web KPST STMIK Widya Cipta Dharma, dengan melampirkan berkas sebagai berikut:\n  - (1) Form Pengecekan Syarat Administrasi, Form Pendaftaran Ujian Proposal dan Form Permohonan Ujian Proposal,\n  - (2) Lembar Persetujuan Seminar Proposal yang telah ditandatangani oleh Dosen Pembimbing Utama, Dosen Pembimbing Pendamping, dan Ketua Program Studi,\n  - (3) Form Bimbingan Proposal Tugas Akhir Skripsi yang sudah di ACC Dosen Pembimbing Utama, Dosen Pembimbing Pendamping, dan Ketua Program Studi,\n  - (4) Form Daftar Hadir Menyaksikan Ujian Seminar Proposal Tugas Akhir Skripsi,\n  - (5) Transkrip Nilai Terakhir, dengan Jumlah SKS Minimal 138 SKS dan IP Kumulatif minimal 3,25.\n  - (6) Kuitansi BPP, SKS, dan Seminar Proposal di semester saat Seminar Proposal dilaksanakan,\n  - (7) Kartu Rencana Studi (KRS) yang mencantumkan Skripsi dan validasi BAAK,\n  - (8) Sertifikat PKKMB/ESQ (Pendidikan Karakter),\n  - (9) Lembar Persetujuan Waktu Ujian Seminar Proposal Tugas Akhir Skripsi,\n  - (10) Bukti pemeriksaan anti-plagiarisme dengan tingkat kemiripan maksimal 30%, berupa hasil dari perangkat lunak atau aplikasi pendeteksi plagiarisme yang valid, seperti Turnitin, Plagscan, atau alat sejenis lainnya. Bukti harus mencantumkan persentase kemiripan dan sumber kecocokan yang terdeteksi.\n  - (11) Draf Laporan Proposal. (*untuk form dapat didownload di web prodi masing-masing*)\n- 3) Ketua Program Studi menunjuk satu dosen sebagai Ketua Penguji.\n- 4) Mahasiswa menyerahkan berkas/naskah Proposal lengkap ke tim dosen yang terdiri dari Dosen Pembimbing Utama, Dosen Pembimbing Pendamping, dan Ketua Penguji Seminar proposal merupakan forum bagi mahasiswa untuk mempresentasikan rencana penelitiannya. Mekanisme pelaksanaan seminar proposal sebagai berikut:\n- 1) Seminar proposal dilakukan paling lambat 7 hari setelah mendapatkan persetujuan Dosen Pembimbing.\n- 2) Proposal dibuat minimal 40 halaman (tidak termasuk cover, daftar isi, daftar tabel, daftar gambar, daftar lampiran, daftar pustaka, dan lampiran), mahasiswa menyiapkan bahan presentasi dan wajib\n\nmempresentasikan di depan Dosen Pembimbing dan Dosen Penguji menggunakan media/alat bantu presentasi (LCD)\n\n- 3) Seminar proposal bersifat terbuka dihadiri oleh Dosen Pembimbing, Dosen Penguji, dan mahasiswa lain. Ujian dipimpin oleh Dosen Pembimbing Utama sebagai ketua panitia ujian dan dibantu Dosen Pembimbing Pendamping\n- 4) Pada saat ujian proposal, mahasiswa diwajibkan berpakai rapi. Pria mengunakan kemeja putih, berdasi, menggunakan almamater, celana hitam serta menggunakan sepatu tertutup berwarna hitam. Wanita menggunakan kemeja putih, berdasi, menggunakan almamater, rok hitam berukuran di bawah lutut serta menggunakan sepatu tertutup berwarna hitam. (Bagi mahasiswi berjilbab, dapat menggunakan jilbab berwarna hitam).\n- 5) Setelah Ketua panitia ujian menanyakan kesiapan fisik dan mental kepada mahasiswa yang diuji, Mahasiswa diberi kesempatan untuk mempresentasikan proposalnya. Seminar proposal dilaksanakan paling lama 60 menit, terdiri dari 10 menit untuk presentasi dan 50 menit untuk tanya jawab\n- 6) Dosen Penguji diberikan kesempatan untuk bertanya, mengklarifikasi, memberikan saran dan perbaikan\n- 7) Dosen Pembimbing mengumumkan hasil keputusan kelayakan proposal apakah proposalnya dapat dilanjutkan ketahap pelaksanaan, dengan menetapkan batasan waktu.\n- 8) Seminar proposal dilaksanakan sesuai dengan kalender akademik yang berlaku pada semester tersebut. Masa berlaku proposal adalah satu tahun akademik sejak ujian proposal dinyatakan lulus.",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB II KETENTUAN UMUM",
+    "pages": [
+      "14"
+    ]
+  },
+  {
+    "id": "skripsi-034",
+    "title": "4. Alur Pelaksanaan Proposal",
+    "content": "![](_page_15_Diagram_3.jpeg)\n\nGambar 1. Alur Pelaksanaan Proposal",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB II KETENTUAN UMUM",
+    "pages": [
+      "14",
+      "16"
+    ]
+  },
+  {
+    "id": "skripsi-036",
+    "title": "1. Pelaksanaan Penelitian",
+    "content": "- 1) Untuk memudahkan dalam mendapatkan pelayanan yang baik selama penelitian dari Dinas/Instansi Pemerintah, Swasta dan Masyarakat, mahasiswa diwajibkan membuat surat pengantar penelitian yang diterbitkan oleh BAAK, diparaf oleh Dosen Pembimbing, dan telah ditandatangani oleh Wakil Ketua I Bidang Akademik dan Kemahasiswaan\n- 2) Selama melaksanakan penelitian di lapangan/laboratorium, mahasiswa dapat membuat jadwal kegiatan penelitian.\n- 3) Mahasiswa secara berkala melaporkan kegiatan penelitiannya kepada Dosen Pembimbing",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB II KETENTUAN UMUM",
+    "pages": [
+      "16"
+    ]
+  },
+  {
+    "id": "skripsi-037",
+    "title": "2. Prosedur Pendaftaran dan Seminar Hasil",
+    "content": "Mekanisme pendaftaran seminar hasil sebagai berikut:\n\n- 1) Naskah Tugas Akhir Skripsi telah disetujui oleh kedua Dosen Pembimbing\n- 2) Mahasiswa mendaftar dan melengkapi berkas di laman web KPST STMIK Widya Cipta Dharma, dengan melampirkan berkas sebagai berikut:\n  - (1) Form Pengecekan Syarat Administrasi, Form Pendaftaran Ujian Seminar Hasil, dan Form Permohonan Ujian Seminar Hasil.\n  - (2) Lembar Persetujuan Seminar Hasil yang telah ditandatangani oleh Dosen Pembimbing Utama, Dosen Pembimbing Pendamping, dan Ketua Program Studi.\n  - (3) Lembar Persetujuan Waktu Ujian Seminar Hasil Tugas Akhir.\n  - (4) Transkrip Nilai Terakhir, dengan Jumlah SKS minimal 138 SKS dan IP Kumulatif minimal 3,25\n  - (5) Kuitansi BPP, SKS, dan Seminar Hasil di semester saat Seminar Hasil dilaksanakan\n  - (6) Kartu Rencana Studi (KRS) yang mencantumkan Tugas Akhir.\n  - (7) Form Daftar Hadir Menyaksikan Seminar Hasil Tugas Akhir\n  - (8) Surat Keterangan Penelitian atau Surat balasan yang ditandatangani dan distempel dari tempat penelitian.\n  - (9) Lembar Daftar Wawancara yang sudah ditandatangani dan distempel asli\n  - (10) Form Bimbingan Hasil Tugas Akhir Skripsi yang sudah ditandatangani Dosen Pembimbing Utama, Dosen Pembimbing Pendamping, dan Ketua Program Studi (11)1 Sertifikat Profesi Bidang IT dan 2 Sertifikat Pelatihan Khusus IT yang diakui dan dilaksanakan di STMIK Widya Cipta Dharma.\n  - (12) Bukti pemeriksaan anti-plagiarisme dengan tingkat kemiripan maksimal 30%, berupa hasil dari perangkat lunak atau aplikasi pendeteksi plagiarisme yang valid, seperti Turnitin,\n\nPlagscan, atau alat sejenis lainnya. Bukti harus mencantumkan persentase kemiripan dan sumber kecocokan yang terdeteksi.",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB II KETENTUAN UMUM",
+    "pages": [
+      "16"
+    ]
+  },
+  {
+    "id": "skripsi-038",
+    "title": "(13) Draf laporan Seminar Hasil Tugas Akhir Skripsi",
+    "content": "(14)Mengirimkan *softcopy* poster ukuran A4 dan video singkat presentasi mengenai pengenalan/ penggunaan program/penelitian Tugas Akhir Skripsi ke email Program Studi masing-masing. Berikut ini adalah ketentuan pembuatan poster dan video untuk keperluan seminar hasil:",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB II KETENTUAN UMUM",
+    "pages": [
+      "16"
+    ]
+  },
+  {
+    "id": "skripsi-039",
+    "title": "A. Ketentuan pembuatan poster:",
+    "content": "- 1. Ukuran: A2/Tipe Art Paper (layout kertas potrait)\n- 2. Isi Poster:\n  - 1) Bagian judul:\n    - (1) Lambang STMIK Widya Cipta Dharma, lambang kampus merdeka, lambang program studi\n    - (2) Judul penelitian maksimal 3 baris (Size 13, font roboto, rata tengah, bold)\n    - (3) Tugas Akhir Skripsi Program Studi (Sistem Informasi/Teknik Informatika/Bisnis Digital)\n    - (4) Tahun\n  - 2) Bagian identitas peneliti:\n    - (1) Foto mahasiswa, nama lengkap dan NIM\n    - (2) Foto Dosen Pembimbing utama, nama lengkap beserta gelar dan NIDN/NUPTK.\n    - (3) Foto Dosen Pembimbing pendamping, nama lengkap beserta gelar dan NIDN/NUPTK.\n  - 3) Bagian abstrak: Isi abstrak sesuai panduan (Font roboto, paragraf rata kanan kiri, style bold)\n  - 4) Bagian Metode penelitian: Jelaskan secara singkat dan jelas, masukan diagram penelitian dan tahapan penelitian yang dilakukan (gambar/tabel/text) (Font roboto, pargraf rata kanan kiri, style bold)\n  - 5) Bagian Hasil Penelitian: Input gambar/text/tabel/flowchart dari hasil penelitian yang telah dilakukan\n  - 6) Bagian bawah poster: web program studi, web STMIK Widya cipta Dharma, dan media sosial program studi.\n  - 7) Warna Poster menyesuaikan dengan warna Program Studi.",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB II KETENTUAN UMUM",
+    "pages": [
+      "16"
+    ]
+  },
+  {
+    "id": "skripsi-040",
+    "title": "B. Ketentuan pembuatan video:",
+    "content": "- 1. Durasi video maksimal 5 menit\n- 2. Pada opening video wajib ada:\n\n- 1) Judul penelitian\n- 2) Nama mahasiswa dan NIM\n- 3) Nama Dosen Pembimbing utama dan Dosen Pembimbing pendamping beserta NIDN/NUPTK\n- 4) Program Studi\n- 5) Tahun\n- 6) Lambang STMIK Widya Cipta Dharma\n- 7) Lambang Program Studi\n- 3. Saat presentasi wajah mahasiswa wajib terlihat dan menggunakan kemeja putih berdasi dan almamater\n- 4. Video berisi penjelasan atau tutorial hasil penelitian (bukan berupa slide yang ditampilkan saat seminar)\n- 5. Ada closing atau penutup video\n- 6. Poster ditampilkan di akhir video (template poster terlampir)\n- 7. Video diupload di youtube, dan link video dikumpulkan saat pendaftaran seminar hasil (*untuk form dapat di download di web masing-masing prodi*)\n- 3) Ketua Program Studi menunjuk satu dosen sebagai anggota Penguji\n- 4) Mahasiswa menyerahkan naskah Tugas Akhir Skripsi lengkap ke tim dosen yang terdiri dari Dosen Pembimbing utama, Dosen Pembimbing pendamping, ketua Dosen Penguji, dan anggota Dosen Penguji. Seminar hasil penelitian dilakukan untuk menyajikan hasil penelitian yang diperoleh. Mekanisme pelaksanaan seminar hasil sebagai berikut:\n- (1) Mahasiswa diijinkan Ujian Seminar hasil, setelah memenuhi syarat yang telah ditetapkan Program Studi.\n- (2) Mahasiswa menyiapkan bahan presentasi hasil penelitian dan wajib mempresentasikan didepan Dosen Pembimbing dan Dosen Penguji menggunakan media/alat bantu presentasi (LCD)\n- (3) Seminar bersifat terbuka yang dihadiri oleh Dosen Pembimbing utama, Dosen Pembimbing pendamping, ketua Dosen Penguji, dan anggota Dosen Penguji, serta mahasiswa. Ujian dipimpin oleh Dosen Pembimbing utama sebagai ketua panitia ujian dan dibantu Dosen Pembimbing pendamping\n- (4) Pada saat ujian seminar, mahasiswa diwajibkan berpakai rapi. Pria mengunakan kemeja putih, berdasi, menggunakan almamater, celana hitam serta menggunakan sepatu tertutup berwarna hitam. Wanita menggunakan kemeja putih, berdasi, menggunakan almamater, rok hitam berukuran\n\n- di bawah lutut serta menggunakan Sepatu tertutup berwarna hitam. (Bagi mahasiswi berjilbab, dapat menggunakan jilbab berwarna hitam).\n- (5) Setelah Ketua panitia ujian menanyakan kesiapan fisik dan mental kepada mahasiswa yang diuji, ketua memberikan kesempatan kepada mahasiswa untuk mempresentasikan hasil penelitiannya. Seminar hasil dilaksanakan paling lama 1 jam (60 menit).\n- (6) Masing-masing Dosen Penguji diberikan kesempatan untuk bertanya, mengklarifikasi, memberikan saran dan perbaikan, serta memberikan penilaian\n- (7) Dosen Pembimbing mengumumkan hasil keputusan ujian apakah seminar dapat dilanjutkan ketahap ujian pendadaran, dengan menetapkan batasan waktu.\n- (8) Seminar hasil penelitian dilaksanakan sesuai dengan kalender akademik yang berlaku pada semester tersebut.",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB II KETENTUAN UMUM",
+    "pages": [
+      "16"
+    ]
+  },
+  {
+    "id": "skripsi-041",
+    "title": "3. Alur Pelaksanaan Seminar Hasil",
+    "content": "![](_page_19_Diagram_2.jpeg)\n\nGambar 2. Alur Pelaksanaan Seminar Hasil",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB II KETENTUAN UMUM",
+    "pages": [
+      "16"
+    ]
+  },
+  {
+    "id": "skripsi-043",
+    "title": "1. Prosedur Pendaftaran Pendadaran dan Pelaksanaan Pendadaran",
+    "content": "- Mekanisme pendaftaran pendadaran sebagai berikut:\n- 1) Naskah Tugas Akhir Skripsi telah disetujui oleh Dosen Pembimbing dan Dosen Penguji.\n- 2) Mahasiswa mendaftar dan melengkapi berkas di laman web KPST STMIK Widya Cipta Dharma, dengan melampirkan berkas sebagai berikut:\n  - (1) Form Pengecekan Syarat Administrasi, Form Pendaftaran Ujian Pendadaran, dan Form Permohonan Ujian Seminar Pendadaran.\n\n- (2) Lembar Persetujuan Seminar Pendadaran yang telah ditandatangani oleh Dosen Pembimbing Utama, Dosen Pembimbing Pendamping, Ketua Dosen Penguji, Anggota Dosen Penguji, dan Ketua Program Studi.\n- (3) Lembar Persetujuan Waktu Ujian Seminar Pendadaran.\n- (4) Transkrip Nilai Terakhir yang telah dilegalisir BAAK, dengan Jumlah SKS minimal 138 SKS dan IP Kumulatif minimal 3,25.\n- (5) Kuitansi BPP, SKS, dan Seminar Pendadaran disemester saat Seminar Pendadaran dilaksanakan.\n- (6) Kartu Rencana Studi (KRS) yang mencantumkan Tugas Akhir yang telah divalidasi BAAK.\n- (7) Sertifikat TOEFL\n- (8) Draf Laporan Seminar Pendadaran (*untuk form dapat di download di web prodi masing-masing*)\n- 3) Mahasiswa menyerahkan naskah Tugas Akhir Skripsi lengkap ke tim dosen yang terdiri dari Dosen Pembimbing Utama, Dosen Pembimbing Pendamping, Ketua Dosen Penguji, dan Anggota Dosen Penguji.\n- 4) Ujian Pendadaran merupakan ujian menyeluruh terhadap seluruh mata kuliah yang telah ditempuh. Mekanisme pelaksanaan pendadaran sebagai berikut:\n- 1) Mahasiswa diijinkan Ujian Pendadaran Tugas Akhir Skripsi, setelah memenuhi syarat yang telah ditetapkan Program studi.\n- 2) Mahasiswa menyiapkan bahan presentasi hasil revisi seminar hasil dan wajib mempresentasikan di depan Dosen Pembimbing dan Dosen Penguji menggunakan media/alat bantu presentasi (LCD)\n- 3) Ujian bersifat tertutup, dihadiri oleh Dosen Pembimbing Utama, Dosen Pembimbing Pendamping, Ketua Dosen Penguji, dan Anggota Dosen Penguji. Ujian dipimpin oleh Dosen Pembimbing Utama sebagai Ketua Panitia Ujian dan dibantu Dosen Pembimbing Pendamping.\n- 4) Pada saat ujian pendadaran, mahasiswa diwajibkan berpakai rapi. Pria mengunakan kemeja putih, berdasi, menggunakan jas hitam, celana hitam serta menggunakan sepatu tertutup berwarna hitam. Wanita menggunakan kemeja putih, berdasi, menggunakan jas hitam, rok hitam berukuran di bawah lutut serta menggunakan sepatu tertutup berwarna hitam. (Bagi mahasiswi berjilbab, dapat menggunakan jilbab berwarna hitam).\n- 5) Setelah Ketua panitia ujian menanyakan kesiapan fisik dan mental kepada mahasiswa yang diuji, ketua memberikan kesempatan kepada mahasiswa untuk mempresentasikan hasil revisi penelitiannya, pendadaran dilaksanakan 1 jam (60 menit).\n\n- 6) Pada saat ujian pendadaran masing-masing Dosen Pembimbing dan Dosen Penguji diberikan kesempatan untuk bertanya, serta memberikan penilaian\n- 7) Dosen Pembimbing mengumumkan hasil keputusan ujian apakah mahasiswa dinyatakan lulus atau mengulang setelah tim Dosen Penguji menginput nilai diaplikasi dan mendiskusikan keputusan kelulusan\n- 8) Seminar pendadaran dilaksanakan disesuaikan dengan Kalender Akademik yang berlaku pada semester tersebut.",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB II KETENTUAN UMUM",
+    "pages": [
+      "20"
+    ]
+  },
+  {
+    "id": "skripsi-044",
+    "title": "2. Alur Pelaksanaan Ujian Pendadaran",
+    "content": "![](_page_21_Diagram_2.jpeg)\n\nGambar 3. Alur Pelaksanaan Pendadaran",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB II KETENTUAN UMUM",
+    "pages": [
+      "20"
+    ]
+  },
+  {
+    "id": "skripsi-046",
+    "title": "1. Perbaikan/Revisi Naskah Tugas Akhir Skripsi",
+    "content": "Mekanisme perbaikan naskah Tugas Akhir Skripsi dilakukan dengan prosedur sebagai berikut:\n\n- 1) Mahasiswa memperbaiki naskah Tugas Akhir Skripsi berdasarkan saran atau revisi dari Dosen Pembimbing dan Dosen Penguji pada saat ujian.\n- 2) Mahasiswa mengajukan hasil perbaikan kepada Dosen Pembimbing dan Dosen Penguji dengan membawa naskah Tugas Akhir Skripsi yang sudah dikoreksi pada saat ujian.\n- 3) Dosen Pembimbing dan Dosen Penguji menerima dan memeriksa perbaikan naskah Tugas Akhir Skripsi.\n- 4) Apabila perbaikan sudah memenuhi syarat maka, Dosen Pembimbing dan Dosen Penguji menandatangani halaman pengesahan Tugas Akhir Skripsi.",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB II KETENTUAN UMUM",
+    "pages": [
+      "22"
+    ]
+  },
+  {
+    "id": "skripsi-047",
+    "title": "2. Ketentuan Publikasi Tugas Akhir Skripsi",
+    "content": "Mahasiswa diwajibkan mempublikasikan tugas akhir skripsi di repository.wicida.ac.id",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB II KETENTUAN UMUM",
+    "pages": [
+      "22"
+    ]
+  },
+  {
+    "id": "skripsi-048",
+    "title": "3. Sistem Penilaian Tugas Akhir Skripsi",
+    "content": "Nilai Tugas Akhir Skripsi diperoleh dari hasil penilaian naskah Tugas Akhir Skripsi dan unjuk kerja (*performance*) mahasiswa saat ujian. Nilai Tugas Akhir Skripsi didasarkan pada kriteria berikut:\n\n1) Pemberian nilai hasil ujian Tugas Akhir Skripsi didasarkan atas kriteria berikut:\n\nTabel 2.1 Penduan Penilaian Tugas Akhir Skripsi\n\n\n\n| Rentang Nilai    | Nilai Huruf | Predikat      | Status Kelulusan |\n|------------------|-------------|---------------|------------------|\n| 80 ≤ Nilai ≤ 100 | A           | Sangat Baik   | Lulus            |\n| 70 ≤ Nilai ≤ 79  | B           | Baik          | Lulus            |\n| 60 ≤ Nilai ≤ 69  | C           | Cukup         | Lulus            |\n| 40 ≤ Nilai ≤ 59  | D           | Kurang        | Tidak Lulus      |\n| 0 ≤ Nilai ≤ 39   | E           | Sangat Kurang | Tidak Lulus      |\n\n2) Penilaian ujian Tugas Akhir Skripsi\n\nTabel 2.2 Rekap Nilai Tugas Akhir Skripsi\n\n\n\n| No Rekap Nilai Akhir Persentase                      | Komponen Penilaian                                 |\n|------------------------------------------------------|----------------------------------------------------|\n| 1 Seminar Hasil 40% Penilaian berdasarkan komponen : |                                                    |\n| 1.                                                   | Orisinalitas Penulisan                             |\n| 2.                                                   | Metodologi Skripsi                                 |\n| 3.                                                   | Penguasaan Materi                                  |\n| 4.                                                   | Kemampuan Argumentasi                              |\n| 5.                                                   | Penampilan/Etika.                                  |\n| 2 Pendadaran 60% Penilaian berdasarkan               | komponen :                                         |\n| 1.                                                   | Orisinalitas Penulisan                             |\n| 2.                                                   | Metodologi Skripsi                                 |\n| 3.                                                   | Penguasaan Materi                                  |\n| 4.                                                   | Kemampuan Argumentasi                              |\n| 5.                                                   | Pengetahuan Bidang Studi                           |\n| 6.                                                   | Penampilan/Etika.                                  |\n| Setiap komponen diberi nilai dalam rentang           | (0-100).                                           |\n| Nilai                                                | yang digunakan adalah hasil rata-rata dari seluruh |\n\n(*Contoh form nilai terlampir)*\n\n3) Mahasiswa dinyatakan lulus ujian Tugas Akhir Skripsi apabila:\n\n- (1) Tugas Akhir Skripsi yang diujikan merupakan hasil karya otentik yang dibuat dan diselesaikan sendiri. Apabila ditemukan bukti bahwa Tugas Akhir Skripsi yang ditulis merupakan duplikasi, jiplakan, atau terjemahan hasil karya orang lain, maka dianggap sebagai pelanggaran akademik dan mahasiswa harus mengajukan judul baru.\n- (2) Memperoleh nilai minimal C.\n\n- (3) Telah memperbaiki Tugas Akhir Skripsi sesuai saran dan arahan dari Dosen Pembimbing dan Dosen Penguji yang dibuktikan dengan penandatanganan pada halaman pengesahan Tugas Akhir Skripsi.",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB II KETENTUAN UMUM",
+    "pages": [
+      "22",
+      "23"
+    ]
+  },
+  {
+    "id": "skripsi-051",
+    "title": "3.1.1.Gambaran Umum",
+    "content": "Proposal Tugas Akhir Skripsi merupakan rencana penelitian yang disusun oleh mahasiswa sebagai bagian dari persyaratan untuk menyelesaikan program studi. Proposal ini bertujuan untuk memberikan gambaran komprehensif mengenai topik penelitian yang akan dilakukan yang termuat dalam Pendahuluan, Tinjauan Pustaka, dan Metode Penelitian. Melalui proposal ini, mahasiswa diharapkan dapat menunjukkan pemahaman yang mendalam tentang topik yang dipilih serta kemampuan dalam merancang dan melaksanakan penelitian yang sistematis dan terarah. Proposal Tugas Akhir Skripsi juga berfungsi sebagai alat evaluasi bagi Dosen Pembimbing untuk menilai kelayakan dan kesiapan mahasiswa dalam melakukan penelitian.",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB III BENTUK TUGAS AKHIR",
+    "pages": [
+      "25"
+    ]
+  },
+  {
+    "id": "skripsi-052",
+    "title": "3.1.2.Sistematika Penulisan Proposal",
+    "content": "Sistematika penulisan terdiri atas Bagian Awal, Bagian Utama dan Bagian Akhir. Sistematika penulisan tersebut dapat dilihat dalam Tabel 3.1\n\nTabel 3.1 Sistematika Penulisan Proposal\n\n\n\n| Bagian       | Keterangan Isi                           |\n|--------------|------------------------------------------|\n| Bagian Awal  | Halaman Sampul Depan (Cover)             |\n| Bagian Utama | BAB I PENDAHULUAN                        |\n| 1.1.         | Latar Belakang Masalah                   |\n| 1.2.         | Rumusan Masalah                          |\n| 1.3.         | Batasan Masalah                          |\n| 1.4.         | Tujuan Penelitian                        |\n| 1.5.         | Manfaat Penelitian                       |\n| 1.6.         | Sistematika Penulisan                    |\n| 2.1.         | Kajian Empiris                           |\n| 2.2.         | Landasan Teori                           |\n| 3.1.         | Tempat dan Waktu Penelitian              |\n| 3.2.         | Teknik Pengumpulan Data                  |\n| 3.3.         | Motode Pengembangan Sistem               |\n| 3.4.         | Jadwal Penelitian                        |\n| Bagian Akhir | Daftar Pustaka                           |",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB III BENTUK TUGAS AKHIR",
+    "pages": [
+      "25"
+    ]
+  },
+  {
+    "id": "skripsi-054",
+    "title": "3.2.1.Gambaran Umum",
+    "content": "Tugas Akhir Skripsi merupakan karya tulis ilmiah yang menjadi salah satu syarat untuk memperoleh gelar sarjana di Perguruan Tinggi. Tugas Akhir Skripsi ini disusun berdasarkan hasil penelitian yang dilakukan oleh mahasiswa dibawah bimbingan Dosen Pembimbing. Penulisan Tugas Akhir Skripsi bertujuan untuk mengembangkan kemampuan mahasiswa dalam melakukan penelitian, menganalisis data, serta menyajikan hasil penelitian secara sistematis dan logis. Proses penyusunan skripsi melibatkan tahapan perencanaan, pelaksanaan penelitian, analisis data, serta penulisan dan revisi. Penduan ini disusun untuk memberikan arahan dan standar yang jelas mengenai struktur, format, dan tata cara penulisan skripsi yang baik dan benar.",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB III BENTUK TUGAS AKHIR",
+    "pages": [
+      "26"
+    ]
+  },
+  {
+    "id": "skripsi-055",
+    "title": "3.2.2.Sistematika Penulisan Tugas Akhir Skripsi",
+    "content": "Sistematika penulisan terdiri atas Bagian Awal, Bagian Utama dan Bagian Akhir. Sistematika penulisan tersebut dapat dilihat dalam Tabel 3.2\n\nTabel 3.2 Sistematika Penulisan Tugas Akhir Skripsi\n\n\n\n| Bagian       | Keterangan Isi               |\n|--------------|------------------------------|\n| Bagian Awal  | Halaman Sampul Depan (Cover) |\n|              | Pernyataan Keaslian          |\n| Bagian Utama | BAB I PENDAHULUAN            |\n| 1.1.         | Latar Belakang Masalah       |\n| 1.2.         | Rumusan Masalah              |\n| 1.3.         | Batasan Masalah              |\n| 1.4.         | Tujuan Penelitian            |\n| 1.5.         | Manfaat Penelitian           |\n| 1.6.         | Sistematika Penulisan        |\n| 2.1.         | Kajian Empiris               |\n| 2.2.         | Landasan Teori               |\n| 3.1.         | Tempat dan Waktu Penelitian  |\n| 3.2.         | Teknik Pengumpulan Data      |\n| 3.3.         | Motode Pengembangan Sistem   |\n| 4.1.         | Hasil Penelitian             |\n| 4.2.         | Pembahasan                   |\n| 5.1.         | Kesimpulan                   |\n| 5.2.         | Saran                        |\n| Bagian Akhir | Daftar Pustaka               |\n\n*Penjelasan secara umum sistematika penulisan dapat dilihat pada BAB IV*",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB III BENTUK TUGAS AKHIR",
+    "pages": [
+      "26"
+    ]
+  },
+  {
+    "id": "skripsi-058",
+    "title": "1. Sampul Depan (Cover)",
+    "content": "Halaman ini merupakan halaman identitas yang memuat judul, jenis usulan, identitas mahasiswa, lambang, program studi, nama institusi, dan tahun diterbitkan.\n\n- 1) **Judul** yang baik dibuat dengan jelas dan harus dapat mengungkapkan masalah serta objek yang sedang dihadapi dan yang akan dipelajari, diketik dengan huruf besar (kapital) dan tidak disingkat.\n- 2) **Jenis Usulan** dapat ditulis Proposal (*untuk keperluan Seminar Proposal)* atau Tugas Akhir Skripsi (*untuk keperluan Seminar Hasil dan Seminar Pendadaran).*\n- 3) **Penjelasan maksud Tugas Akhir Skripsi:**  Skripsi Sebagai Salah Satu Syarat Untuk Memperoleh Gelar Sarjana Komputer\n- 4) **Identitas Mahasiswa**: Nama dan Nomor Induk Mahasiswa (NIM) diletakkan ditengah halaman judul tanpa disertai garis bawah, nama tidak boleh disingkat dan derajat kesarjanaan tidak boleh disertakan. Nomor induk mahasiswa ditempatkan di bawah nama mahasiswa.",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB IV PENJELASAN SISTEMATIKA PENULISAN LAPORAN",
+    "pages": [
+      "28"
+    ]
+  },
+  {
+    "id": "skripsi-060",
+    "title": "6) Program Studi, Nama Institusi, dan Tahun Diterbitkan",
+    "content": "*(Contoh Terlampir)*",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB IV PENJELASAN SISTEMATIKA PENULISAN LAPORAN",
+    "pages": [
+      "28"
+    ]
+  },
+  {
+    "id": "skripsi-061",
+    "title": "2. Halaman Pengesahan",
+    "content": "Pada halaman ini memuat Judul, Nama, NIM, Jenjang, Program Studi, Tanda Tangan Dosen Pembimbing dan Dosen Penguji, mengetahui Ketua Program Studi, dan Ketua STMIK Widya Cipta Dharma.\n\n*(Contoh Terlampir)*",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB IV PENJELASAN SISTEMATIKA PENULISAN LAPORAN",
+    "pages": [
+      "28"
+    ]
+  },
+  {
+    "id": "skripsi-062",
+    "title": "3. Halaman Pernyataan Keaslian Tugas Akhir",
+    "content": "Pada halaman ini berisi pernyataan yang menjelaskan bahwa Tugas Akhir Skripsi tersebut asli karya sendiri, tidak merupakan hasil jiplakan dan bukan berupa karya orang lain. Halaman ini memuat Nama, NIM, Jenjang, Program Studi, yang dilengkapi dengan tanggal, nama lengkap, dan NIM serta materai Rp. 10.000,- *(Contoh Terlampir)*",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB IV PENJELASAN SISTEMATIKA PENULISAN LAPORAN",
+    "pages": [
+      "28"
+    ]
+  },
+  {
+    "id": "skripsi-063",
+    "title": "4. Abstrak",
+    "content": "Pada halaman ini merupakan uraian yang memuat latar belakang masalah yang diteliti, metode yang digunakan dan hasil penelitian. Pada umumnya abstrak terdiri dari 3 alinea, dan panjangnya tidak lebih dari satu halaman, ditulis dengan jarak 1 spasi, dan dibuat dalam 2 bahasa yaitu bahasa Indonesia dan bahasa Inggris. *(Contoh Terlampir)*",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB IV PENJELASAN SISTEMATIKA PENULISAN LAPORAN",
+    "pages": [
+      "28"
+    ]
+  },
+  {
+    "id": "skripsi-064",
+    "title": "5. Halaman Riyawat Hidup",
+    "content": "Pada halaman ini berisi riwayat hidup mahasiswa yang bersangkutan yaitu nama, tempat tanggal lahir, pendidikan, pengalaman kerja, dan riwayat lain yang diperlukan disertai dengan pas foto mahasiswa beralmamater. *(Contoh Terlampir)*",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB IV PENJELASAN SISTEMATIKA PENULISAN LAPORAN",
+    "pages": [
+      "28"
+    ]
+  },
+  {
+    "id": "skripsi-065",
+    "title": "6. Kata Pengantar",
+    "content": "Halaman Kata Pengantar dibuat ringkas dalam satu atau dua halaman. Fungsi utama kata pengantar adalah mengantarkan pembaca pada masalah yang akan dicari jawabannya dan kekhususankekhususan tertentu dari tugas akhir. Dilanjutkan dengan ucapan terimakasih kepada pihak-pihak yang telah membantu dalam penyusunan tugas akhir. Ucapan terima kasih didalamnya harus memuat nama, jabatan, dan jasa yang telah diberikan. Bahasa yang digunakan harus mengikuti kaidah bahasa Indonesia yang baku. Kata Pengantar diakhiri dengan mencantumkan kota dan tanggal penulisan diikuti di bawahnya nama penulis tanpa perlu tanda tangan *(Contoh Terlampir)*",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB IV PENJELASAN SISTEMATIKA PENULISAN LAPORAN",
+    "pages": [
+      "28"
+    ]
+  },
+  {
+    "id": "skripsi-066",
+    "title": "7. Daftar Isi",
+    "content": "Daftar isi memuat urutan bab, sub-bab dan anak-sub-bab beserta nomor halaman naskah *(Contoh Terlampir)*",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB IV PENJELASAN SISTEMATIKA PENULISAN LAPORAN",
+    "pages": [
+      "28"
+    ]
+  },
+  {
+    "id": "skripsi-067",
+    "title": "8. Daftar Tabel",
+    "content": "Daftar tabel memuat nomor urut, judul dan nomor halaman tabel. *(Contoh Terlampir)*",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB IV PENJELASAN SISTEMATIKA PENULISAN LAPORAN",
+    "pages": [
+      "28"
+    ]
+  },
+  {
+    "id": "skripsi-068",
+    "title": "9. Daftar Gambar",
+    "content": "Daftar tabel memuat nomor urut, judul dan nomor halaman gambar. *(Contoh Terlampir)*",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB IV PENJELASAN SISTEMATIKA PENULISAN LAPORAN",
+    "pages": [
+      "28"
+    ]
+  },
+  {
+    "id": "skripsi-069",
+    "title": "10. Daftar Lampiran",
+    "content": "Daftar lampiran berisi seluruh lampiran-lampiran dokumen yang ditulis pada naskah. *(Contoh Terlampir)*",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB IV PENJELASAN SISTEMATIKA PENULISAN LAPORAN",
+    "pages": [
+      "28"
+    ]
+  },
+  {
+    "id": "skripsi-071",
+    "title": "1. Bab I Pendahuluan",
+    "content": "- 1) **Latar Belakang Masalah**, memuat uraian secara jelas timbulnya masalah yang memerlukan pemecahan dengan didukung oleh logika-logika dan teori-teori yang mendasari timbulnya gagasan pemecahan / pembahasan masalah. Dengan mengemukakan latar belakang masalah akan mempermudah rumusan masalah\n- 2) **Rumusan Masalah**, yang akan dicari pemecahannya melalui penelitian yang akan diajukan hendaknya dirumuskan dalam bentuk kalimat tanya atau penyataan yang tegas dan jelas, untuk menambah ketajaman masalah. Adapun contoh rumusan masalah sebagai berikut:",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB IV PENJELASAN SISTEMATIKA PENULISAN LAPORAN",
+    "pages": [
+      "29"
+    ]
+  },
+  {
+    "id": "skripsi-073",
+    "title": "(2) Pernyataan",
+    "content": "\"Berdasarkan latar belakang masalah xyz terdapat permasalahan pengolahan data yang belum efektif dan efisien\"\n\n- 3) **Batasan Masalah**, pada bagian ini masalah yang akan dicari pemecahan masalahnya harus terbatas ruang lingkupnya agar pembahasannya dapat lebih terperinci dan dapat dimungkinkan pengambilan keputusan definitif. Adapun variabel-variabel yang terlibat dalam penelitian harus ditentukan.\n- 4) **Tujuan Penelitian,** memuat uraian yang menyebutkan secara spesifik maksud atau tujuan yang hendak dicapai dari penelitian yang dilakukan. Maksud-maksud yang terkandung didalam kegiatan tersebut baik maksud utama maupun tambahan, harus dikemukakan dengan jelas.\n- 5) **Manfaat Penelitian,** pada bagian ini ditunjukkan kegunaan atau pentingnya produk yang dihasilkan bagi tempat penelitian dan masyarakat umum.\n- 6) **Sistematika Penulisan,** berisi sistematika penulisan tugas akhir yang memuat uraian secara garis besar isi tugas akhir untuk tiap-tiap bab dari Bab I sampai dengan Bab V.\n- **2. Bab II Tinjauan Pustaka**\n- 1) **Kajian Empiris**, adalah kajian yang didapatkan dari penelitian yang telah dilakukan sebelumnya oleh peneliti lain dan berhubungan dengan penelitian yang dilakukan,\n- 2) **Landasan Teori,** memuat ilmu-ilmu dasar yang relevan dengan parameter-parameter penelitian yang disusun secara sistematis. Landasan teori ini akan menjadi sebuah landasan yang kuat dan akan menentukan kesahihan penelitian. Semua sumber yang dipakai pada kajian empiris dan landasan teori harus disebutkan dengan\n\nmencantumkan nama penulis dan tahun terbit maksimal 5 tahun terakhir",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB IV PENJELASAN SISTEMATIKA PENULISAN LAPORAN",
+    "pages": [
+      "29"
+    ]
+  },
+  {
+    "id": "skripsi-074",
+    "title": "3. Bab III Metode Penelitian",
+    "content": "Metode penelitian berisi tentang uraian tahapan penelitian yang sistematis, antara lain:",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB IV PENJELASAN SISTEMATIKA PENULISAN LAPORAN",
+    "pages": [
+      "29"
+    ]
+  },
+  {
+    "id": "skripsi-075",
+    "title": "1) Tempat dan Waktu Penelitian",
+    "content": "- (1) Tempat menjelaskan mengenai tempat penelitian dilakukan.\n- (2) Waktu menjelaskan mengenai kapan penelitian dilaksanakan di suatu instansi\n- 2) **Teknik Pengumpulan Data,** memuat uraian tentang cara dan proses pengumpulan data secara rinci, dengan menunjukkan urutan langkah-langkah yang ditempuh, teknik pengumpulan data dapat berupa :\n  - (1) **Studi Pustaka**, adalah suatu teknik pengumpulan data yang dilakukan oleh peneliti dengan menelaah teori-teori, pendapat pendapat serta pokok-pokok pikiran yang terdapat dalam media cetak, khususnya buku-buku yang menunjang dan relevan dengan masalah yang dibahas dalam penelitian.\n\n- (2) **Studi lapangan** adalah pengumpulan data secara langsung dengan mempergunakan teknik pengumpulan data secara observasi, wawancara, dan dokumentasi\n- 3) **Motode Pengembangan Sistem,** menjelaskan atau menguraikan tahapan metode pengembangan sistem yang digunakan\n- 4) **Jadwal Penelitian,** tentang pelaksanaan jadwal penelitian mulai dari pengajuan proposal, pengumpulan data, analisis data, perancangan dan implementasi, seminar hasil dan pendadaran. *(Contoh Terlampir)*\n- **4. Bab IV Hasil Penelitian dan Pembahasan**\n- 1) **Hasil Penelitian**, yang menguraikan tentang gambaran umum objek penelitian, misalnya gambaran umum perusahaan (struktur organisasi, jabatan tugas dan wewenang), atau gambaran umum produk, serta data yang dipergunakan untuk memecahkan masalah-masalah yang dihadapi, berkaitan dengan kegiatan penelitian\n- 2) **Pembahasan**, pada Bab ini akan memaparkan hasil dari metode pengembangan sistem yang digunakan\n- **5. Bab V Penutup**\n- 1) **Kesimpulan**, dapat mengemukakan kembali masalah penelitian (mampu menjawab pertanyaan dalam rumusan masalah), menyimpulkan bukti-bukti yang diperoleh dan akhirnya menarik kesimpulan apakah hasil yang didapat (dikerjakan), layak untuk digunakan (diimplementasikan). Tidak diperkenankan menyimpulkan masalah jika pembuktian tidak terdapat dalam hasil penelitian\n- 2) **Saran**, merupakan manifestasi dari penelitian untuk dilaksanakan (sesuatu yang belum ditempuh dan layak untuk dilaksanakan). Saran dicantumkan karena peneliti melihat adanya jalan keluar untuk mengatasi masalah (kelemahan yang ada), saran yang diberikan tidak terlepas dari ruang lingkup penelitian (untuk objek penelitian maupun pembaca yang akan mengembangkan hasil penelitian).",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB IV PENJELASAN SISTEMATIKA PENULISAN LAPORAN",
+    "pages": [
+      "29"
+    ]
+  },
+  {
+    "id": "skripsi-076",
+    "title": "4.3. BAGIAN AKHIR",
+    "content": "- **1. Daftar Pustaka**, merupakan referensi/literatur atas penelitian yang dilakukan dan hendaknya dikemukaan secara jelas, daftar pustaka tersebut disusun dengan aturan penulisan daftar pustaka seperti lazimnya digunakan dalam penulisan skripsi. *(Contoh Terlampir)*\n- **2. Lampiran-Lampiran**, berupa keterangan pelengkap atau tambahan dari tubuh utama yang berupa daftar pertanyaan atau contoh formulir data yang sesuai dengan penelitian dan sebagainya sesuai dengan keperluan penelitian.",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB IV PENJELASAN SISTEMATIKA PENULISAN LAPORAN",
+    "pages": [
+      "31"
+    ]
+  },
+  {
+    "id": "skripsi-078",
+    "title": "5.1. JENIS DAN UKURAN KERTAS",
+    "content": "Spesifikasi kertas yang digunakan dalam penyajian laporan Hardcover Non Skripsi adalah jenis HVS-A4 (21 cm x 29,7 cm) dengan berat 80 gram berwarna putih polos. Untuk halaman judul hardcover menggunakan kertas cover warna yang telah ditentukan oleh STMIKWidya Cipta Dharma. Penulisan dilakukan pada satu sisi halaman kertas dan menggunakan tinta HITAM yang tidak mudah luntur untuk mencetak, kecuali untuk lambang dan gambar yang harus disajikan berwarna.",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB V FORMAT DAN TATA CARA PENULISAN",
+    "pages": [
+      "32"
+    ]
+  },
+  {
+    "id": "skripsi-080",
+    "title": "1. Margin",
+    "content": "Naskah diketik rata kiri dan kanan dengan batas margin pengetikan naskah ditentukan sebagai berikut: Margin atas: 3 cm Margin Bawah: 3 cm Margin Kiri: 4 cm Margin Kanan: 3 cm",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB V FORMAT DAN TATA CARA PENULISAN",
+    "pages": [
+      "32"
+    ]
+  },
+  {
+    "id": "skripsi-081",
+    "title": "2. Jenis huruf",
+    "content": "Naskah skripsi diketik dengan huruf standar (*Times New Roman*) dan ukuran (*font size*) yang sama, untuk seluruh naskah *font size* 12, kecuali bila didalam tabel ukuran huruf tersebut dapat dikecilkan menjadi kurang dari 12 point.",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB V FORMAT DAN TATA CARA PENULISAN",
+    "pages": [
+      "32"
+    ]
+  },
+  {
+    "id": "skripsi-082",
+    "title": "3. Spasi Pengetikan",
+    "content": "Jarak antara baris satu dengan yang lain dibuat 1,5 spasi, kecuali daftar isi, daftar tabel, daftar gambar, daftar lampiran, judul tabel, judul gambar dan daftar pustaka menggunakan spasi tunggal atau satu spasi.",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB V FORMAT DAN TATA CARA PENULISAN",
+    "pages": [
+      "32"
+    ]
+  },
+  {
+    "id": "skripsi-083",
+    "title": "4. Pengetikan Alenia Baru",
+    "content": "Tiap-tiap baris dari suatu alinea dimulai dengan ketukan huruf pertama agak menjorok kedalam (kearah kanan) sebanyak 6 ketukan huruf dari *margin*/batas kiri atau + 1,2 cm",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB V FORMAT DAN TATA CARA PENULISAN",
+    "pages": [
+      "32"
+    ]
+  },
+  {
+    "id": "skripsi-084",
+    "title": "5. Pengetikan Bab dan sub-bab",
+    "content": "Nama bab diketik dengan huruf kapital dengan jarak 3 cm dari tepi atas kertas. Nomor urut bab ditulis dengan huruf romawi dan ditulis ditengah-tengah kertas di atas nama bab. Pengetikan nama sub-bab dan nomor sub-bab dimulai dari tepi kiri. Nama bab dan sub-bab diketik dengan huruf tebal.",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB V FORMAT DAN TATA CARA PENULISAN",
+    "pages": [
+      "32"
+    ]
+  },
+  {
+    "id": "skripsi-085",
+    "title": "6. Angka",
+    "content": "- 1) Angka dalam skripsi menggunakan pembulatan dua angka atau lebih di belakang koma disesuaikan dengan keperluan.\n\n- 2) Bilangan desimal ditandai dengan tanda koma (,) bukan titik (.).\n- 3) Satuan dinyatakan dengan singkatan resminya dan diakhiri tanpa tanda titik",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB V FORMAT DAN TATA CARA PENULISAN",
+    "pages": [
+      "32"
+    ]
+  },
+  {
+    "id": "skripsi-086",
+    "title": "7. Penomoran Halaman",
+    "content": "- 1) Bagian awal Skripsi, mulai dari halaman judul sampai daftar gambar, diberi nomor halaman dengan angka Romawi kecil (i, ii, iii, ... dst) dan diletakkan di tengah bawah.\n- 2) Bagian utama dan akhir, mulai dari Bab I sampai ke halaman terakhir, memulai angka Arab (1,2,3,4, … dst) sebagai nomor halaman.\n- 3) Nomor halaman ditempatkan di sebelah kanan atas, kecuali bila ada judul atau bab pada bagian atas halaman tersebut. Untuk halaman yang demikian nomornya ditulis di tengah bawah.\n- 4) Nomor halaman diketik dengan jarak 3 cm dari tepi kanan dan 1,5 cm dari tepi atas. Sedangkan nomor pada tengah bawah berjarak 1,5 cm dari bawah",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB V FORMAT DAN TATA CARA PENULISAN",
+    "pages": [
+      "32"
+    ]
+  },
+  {
+    "id": "skripsi-088",
+    "title": "1) Tabel",
+    "content": "- (1) Tabel dan gambar diberi nomor urut dengan angka Arab dengan format berupa 2 angka. Angka pertama menunjukkan bab dan angka kedua menunjukkan urutan nomor tabel/gambar (Contoh: Gambar 4.1 artinya gambar pada bab 4 dengan urutan nomor 1).\n- (2) Nomor tabel (daftar) yang diikuti dengan keterangan, ditempatkan simetris diatas (daftar), tanpa diakhiri titik.\n- (3) Tabel tidak boleh terpotong, kecuali jika panjangnya tidak memungkinkan untuk diketik dalam satu halaman. Pada halaman lanjutan, header tabel harus tetap ditampilkan di setiap halaman.\n- (4) Penulisan isi tabel menggunakan jarak 1 spasi.\n- (5) Jika tabel memiliki ukuran yang lebih besar dari lebar kertas sehingga harus dibuat memanjang, maka bagian atas tabel harus ditempatkan di sisi kiri kertas dengan posisi landscape.\n- (6) Judul tabel yang ditulis setelah nomor tabel letaknya di atas tabelnya. huruf tidak tebal dengan diawali oleh huruf kapital di setiap awal kata (kecuali kata depan dan kata penghubung) tanpa diakhiri dengan tanda titik. Bila judul lebih dari satu baris, baris kedua dimulai tepat di bawah huruf pertama judul dengan jarak 1 (satu) spasi, dengan ukuran huruf *Font Size* adalah 11.\n- (7) Sumber pustaka dari tabel tersebut diletakkan setelah judul tabel dengan format nama pengarang pustaka yang dikutip, dan tahun dengan ukuran huruf *font size* adalah 11. Contoh dapat dilihat pada tabel 1.1.\n\nTabel 1.1 Judul Tabel (*jarak 1 (satu) spasi, dengan ukuran huruf 11*)\n\n| Algoritma | Waktu  | Ketelitian | Memori |\n|-----------|--------|------------|--------|\n| A         | 120 ms | 98%        | 200 KB |\n| B         | 105 ms | 98%        | 200 KB |\n\nSumber : Nama Pengarang, Nama Pustaka (Tahun) (*jarak 1 (satu) spasi, dengan ukuran huruf 11*)",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB V FORMAT DAN TATA CARA PENULISAN",
+    "pages": [
+      "32"
+    ]
+  },
+  {
+    "id": "skripsi-089",
+    "title": "2) Gambar",
+    "content": "- (1) Pemilihan sajian data hasil penelitian dalam bentuk grafik, diagram alir, bagan, peta, foto, atau gambar dalam karya ilmiah perlu dipertimbangkan dengan memperhatikan relevansinya dengan topik penelitian yang dilakukan.\n- (2) Nomor gambar yang diikuti dengan judul diletakkan simetris di bawah gambar tanpa diakhiri dengan titik, ditulis di bawah, tidak di halaman lain. Bila judul lebih dari satu baris, baris kedua dimulai tepat di bawah huruf pertama judul dengan jarak 1 (satu) spasi, dengan ukuran huruf *font size* adalah 11.\n- (3) Ukuran gambar (lebar dan tinggi) diusahakan proporsional dan jelas.\n- (4) Letak gambar diatur supaya simetris.\n- (5) Sumber pustaka dari gambar tersebut diletakkan setelah judul gambar dengan format nama pengarang, nama pustaka, dan tahun. Contoh dapat dilihat pada gambar 1.1\n\nGambar 1.1 Judul Gambar Sumber: Nama Pengarang, Nama Pustaka (Tahun) (*jarak 1 (satu) spasi, dengan ukuran huruf Font Size adalah 11*)",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB V FORMAT DAN TATA CARA PENULISAN",
+    "pages": [
+      "32"
+    ]
+  },
+  {
+    "id": "skripsi-090",
+    "title": "5.3. BAHASA",
+    "content": "- 1. Bahasa yang digunakan mengikuti Pedoman Umum Ejaan Bahasa Indonesia (PUEBI).\n- 2. Bentuk dalam kalimat tidak boleh menampilkan orang pertama atau orang kedua (contoh: saya, aku, kita, engkau, peneliti, penulis dan lain-lainnya), tetapi dibuat berbentuk kalimat pasif.\n- 3. Istilah\n  - 1) Istilah yang digunakan adalah istilah Indonesia atau istilah asing yang sudah di Indonesiakan\n\n- 2) Jika harus menggunakan istilah asing, pada istilah tersebut harus dicetak miring, dan konsisten.",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB V FORMAT DAN TATA CARA PENULISAN",
+    "pages": [
+      "34"
+    ]
+  },
+  {
+    "id": "skripsi-091",
+    "title": "5.4. HURUF MIRING",
+    "content": "Penggunaan huruf miring dalam bagian isi Tugas Akhir mengikuti aturan yang ditetapkan dalam PUEBI. Penggunaan huruf miring dalam penulisan daftar pustaka, mengikuti aturan tersendiri seperti yang dicontohkan dalam bagian penulisan daftar pustaka",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB V FORMAT DAN TATA CARA PENULISAN",
+    "pages": [
+      "35"
+    ]
+  },
+  {
+    "id": "skripsi-093",
+    "title": "1. Penyusunan Daftar Pustaka",
+    "content": "Penulisan nama dalam kutipan dan daftar pustaka adalah sebagai berikut:\n\n- 1) Menggunakan American Psychological Association (APA). Disarankan membuat referensi dengan tools Mendeley atau tools reference lainnya.\n- 2) Jumlah referensi minimal 15 dan 80% dari referensi tersebut harus berasal dari buku dan jurnal.\n- 3) Disarankan merujuk pada referensi yang berusia kurang dari 5 tahun kecuali referensi tersebut dianggap sangat penting meskipun berusia lebih dari 5 tahun\n- 4) Disarankan terdapat sumber rujukan dari penulis dosen STMIK Widya Cipta Dharma\n- 5) **Nama Penulis:** Penulisan dimulai dengan nama belakang, diikuti inisial nama depan. Jika ada lebih dari satu penulis, pisahkan dengan koma, dan sebelum penulis terakhir gunakan \"&.\", Gelar tidak perlu disebutkan.\n- 6) **Tahun:** Diletakkan setelah nama penulis dalam tanda kurung.\n- 7) **Judul:** Ditulis miring (italic) untuk buku dan jurnal. Untuk artikel, judul artikel tidak dicetak miring, tetapi judul jurnal tetap dicetak miring. Hanya huruf pertama dari judul dan subjudul yang ditulis dengan huruf kapital.\n- 8) **Informasi Publikasi:** Berisi nama penerbit, volume, halaman, dan DOI jika ada.\n- 9) **Urutan Abjad:** Daftar pustaka disusun berdasarkan urutan abjad nama penulis pertama.\n- 10) **Hanging Indent:** Setiap entri dalam daftar pustaka menggunakan hanging indent (baris kedua dan seterusnya menjorok ke dalam).\n- 11) **DOI atau URL:** Jika ada DOI atau URL, selalu sertakan untuk referensi elektronik.\n- 12) **Jika Tidak Ada Tanggal:** Gunakan \"n.d.\" (no date). **Contoh:** Smith, J. (n.d.). *Introduction to psychology*.\n- 13) Setiap pustaka diketik dengan jarak satu spasi (rata kiri)",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB V FORMAT DAN TATA CARA PENULISAN",
+    "pages": [
+      "35"
+    ]
+  },
+  {
+    "id": "skripsi-095",
+    "title": "1) Artikel Jurnal",
+    "content": "Penulis, A. A., & Penulis, B. B. (Tahun). Judul artikel. *Nama Jurnal*, **volume**(edisi), halaman. <https://doi.org/xx.xxxxx>",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB V FORMAT DAN TATA CARA PENULISAN",
+    "pages": [
+      "35"
+    ]
+  },
+  {
+    "id": "skripsi-096",
+    "title": "Contoh:",
+    "content": "Bryman, A. (2006). Integrating quantitative and qualitative research: How is it done? *Qualitative Research*, **6**(1), 97–113. https://doi.org/10.1177/1468794106058877",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB V FORMAT DAN TATA CARA PENULISAN",
+    "pages": [
+      "35"
+    ]
+  },
+  {
+    "id": "skripsi-097",
+    "title": "2) Buku",
+    "content": "Penulis, A. A. (Tahun). *Judul buku: Subjudul jika ada*. Penerbit: Kota Terbit.",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB V FORMAT DAN TATA CARA PENULISAN",
+    "pages": [
+      "35"
+    ]
+  },
+  {
+    "id": "skripsi-098",
+    "title": "Contoh dengan satu penulis",
+    "content": "Sugiyono. (2016). *Metode penelitian kuantitatif, kualitatif, dan R&D*. Alfabeta: Bandung.",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB V FORMAT DAN TATA CARA PENULISAN",
+    "pages": [
+      "35"
+    ]
+  },
+  {
+    "id": "skripsi-099",
+    "title": "Contoh dengan dua penulis",
+    "content": "Smith, J. A., & Brown, P. L. (2020). *Introduction to database systems*. Pearson Education: London.",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB V FORMAT DAN TATA CARA PENULISAN",
+    "pages": [
+      "35"
+    ]
+  },
+  {
+    "id": "skripsi-100",
+    "title": "3) Artikel di Website",
+    "content": "Penulis, A. A. (Tahun, Tanggal). Judul artikel. *Nama Situs Web*. URL",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB V FORMAT DAN TATA CARA PENULISAN",
+    "pages": [
+      "35"
+    ]
+  },
+  {
+    "id": "skripsi-101",
+    "title": "Contoh:",
+    "content": "World Health Organization. (2021, March 25). Mental health and COVID-19. *WHO*. [https://www.who.int/news-room/mental-health.](https://www.who.int/news-room/mental-health)",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB V FORMAT DAN TATA CARA PENULISAN",
+    "pages": [
+      "35"
+    ]
+  },
+  {
+    "id": "skripsi-102",
+    "title": "4) Sumber dari Bab Buku (Book Chapter)",
+    "content": "Penulis, A. A. (Tahun). Judul bab. Dalam A. Editor & B. Editor (Ed.), *Judul Buku* (hal. xx–xx). Penerbit.",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB V FORMAT DAN TATA CARA PENULISAN",
+    "pages": [
+      "35"
+    ]
+  },
+  {
+    "id": "skripsi-103",
+    "title": "Contoh:",
+    "content": "Jones, G. R. (2019). Organizational design. Dalam J. R. Schermerhorn, *Management Foundations* (hal. 145–172). Wiley.",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB V FORMAT DAN TATA CARA PENULISAN",
+    "pages": [
+      "35"
+    ]
+  },
+  {
+    "id": "skripsi-104",
+    "title": "5) Sumber dari Skripsi/Tesis/Disertasi",
+    "content": "Penulis, A. A. (Tahun). *Judul disertasi atau tesis* (Disertasi/Tesis tidak dipublikasikan). Institusi.\n\n**Contoh:**\n\nPratama, R. F. (2020). *Pengaruh media pembelajaran berbasis teknologi terhadap hasil belajar siswa* (Skripsi tidak dipublikasikan). STMIK Widya Cipta Dharma.",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB V FORMAT DAN TATA CARA PENULISAN",
+    "pages": [
+      "35"
+    ]
+  },
+  {
+    "id": "skripsi-105",
+    "title": "6) Sumber dari Media Online (Tanpa Penulis)",
+    "content": "Nama Organisasi atau Judul Artikel. (Tahun, Tanggal). Judul artikel. *Nama Situs Web*. URL",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB V FORMAT DAN TATA CARA PENULISAN",
+    "pages": [
+      "35"
+    ]
+  },
+  {
+    "id": "skripsi-106",
+    "title": "Contoh:",
+    "content": "Kementerian Pendidikan dan Kebudayaan. (2021, 15 Mei). Peningkatan kompetensi guru di era digital. *Kemendikbud*. https://www.kemendikbud.go.id",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "BAB V FORMAT DAN TATA CARA PENULISAN",
+    "pages": [
+      "35"
+    ]
+  },
+  {
+    "id": "skripsi-107",
+    "title": "Lampiran 1. Contoh Halaman Sampul Depan Tugas Akhir Skripsi",
+    "content": "**JUDUL TUGAS AKHIR SKRIPSI**\n\n*(Times New Roman, Uppercase, Size 14, Bold, Spasi 1,5, Center)*\n\n**TUGAS AKHIR SKRIPSI**\n\n*(Times New Roman, Uppercase, Size 14, Bold, Spasi Single, Center)*",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "37"
+    ]
+  },
+  {
+    "id": "skripsi-108",
+    "title": "Skripsi Sebagai Salah Satu Syarat Untuk Memperoleh Gelar Sarjana Komputer/Bisnis [<sup>1</sup>](#page-36-1)",
+    "content": "*(Times New Roman, Capitalize Each Word, Italic, Size 12, Bold, Center)*\n\noleh:\n\n**NAMA MAHASISWA**\n\n**NIM**\n\n*(Times New Roman, Uppercase, Size 12, Bold, Spasi Single, Center)*",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "37"
+    ]
+  },
+  {
+    "id": "skripsi-109",
+    "title": "PROGRAM STUDI SI/TI/BisDig [<sup>2</sup>](#page-36-2) SEKOLAH TINGGI MANAJEMEN INFORMATIKA DAN KOMPUTER WIDYA CIPTA DHARMA TAHUN KELULUSAN",
+    "content": "*(Times New Roman, Uppercase, Size 12, Bold, Spasi 1, Center)*\n\n<sup>1</sup> Gelar sarjana pilih salah satu\n\n<sup>2</sup> Pilih salah satu dan nama prodi tidak disingkat",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "37"
+    ]
+  },
+  {
+    "id": "skripsi-111",
+    "title": "HALAMAN PENGESAHAN",
+    "content": "*(Font Times New Roman, Uppercase, Size 12, Bold, Spasi 1,5, Center)*",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "38"
+    ]
+  },
+  {
+    "id": "skripsi-112",
+    "title": "TUGAS AKHIR",
+    "content": "**SKRIPSI**\n\nyang disusun dan diajukan oleh:",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "38"
+    ]
+  },
+  {
+    "id": "skripsi-113",
+    "title": "Nama Mahasiswa",
+    "content": "**NIM. xxxxxxxx**\n\nTelah dipertahankan di depan Dewan Penguji\n\nPada tanggal *<tanggal ujian pendadaran>*\n\n*(Times New Roman, Capitalize Each Word, Size 12, Spasi 1,5)*",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "38"
+    ]
+  },
+  {
+    "id": "skripsi-115",
+    "title": "Nama dan Gelar Dosen Pembimbing Utama",
+    "content": "NIDN/NUPTK.",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "38"
+    ]
+  },
+  {
+    "id": "skripsi-116",
+    "title": "Nama dan Gelar Dosen Pembimbing Pendamping",
+    "content": "NIDN/NUPTK.",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "38"
+    ]
+  },
+  {
+    "id": "skripsi-117",
+    "title": "Nama dan Gelar Ketua Dosen Penguji",
+    "content": "NIDN/NUPTK.",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "38"
+    ]
+  },
+  {
+    "id": "skripsi-118",
+    "title": "Nama dan Gelar Anggota Dosen Penguji",
+    "content": "NIDN/NUPTK\n\nMengetahui, Mengesahkan, Ketua STMIK Widya Cipta Dharma\n\nKetua Program Studi (SI/TI/BisDig) **[<sup>3</sup>](#page-37-1)**\n\n**Nama dan Gelar** NIK.\n\n**Nama dan Gelar** NIK.\n\n*(Font Times New Roman, Capitalize Each Word, Size 12, Spasi Single)*\n\n*Tanda Tangan*\n\n*Tanda Tangan*\n\n*Tanda Tangan*\n\n*Tanda Tangan*\n\n<sup>3</sup> Pilih salah satu dan nama prodi tidak disingkat",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "38"
+    ]
+  },
+  {
+    "id": "skripsi-120",
+    "title": "HALAMAN PERNYATAAN KEASLIAN TUGAS AKHIR",
+    "content": "*(Font Times New Roman, Uppercase, Size 12, Bold, Spasi 1,5, Center)*\n\nSaya yang bertandatangan dibawah ini\n\nNama : ………………….\n\nNim : ………………….\n\nJenjang : Sarjana\n\nProgram Studi : ………………….\n\nJudul Tugas Akhir Skripsi : ………………….\n\nMenyatakan bahwa saya bertanggung jawab terhadap keaslian karya dan merupakan hasil karya saya sendiri kecuali cuplikan dan ringkasan yang masing-masing telah saya jelaskan sumbernya. Jika dikemudian hari terdapat penyimpangan dan ketidak benaran serta ada pihak lain yang mengklaim bahwa karya ini sebagai karyanya, yang disertai dengan bukti-bukti yang cukup, maka saya siap untuk mendapatkan sanksi akademik sesuai dengan ketentuan yang berlaku di STMIK Widya Cipta Dharma.\n\n> Samarinda, < *tanggal disetujui daftar ujian* > Yang Membuat Pernyataan\n\n*Meterai Asli Rp 10.000,-* **Nama Lengkap Mahasiswa** NIM.\n\n*(Font Times New Roman, Capitalize Each Word, Size 12, Spasi 1,5)*",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "39"
+    ]
+  },
+  {
+    "id": "skripsi-122",
+    "title": "ABSTRAK",
+    "content": "*(Font Times New Roman, Uppercase, Size 12, Bold, Spasi 1,5, Center)*\n\nNama Mahasiswa, Tahun, Judul Tugas Akhir, Sekolah Tinggi Manajemen Informatika dan Komputer Widya Cipta Dharma, Dosen Pembimbing Utama : Nama Dosen Pembimbing Utama disertai gelar., Dosen Pembimbing Pendamping: Nama Dosen Pembimbing Pendamping disertai gelar.\n\n**Kata Kunci**: analisis pola belanja, konsumen, tata letak barang, market basket analysis, *data mining*\n\nDewasa ini hampir setiap aktivitas selalu menghasilkan data, seperti bidang bisnis data transaksi penjualan yang tersimpan disistem *database* akan selalu bertambah dan menumpuk. Toko ABCD merupakan usaha kecil dan menengah yang menjual berbagai perlengkapan sekolah dan perlengkapan acara yang menggunakan sistem *POS* untuk setiap transaksinya. Saat ini data yang ada hanya dijadikan arsip oleh pemilik toko sehingga berdampak pada strategi penjualan yang tidak terlaksana dengan baik, padahal data yang ada dapat diolah menjadi informasi untuk menentukan tata letak barang sehingga dapat meningkatkan *impulse buying*, menaikkan atau mempertahankan omzet, dan meminimalisir produk yang menumpuk hingga kadaluarsa yang dapat merugikan toko.\n\nMetode penelitian ini menggunakan market basket analysis atau disebut juga dengan *association rules* yang merupakan salah satu teknik pada *data mining* untuk menemukan pola-pola yang sering muncul secara bersamaan pada data transaksi, sehingga dapat digunakan sebagai metode untuk mencari informasi mengenai barang seperti apa yang sering dibeli oleh konsumen secara bersamaan.\n\nHasil dari penelitian ini berdasarkan hasil analisis data menggunakan Aplikasi Rapidminer didapatkan 25 hubungan asosiatif atau *rules* dengan nilai *liftratio* lebih dari 1, aturan tersebut menjadi acuan dalam menentukan tata letak barang. Pemberian rekomendasi perubahan tata letak bertujuan untuk memudahkankonsumen dalam berbelanja, meningkatkan kemungkinan terjadinya *impulse buying* oleh konsumen, dan memaksimalkan dalam hal pemajangan produk, sehingga mengurangi penumpukan barang pada gudang Toko.\n\n*(Font Times New Roman, Size 12, Spasi 1)*",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "40"
+    ]
+  },
+  {
+    "id": "skripsi-123",
+    "title": "Catatan :",
+    "content": "*Abstrak adalah ringkasan dari tugas akhir yang memberikan gambaran umum kepada pembaca mengenai inti penelitian. Abstrak terdiri dari tiga alinea, yakni pengantar (opsional) yang berisi latar belakang topik, diikuti dengan alinea pertama yang menjelaskan tujuan penelitian, alinea kedua yang menguraikan metode penelitian, dan alinea ketiga yang menyajikan hasil penelitian secara ringkas. Panjang abstrak tidak lebih dari satu halaman atau maksimal 300 kata, ditulis dengan jarak 1 spasi, dan dibuat dalam dua bahasa (Bahasa Indonesia dan Bahasa Inggris). Abstrak juga memiliki 3 sampai dengan 5 kata kunci yang berasal dari topik utama penelitian, ditulis dengan huruf kecil dan dipisahkan oleh koma.*",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "40"
+    ]
+  },
+  {
+    "id": "skripsi-125",
+    "title": "ABSTRACT",
+    "content": "*(Font Times New Roman, Uppercase, Size 12, Bold, Spasi 1,5, Center)*\n\nStudent Name, Year, Final Project Title, STMIK Widya Cipta Dharma, Main Supervisor: Supervisor Name with Title, Co-Supervisor: Co-Supervisor Name with Title.\n\n**Keywords:** shopping pattern analysis, consumers, product layout, market basket analysis, data mining\n\nNowadays, almost every activity generates data, such as sales transaction data in the business sector, which is continuously increasing and accumulating in the database system. ABCD Store is a small and medium-sized business that sells various school and event supplies, utilizing a POS system for each transaction. Currently, the existing data is only used as an archive by the store owner, which affects the implementation of sales strategies. However, the available data can be processed into useful information to determine product layout, thereby increasing impulse buying, maintaining or increasing revenue, and minimizing product accumulation that may lead to expiration, causing store losses.\n\nThis research employs market basket analysis, also known as association rules, which is one of the techniques in data mining used to discover frequently occurring patterns in transaction data. This method can be utilized to find information about which products are often purchased together by consumers.\n\nThe research results, based on data analysis using the RapidMiner application, identified 25 associative relationships or rules with a lift ratio value greater than 1. These rules serve as a reference in determining product layout. The recommended changes in product layout aim to facilitate consumer shopping, increase the likelihood of impulse buying, and optimize product display, thus reducing excess inventory in the store's warehouse.",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "41"
+    ]
+  },
+  {
+    "id": "skripsi-127",
+    "title": "HALAMAN RIWAYAT HIDUP",
+    "content": "*(Font Times New Roman, Uppercase, Size 12, Bold, Spasi 1,5, Center)*\n\n*Pada halaman ini ditulis riwayat hidup mahasiswa yang bersangkutan, yaitu nama, tempat tanggal lahir, pendidikan, pengalaman kerja, dan riwayat lain yang diperlukan. Sertakan pula pas foto mahasiswa ukuran 2x3 cm dan menyesuaikan dengan isian riwayat hidup.*",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "42"
+    ]
+  },
+  {
+    "id": "skripsi-129",
+    "title": "KATA PENGANTAR",
+    "content": "*(Font Times New Roman, Uppercase, Size 12, Bold, Spasi 1,5, Center)*\n\nHalaman ini sebaiknya dibuat ringkas dalam satu atau dua halaman. Fungsi utama kata pengantar adalah mengantarkan pembaca pada masalah yang akan dicari jawabannya dan kekhususan-kekhususan tertentu dari skripsi (produk yang dihasilkan). Dilanjutkan dengan ucapan terima kasih kepada pihak-pihak yang telah membantu dalam penyusunan skripsi. Ucapan terima kasih didalamnya harus memuat nama, jabatan, dan jasa yang telah diberikan. Bahasa yang digunakan harus mengikuti kaidah bahasa Indonesia yang baku. Kata Pengantar diakhiri dengan mencantumkan kota dan tanggal penulisan diikuti di bawahnya nama penulis tanpa perlu tanda tangan.\n\n> Samarinda, < *tanggal disetujui daftar ujian* > Penulis",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "43"
+    ]
+  },
+  {
+    "id": "skripsi-131",
+    "title": "DAFTAR ISI",
+    "content": "*(Font Times New Roman, Uppercase, Size 12, Bold, Spasi 1,5, Center) (gunakan tools table of content pada menu references di Word)*\n\nHALAMAN JUDUL .......................................................................................................... Mulai Hal i dst\n\nHALAMAN PENGESAHAN\n\nHALAMAN PERNYATAAN KEASLIAN\n\nABSTRAK\n\nHALAMAN RIWAYAT HIDUP\n\nKATA PENGANTAR\n\nDAFTAR ISI DAFTAR TABEL DAFTAR GAMBAR DAFTAR LAMPIRAN",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "44"
+    ]
+  },
+  {
+    "id": "skripsi-132",
+    "title": "BAB I PENDAHULUAN",
+    "content": "- 1.1 Latar Belakang Masalah\n- 1.2 Rumusan Masalah\n- 1.3 Batasan Masalah\n- 1.4 Tujuan Penelitian\n- 1.5 Manfaat Penelitian\n- 1.6 Sistematika Penulisan",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "44"
+    ]
+  },
+  {
+    "id": "skripsi-133",
+    "title": "BAB II TINJAUAN PUSTAKA",
+    "content": "- 2.1 ......\n- 2.2 ....\n  - 2.2.1 .....",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "44"
+    ]
+  },
+  {
+    "id": "skripsi-134",
+    "title": "BAB III METODE PENELITIAN",
+    "content": "- 3.1 Waktu dan Tempat Penelitian\n- 3.2 Teknik Pengumpulan Data\n  - 3.2.1 ..........\n- 3.3 Metode Pengembangan Sistem\n  - 3.3.1 ..........\n  - 3.3.2 ..........",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "44"
+    ]
+  },
+  {
+    "id": "skripsi-135",
+    "title": "BAB IV HASIL PENELITIAN dan PEMBAHASAN",
+    "content": "- 4.1 Hasil Penelitian\n  - 4.1.1 Gambaran umum\n  - 4.1.2 Struktur Organisasi\n- 4.2 Pembahasan\n  - 4.2.1 ........",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "44"
+    ]
+  },
+  {
+    "id": "skripsi-136",
+    "title": "BAB V PENUTUP",
+    "content": "- 5.1 Kesimpulan\n- 5.2 Saran",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "44"
+    ]
+  },
+  {
+    "id": "skripsi-140",
+    "title": "DAFTAR TABEL",
+    "content": "*(Font Times New Roman, Uppercase, Size 12, Bold, Spasi 1,5, Center)*\n\n- Tabel 1.1 Pencatatan Daftar Barang\n- Tabel 1.2 Pencatatan Daftar Supplier\n- Tabel 2.3 Pembelian Barang\n- Tabel 2.4 Pengembalian Barang\n- Tabel 3.5 Penjualan Barang\n- Tabel 3.6 Laporan Pembelian Barang",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "45"
+    ]
+  },
+  {
+    "id": "skripsi-142",
+    "title": "DAFTAR GAMBAR",
+    "content": "*(Font Times New Roman, Uppercase, Size 12, Bold, Spasi 1,5, Center)*\n\n- Gambar 2.1 Simbol – simbol Flow Of Dokumen (FOD)\n- Gambar 2.2 Simbol – simbol Diagram Arus Data (DAD)\n- Gambar 2.3 Notasi simbolik dalam Diagram E-R\n- Gambar 3.4 Rancangan Flow Of Document\n- Gambar 3.5 Diagram Konteks\n- Gambar 3.6 DFD Level 0 Sistem Akuntansi\n- Gambar 3.7 Diagram Entity - Relationship Sistem",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "46"
+    ]
+  },
+  {
+    "id": "skripsi-144",
+    "title": "DAFTAR LAMPIRAN",
+    "content": "*(Font Times New Roman, Uppercase, Size 12, Bold, Spasi 1,5, Center)*\n\n- Lampiran 1 Struktur Organisasi\n- Lampiran 2 Form Pembelian Barang\n- Lampiran 3 Form Transaksi Penjualan\n- Lampiran 4 Kuisioner",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "47"
+    ]
+  },
+  {
+    "id": "skripsi-146",
+    "title": "DAFTAR PUSTAKA",
+    "content": "- Darmawan, D. (2018). *Metode penelitian kuantitatif*. Bandung: Alfabeta.\n- Kurniawan, A. W., & Yulianto, A. (2020). Pengaruh teknologi informasi terhadap peningkatan produktivitas kerja di sektor pendidikan. *Jurnal Teknologi dan Pendidikan Indonesia, 12*(3), 45–58. <https://doi.org/10.xxxxx/jtpi.v12i3.2020>\n- Rahmat, M. T., & Kusumawati, A. (2021). Implementasi manajemen strategis berbasis teknologi informasi di perguruan tinggi. *Jurnal Ilmu Manajemen Indonesia, 15*(2), 89–102. <https://doi.org/10.xxxxx/jimi.v15i2.2021>\n- Santrock, J. W. (2019). *Psikologi pendidikan* (Terj. I. D. Setyo). Jakarta: Kencana.\n- Sugiyono. (2017). *Metode penelitian pendidikan: Pendekatan kuantitatif, kualitatif, dan R&D*. Bandung: Alfabeta.",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "48"
+    ]
+  },
+  {
+    "id": "skripsi-147",
+    "title": "Lampiran 13. Contoh Jadwal Penelitian",
+    "content": "| No  | Nama Kegiatan | Bulan | 1 | 2 | 3 | 4 |\n|-----|---------------|-------|---|---|---|---|\n| 1   |               |       |   |   |   |   |\n| 2   |               |       |   |   |   |   |\n| 3   |               |       |   |   |   |   |\n| 4   |               |       |   |   |   |   |\n| 5   |               |       |   |   |   |   |\n| dst |               |       |   |   |   |   |",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "49"
+    ]
+  },
+  {
+    "id": "skripsi-148",
+    "title": "SEKOLAH TINGGI MANAJEMEN INFORMATIKA dan KOMPUTER WIDYA CIPTA DHARMA",
+    "content": "Status Terakreditasi Badan Akreditasi Nasional Perguruan Tinggi Jl. M. Yamin No. 25 Samarinda – Kalimantan Timur 75123 Telp. 0541 – 736071 Fax.203492,734468, E-mail : wicida@wicida.ac.id",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "49"
+    ]
+  },
+  {
+    "id": "skripsi-149",
+    "title": "Lampiran 14. Form Bimbingan Seminar Proposal/Hasil/Pendadaran",
+    "content": "**FORM BIMBINGAN SEMINAR PROPOSAL/HASIL/PENDADARAN [<sup>4</sup>](#page-49-1) PROGRAM STUDI SISTEM INFORMASI/TEKNIK INFORMATIKA/BISNIS DIGITAL [<sup>5</sup>](#page-49-2)**\n\nNama :\n\nNIM :\n\nJudul Tugas Akhir :\n\n| No. | Uraian | Tanggal | Tanda Tangan |\n|-----|--------|---------|--------------|\n|     |        |         |              |\n\nMengetahui, Samarinda....................................\n\nKetua Program Studi SI/TI/BisDig **[<sup>6</sup>](#page-49-3)** Dosen Pembimbing Utama/Pendamping **[<sup>7</sup>](#page-49-4)**\n\n**Nama Ketua Program Studi Nama Dosen Pembimbing**\n\n<sup>4,5,6,7</sup> : Pilih salah satu dan nama prodi tidak disingkat\n\nStatus Terakreditasi Badan Akreditasi Nasional Perguruan Tinggi\nJl. M. Yamin No. 25 Samarinda – Kalimantan Timur 75123 Telp. 0541 – 736071 Fax.203492,734468, E-mail : wicida@wicida.ac.id",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "49",
+      "50"
+    ]
+  },
+  {
+    "id": "skripsi-151",
+    "title": "PROGRAM STUDI SISTEM INFORMASI/TEKNIK INFORMATIKA/BISNIS DIGITAL [<sup>9</sup>](#page-50-2)",
+    "content": "Nama : …………………………………………….\n\nNIM : …………………………………………….\n\nKelas : …………………………………………….\n\n| No. | Hari/Tanggal | Seminaris (Nama dan Nim) | Judul Tugas Akhir | Tanda Tangan Dosen Pembimbing |\n|-----|--------------|--------------------------|-------------------|-------------------------------|\n|     |              |                          |                   |                               |\n|     |              |                          |                   |                               |\n|     |              |                          |                   |                               |\n\nMengetahui,\n\nKetua Program Studi SI/TI/BisDig **[<sup>10</sup>](#page-50-3)**",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "51"
+    ]
+  },
+  {
+    "id": "skripsi-152",
+    "title": "Nama Ketua Program Studi",
+    "content": "<sup>8,9,10</sup> Pilih salah satu dan nama prodi tidak disingkat\n\n**Status Terakreditasi Badan Akreditasi Nasional Perguruan Tinggi**  \n**Jl. M. Yamin No. 25 Samarinda – Kalimantan Timur 75123 Telp. 0541 – 736071 Fax.203492,734468,**  \n**E-mail : wicida@wicida.ac.id**",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "51"
+    ]
+  },
+  {
+    "id": "skripsi-154",
+    "title": "DAFTAR WAWANCARA",
+    "content": "**Nama Responden : Jabatan Responden : Nama Pewawancara : Lokasi Wawancara :**\n\n- **1.**\n- **2.**\n- **3.**\n- **4.**\n- **5.**\n- **6.**\n- **7.**\n- **8.**\n- **9.**\n- **10.**\n\nKota dilakukan wawancara, (*tanggal wawancara*) Responden,\n\n*Stempel Perusahaan dan Tanda Tangan*\n\n**Nama Lengkap Responden**",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "52"
+    ]
+  },
+  {
+    "id": "skripsi-156",
+    "title": "LEMBAR PERSETUJUAN SEMINAR PROPOSAL",
+    "content": "*(Font Times New Roman, Uppercase, Size 12, Bold, Spasi 1,5, Center)*\n\nJudul Proposal : …………………. Nim : ………………….\n\nNama : ………………….\n\nJenjang : Sarjana\n\nProgram Studi : ………………….",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "53"
+    ]
+  },
+  {
+    "id": "skripsi-157",
+    "title": "Menyetujui,",
+    "content": "Pembimbing Utama Pembimbing Pendamping\n\n**Nama dan Gelar** NIDN/NUPTK.\n\n**Nama dan Gelar** NIDN/NUPTK.\n\nMengetahui,\n\nKetua Program Studi (SI/TI/BisDig) **[<sup>11</sup>](#page-52-1)**\n\n**Nama dan Gelar** NIK.\n\n*(Font Times New Roman, Capitalize Each Word, Size 12, Spasi 1,5)*\n\n*( Spasi Menyesuaikan) ( Spasi Menyesuaikan)*\n\n*( Spasi Menyesuaikan)*\n\n<sup>11</sup> : Pilih salah satu dan nama prodi tidak disingkat\n\n**Status Terakreditasi Badan Akreditasi Nasional Perguruan Tinggi**  \n**Jl. M. Yamin No. 25 Samarinda – Kalimantan Timur 75123 Telp. 0541 – 736071 Fax.203492,734468,**  \n**E-mail : wicida@wicida.ac.id**",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "53"
+    ]
+  },
+  {
+    "id": "skripsi-159",
+    "title": "LEMBAR PERSETUJUAN SEMINAR HASIL",
+    "content": "*(Font Times New Roman, Uppercase, Size 12, Bold, Spasi 1,5, Center)*\n\nJudul Tugas Akhir : …………………. Nim : …………………. Nama : …………………. Jenjang : Sarjana Program Studi : ………………….",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "54"
+    ]
+  },
+  {
+    "id": "skripsi-160",
+    "title": "Menyetujui,",
+    "content": "Pembimbing Utama Pembimbing Pendamping\n\n**Nama dan Gelar** NIDN/NUPTK.\n\n**Nama dan Gelar** NIDN/NUPTK.\n\nMengetahui, Ketua Program Studi (SI/TI/BisDig) **[<sup>12</sup>](#page-53-1)**\n\n**Nama dan Gelar** NIDN/NUPTK.\n\n*(Font Times New Roman, Capitalize Each Word, Size 12, Spasi 1,5)*\n\n*( Spasi Menyesuaikan) ( Spasi Menyesuaikan)*\n\n*( Spasi Menyesuaikan)*\n\n<sup>12</sup> : Pilih salah satu dan nama prodi tidak disingkat\n\n**Status Terakreditasi Badan Akreditasi Nasional Perguruan Tinggi**  \n**Jl. M. Yamin No. 25 Samarinda – Kalimantan Timur 75123 Telp. 0541 – 736071 Fax.203492,734468,**  \n**E-mail : wicida@wicida.ac.id**",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "54"
+    ]
+  },
+  {
+    "id": "skripsi-162",
+    "title": "LEMBAR PERSETUJUAN PENDADARAN",
+    "content": "*(Font Times New Roman, Uppercase, Size 12, Bold, Spasi 1,5, Center)*\n\nJudul Tugas Akhir : …………………. Nim : …………………. Nama : …………………. Jenjang : Sarjana Program Studi : ………………….",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "55"
+    ]
+  },
+  {
+    "id": "skripsi-163",
+    "title": "Menyetujui,",
+    "content": "| Pembimbing Utama      | Pembimbing Pendamping |\n|-----------------------|-----------------------|\n| Ketua Penguji         | Anggota Penguji       |\n| ( Spasi Menyesuaikan) | ( Spasi Menyesuaikan) |\n| ( Spasi Menyesuaikan) | ( Spasi Menyesuaikan) |\n\nMengetahui, Ketua Program Studi (SI/TI/BisDig) **[<sup>13</sup>](#page-54-1)**",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "55"
+    ]
+  },
+  {
+    "id": "skripsi-164",
+    "title": "Nama dan Gelar",
+    "content": "NIK**.**\n\n*(Font Times New Roman, Capitalize Each Word, Size 12, Spasi 1,5)*\n\n*( Spasi Menyesuaikan)*\n\n<sup>13</sup> : Pilih salah satu dan nama prodi tidak disingkat",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "55"
+    ]
+  },
+  {
+    "id": "skripsi-167",
+    "title": "BERITA ACARA SEMINAR PROPOSAL TUGAS AKHIR SKRIPSI PROGRAM STUDI (SI/TI/BisDig)",
+    "content": "Panitia Ujian Seminar Tugas Akhir Skripsi Sekolah Tinggi Manajemen Informatika dan Komputer Widya Cipta Dharma Setelah melaksanakan Seminar Proposal Tahun Akademik Ganjil/Genap ………… Pada Hari ………… Tanggal ……………… Bertempat di Sekolah Tinggi Manajemen Informatika dan Kompter Widya Cipta Dharma",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "56"
+    ]
+  },
+  {
+    "id": "skripsi-168",
+    "title": "Memperhatikan:",
+    "content": "- 1. Jawaban-jawaban dan sanggahan yang diberikan selama seminar proposal\n- 2. Nilai hasil seminar yang dicapai dalam seminar proposal tugas akhir skripsi dengan susunan dewan Penguji sebagai berikut :\n\n| No | Nama Dosen Pembimbing | Sebagai Tanda Tangan |\n|----|-----------------------|----------------------|\n| 1  | Pembimbing Utama      |                      |\n| 2  | Pembimbing Pendamping |                      |\n| 3  | Ketua Penguji         |                      |",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "56"
+    ]
+  },
+  {
+    "id": "skripsi-170",
+    "title": "Menetapkan :",
+    "content": "- 1. Nama : .......................................................................................\n- 2. Nim : .......................................................................................\n- 3. Program Studi/Jenjang : .......................................................................................\n- 4. Kelas :........................................................................................\n- 5. Jalur : SKRIPSI\n- 6. Judul Tugas Akhir :........................................................................................\n\nHasil Kesimpulan :........................................................................................ Catatan :........................................................................................\n\n> Samarinda, …………….. Ketua Program Studi\n\n **Nama dan Gelar** NIK.",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "56"
+    ]
+  },
+  {
+    "id": "skripsi-172",
+    "title": "BERITA ACARA SEMINAR HASIL TUGAS AKHIR SKRIPSI PROGRAM STUDI (SI/TI/BisDig)",
+    "content": "Panitia Ujian Seminar Tugas Akhir Skripsi Sekolah Tinggi Manajemen Informatika dan Komputer Widya Cipta Dharma Setelah melaksanakan Seminar Hasil Tahun Akademik Ganjil/Genap ………… Pada Hari ………… Tanggal ……………… Bertempat di Sekolah Tinggi Manajemen Informatika dan Kompter Widya Cipta Dharma",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "56"
+    ]
+  },
+  {
+    "id": "skripsi-173",
+    "title": "Memperhatikan:",
+    "content": "- 1. Jawaban-jawaban dan sanggahan yang diberikan selama seminar hasil\n- 2. Nilai hasil seminar yang dicapai dalam seminar hasil tugas akhir skripsi dengan susunan dewan Penguji sebagai berikut:\n\n| No | Nama Dosen Pembimbing | Sebagai Tanda Tangan |\n|----|-----------------------|----------------------|\n| 1  | Pembimbing Utama      |                      |\n| 2  | Pembimbing Pendamping |                      |\n| 3  | Ketua Penguji         |                      |\n| 4  | Anggota Penguji       |                      |",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "56"
+    ]
+  },
+  {
+    "id": "skripsi-175",
+    "title": "Menetapkan :",
+    "content": "- 1. Nama : .......................................................................................\n- 2. Nim : .......................................................................................\n- 3. Program Studi/Jenjang : .......................................................................................\n- 4. Kelas :........................................................................................\n- 5. Jalur : SKRIPSI\n- 6. Judul Tugas Akhir :........................................................................................",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "56"
+    ]
+  },
+  {
+    "id": "skripsi-176",
+    "title": "Hasil Kesimpulan :........................................................................................ Catatan :........................................................................................",
+    "content": "Samarinda, ……………… Ketua Program Studi",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "56"
+    ]
+  },
+  {
+    "id": "skripsi-177",
+    "title": "Nama dan Gelar",
+    "content": "NIK.\n\nStatus Terakreditasi Badan Akreditasi Nasional Perguruan Tinggi\nJl. M. Yamin No. 25 Samarinda – Kalimantan Timur 75123 Telp. 0541 – 736071 Fax.203492,734466, E-mail : wicida@wicida.ac.id",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "56"
+    ]
+  },
+  {
+    "id": "skripsi-179",
+    "title": "BERITA ACARA SEMINAR PENDADARAN TUGAS AKHIR SKRIPSI PROGRAM STUDI (SI/TI/BisDig)",
+    "content": "Panitia Ujian Seminar Tugas Akhir Sekolah Tinggi Manajemen Informatika dan Komputer Widya Cipta Dharma Setelah melaksanakan Seminar Pendadaran Tahun Akademik Ganjil/Genap ……… Pada Hari ………… Tanggal ……………… Bertempat di Sekolah Tinggi Manajemen Informatika dan Kompter Widya Cipta Dharma",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "56"
+    ]
+  },
+  {
+    "id": "skripsi-180",
+    "title": "Memperhatikan:",
+    "content": "- 1. Jawaban-jawaban dan sanggahan yang diberikan selama pendadaran\n- 2. Nilai hasil seminar yang dicapai dalam seminar pendadaran skripsi dengan susunan dewan Penguji sebagai berikut :\n\n| No | Nama Dosen Pembimbing | Sebagai Tanda Tangan |\n|----|-----------------------|----------------------|\n| 1  | Pembimbing Utama      |                      |\n| 2  | Pembimbing Pendamping |                      |\n| 3  | Ketua Penguji         |                      |\n| 4  | Anggota Penguji       |                      |",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "56"
+    ]
+  },
+  {
+    "id": "skripsi-182",
+    "title": "Menetapkan :",
+    "content": "1. Nama : ....................................................................................... 2. Nim : ....................................................................................... 3. Program Studi/Jenjang : ....................................................................................... 4. Kelas :........................................................................................\n\n5. Jalur : SKRIPSI\n\n6. Judul Tugas Akhir :........................................................................................",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "56"
+    ]
+  },
+  {
+    "id": "skripsi-184",
+    "title": "Dinyatakan : LULUS / TIDAK LULUS [<sup>14</sup>](#page-57-0)",
+    "content": "Catatan :........................................................................................\n\nSamarinda, ………… Ketua Program Studi\n\n **Nama dan Gelar** NIK.\n\n<sup>14</sup> Coret yang tidak perlu",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "56",
+      "58"
+    ]
+  },
+  {
+    "id": "skripsi-187",
+    "title": "NILAI UJIAN SEMINAR II TUGAS AKHIR SKRIPSI PROGRAM STUDI (SI/TI/BisDig)",
+    "content": "Yang bertandatangan di bawah ini sebagai Penguji Sidang Tugas Akhir Skripsi bagi mahasiswa STMIK Widya Cipta Dharma sebagai berikut:\n\nNIM : ............................................................................................\n\nNama : ............................................................................................\n\nProgram Studi / Jenjang : ............................................................................................\n\nJudul Tugas Akhir : ............................................................................................\n\n| No | Komponen Penilaian Nilai Keterangan |\n|----|-------------------------------------|\n| 1  | Orisinalitas Penulisan              |\n| 2  | Metodologi Skripsi                  |\n| 3  | Pengusaan Materi                    |\n| 4  | Kemampuan Argumentasi               |\n| 5  | Penampilan / Etika                  |\n\nSamarinda, …………………….. Dosen Pembimbing/Penguji\n\n(…………………………)",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "59"
+    ]
+  },
+  {
+    "id": "skripsi-188",
+    "title": "Keterangan :",
+    "content": "Setiap komponen diberi nilai dalam rentang (0-100). Nilai yang digunakan adalah hasil rata-rata dari seluruh nilai komponen tersebut",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "59"
+    ]
+  },
+  {
+    "id": "skripsi-190",
+    "title": "NILAI UJIAN PENDADARAN TUGAS AKHIR SKRIPSI PROGRAM STUDI (SI/TI/BisDig)",
+    "content": "NIM : ............................................................................................\n\nNama : ............................................................................................\n\nProgram Studi / Jenjang : ............................................................................................\n\nJudul Tugas Akhir : ............................................................................................\n\n| No | Komponen Penilaian Nilai Keterangan |\n|----|-------------------------------------|\n| 1  | Orisinalitas Penulisan              |\n| 2  | Metodologi Skripsi                  |\n| 3  | Pengusaan Materi                    |\n| 4  | Kemampuan Argumentasi               |\n| 5  | Pengetahuan Bidang Studi            |\n| 6  | Penampilan / Etika                  |\n\nSamarinda, …………………….. Dosen Pembimbing/Penguji\n\n(…………………………)",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "59"
+    ]
+  },
+  {
+    "id": "skripsi-191",
+    "title": "Keterangan :",
+    "content": "Setiap komponen diberi nilai dalam rentang (0-100). Nilai yang digunakan adalah hasil rata-rata dari seluruh nilai komponen tersebut\n\n**Status Terakreditasi Badan Akreditasi Nasional Perguraan Tinggi**  \n**Jl. M. Yamin No. 25 Samarinda – Kalimantan Timur 75123 Telp. 0541 – 736071 Fax.203492,734468,**  \n**E-mail : wicida@wicida.ac.id**",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "59"
+    ]
+  },
+  {
+    "id": "skripsi-193",
+    "title": "NILAI UJIAN TUGAS AKHIR SKRIPSI PROGRAM STUDI (SI/TI/BisDig)",
+    "content": "| NIM                     | : ............................................................................................ |\n|-------------------------|------------------------------------------------------------------------------------------------|\n| Nama                    | : ............................................................................................ |\n| Program Studi / Jenjang | : ............................................................................................ |\n| Judul Tugas Akhir       | : ............................................................................................ |",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "59"
+    ]
+  },
+  {
+    "id": "skripsi-194",
+    "title": "A. SEMINAR HASIL",
+    "content": "Pembimbing Utama = ………. Pembimbing Pendamping = ………. Ketua Penguji = ………. Anggota Penguji = ………. **JUMLAH** = ………. : 4 =………. X 40 % = ……….",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "59"
+    ]
+  },
+  {
+    "id": "skripsi-195",
+    "title": "B. PENDADARAN",
+    "content": "Pembimbing Utama = ………. Pembimbing Pendamping = ………. Ketua Penguji = ………. Anggota Penguji = ………. **JUMLAH** = ………. : 4 =………. X 60 % = ……….\n\n> **TOTAL = ………. NILAI HURUF = ……….**",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "59"
+    ]
+  },
+  {
+    "id": "skripsi-196",
+    "title": "Keterangan :",
+    "content": "| At : <span>80 ≤ Nilai ≤ 100</span> |\n|------------------------------------|\n| B : <span>70 ≤ Nilai ≤ 79</span>   |\n| C : <span>60 ≤ Nilai ≤ 69</span>   |\n| D : <span>40 ≤ Nilai ≤ 59</span>   |\n| E : <span>0 ≤ Nilai ≤ 39</span>    |\n\nStatus Terakreditasi Badan Akreditasi Nasional Perguruan Tinggi\nJl. M. Yamin No. 25 Samarinda – Kalimantan Timur 75123 Telp. 0541 – 736071 Fax.203492,734468, E-mail : wicida@wicida.ac.id",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "59"
+    ]
+  },
+  {
+    "id": "skripsi-198",
+    "title": "PERMOHONAN PENGGANTIAN DOSEN PEMBIMBING TUGAS AKHIR",
+    "content": "NIM : ............................................................................................ Nama : ............................................................................................ Program Studi / Jenjang : ............................................................................................ Jalur : SKRIPSI Judul Tugas Akhir : ............................................................................................\n\nDengan ini mengajukan permohonan penggantian Dosen Pembimbing.\n\nDosen Pembimbing yang akan diganti: *Tuliskan nama dosen dan gelarnya*\n\nAlasan penggantian Dosen Pembimbing Tugas Akhir Skripsi: **[15](#page-61-1)**\n\n- a. Meninggal dunia\n- b. Sakit, sehingga yang bersangkutan harus istirahat panjang\n- c. Cuti diluar tanggungan Negara\n- d. Pindah tugas\n\ne. ……………………………\n\nSamarinda, …………………….. Pemohon\n\n(…………………………)\n\n<sup>15</sup> Lingkari salah satu\n\nStatus Terakreditasi Badan Akreditasi Nasional Perguruan Tinggi\nJl. M. Yamin No. 25 Samarinda – Kalimantan Timur 75123 Telp. 0541 – 736071 Fax.203492,734468, E-mail : wicida@wicida.ac.id",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "62"
+    ]
+  },
+  {
+    "id": "skripsi-200",
+    "title": "SURAT TUGAS",
+    "content": "**NO : ………………………………**\n\nBersama ini kami menugaskan kepada Bapak/Ibu Dosen :\n\nNama : ............................................................................................\n\nNIDN/NUPTK : ............................................................................................\n\nProgram Studi : ............................................................................................\n\nUntuk menjadi Dosen Pembimbing pengganti **Skripsi/ Non Skripsi [<sup>16</sup>](#page-62-1)** mahasiswa dengan :\n\nNIM : ............................................................................................\n\nNama : ............................................................................................\n\nProgram Studi / Jenjang : ............................................................................................\n\nJudul Tugas Akhir : ............................................................................................\n\nDemikian surat tugas ini kami sampaikan, atas perhatian dan kerjasama Bapak/ Ibu diucapkan terima kasih.\n\n> Samarinda, …………………….. Ketua Program Studi\n\n **Nama dan Gelar** NIK.\n\n<sup>16</sup> Pilih salah satu",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "63"
+    ]
+  },
+  {
+    "id": "skripsi-202",
+    "title": "1. Poster Program Studi Sistem Informasi",
+    "content": "**[JUDUL PENELITIAN]**  \n**\\*[Size 13, Font Roboto, Rata Tengah, Bold]**  \n**\\*Maximal 3 Baris**  \n**Tugas Akhir Program Studi Sistem Informasi**  \n**2024**\n\n**Identitas Peneliti**\n\n[Nama Dosen Pembimbing Utama+Gelar]  \n [NIDN/NUPTK]\n\n[Nama Lengkap Mahasiswa]  \n [NIM]\n\n[Nama Dosen Pembimbing Pendamping+Gelar]  \n [NIDN/NUPTK]\n\n**Abstract**\n\nIsi Abstract Sesuai Pedoman!  \n \\*[Font Roboto, Size 8, Paragraf Rata Kanan Kiri, Style Bold]\n\n**Metode Penelitian**\n\nJelaskan Secara Singkat dan Jelas, Masukkan Diagram Penelitian dan Tahapan Penelitian yang dilakukan (Gambar/Tabel/Text)  \n \\*[Font Roboto, Size 8, Paragraf Rata Kanan Kiri, Style Bold]\n\n**Hasil Penelitian**\n\nInput Gambar/Text/Tabel/Flowchart dari hasil penelitian yang telah dilakukan\n\n PRODISI\\_WICIDA.AC.JD PRODISI\\_WICIDA PRODISI\\_WICIDA PRODISI\\_WICIDA",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "64"
+    ]
+  },
+  {
+    "id": "skripsi-206",
+    "title": "WIDYA CIPTA DHARMA",
+    "content": "Center Of Excellence",
+    "source": "Panduan Penyusunan Skripsi Cetak",
+    "section": "LAMPIRAN",
+    "pages": [
+      "64"
+    ]
+  }
+]
