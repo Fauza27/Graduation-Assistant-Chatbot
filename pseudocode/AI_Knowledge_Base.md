@@ -26,11 +26,12 @@ Sistem menggunakan **PostgreSQL (via Supabase)** dengan ekstensi `pgvector` untu
 - `title` (text): Judul dokumen/bab.
 - `content` (text): Teks isi utuh.
 - `section` (text): Kategori bagian (Misal: "BAB II").
+- `domain` (text): Domain data ('PI', 'KKP', 'SKRIPSI', 'NON_SKRIPSI').
 - `child_ids` (text[]): Daftar ID potongan anak yang merujuk ke sini.
 
 *Contoh Data*:
 ```json
-{"parent_id": "pi-bab2-001", "title": "Ketentuan Pembimbing", "content": "Dosen pembimbing PI wajib memiliki...", "section": "BAB II", "child_ids": ["pi-bab2-001-c1", "pi-bab2-001-c2"]}
+{"parent_id": "pi-bab2-001", "title": "Ketentuan Pembimbing", "content": "Dosen pembimbing PI wajib memiliki...", "section": "BAB II", "domain": "PI", "child_ids": ["pi-bab2-001-c1", "pi-bab2-001-c2"]}
 ```
 
 **2. `child_documents`** (Menyimpan potongan kecil teks + Vektor untuk pencarian Hybrid)
@@ -40,30 +41,54 @@ Sistem menggunakan **PostgreSQL (via Supabase)** dengan ekstensi `pgvector` untu
 - `title`, `content`, `section` (text): Data tekstual.
 - `pages` (int[]): Nomor halaman asli di dokumen cetak.
 - `source` (text): Nama dokumen sumber.
+- `domain` (text): Domain data ('PI', 'KKP', 'SKRIPSI', 'NON_SKRIPSI').
 - `metadata` (jsonb): Data pelengkap.
 - `embedding` (vector(2000)): Representasi vektor numerik teks.
 
 *Contoh Data*:
 ```json
-{"id": "pi-bab2-001-c1", "parent_id": "pi-bab2-001", "title": "Ketentuan Pembimbing", "content": "Dosen pembimbing PI wajib minimal S2...", "section": "BAB II", "pages": [14], "source": "Panduan PI", "metadata": {"parent_id": "pi-bab2-001"}, "embedding": [0.012, -0.045, ...]}
+{"id": "pi-bab2-001-c1", "parent_id": "pi-bab2-001", "title": "Ketentuan Pembimbing", "content": "Dosen pembimbing PI wajib minimal S2...", "section": "BAB II", "domain": "PI", "pages": [14], "source": "Panduan PI", "metadata": {"parent_id": "pi-bab2-001"}, "embedding": [0.012, -0.045, ...]}
 ```
 
-**3. `conversation_sessions`** (Menyimpan riwayat obrolan user)
+**3. `mahasiswa_accounts`** (Akun Mahasiswa untuk login Website)
+- `mahasiswa_id` (uuid, PK): ID unik mahasiswa.
+- `google_sub` (text, UNIQUE): ID autentikasi Google.
+- `email`, `nama`, `avatar_url` (text): Profil mahasiswa.
+- `created_at`, `last_login` (timestamptz): Waktu pembuatan dan login.
+
+**4. `admin_users`** (Akun Admin untuk Dashboard CMS)
+- `admin_id` (uuid, PK): ID unik admin.
+- `username` (text, UNIQUE): Username login.
+- `password_hash`, `full_name` (text): Profil kredensial.
+- `created_at`, `last_login` (timestamptz): Waktu pembuatan dan login.
+
+**5. `conversation_sessions`** (Menyimpan riwayat obrolan user)
 - `session_id` (text, PK): ID sesi / ID User Telegram.
+- `mahasiswa_id` (uuid, FK ke `mahasiswa_accounts`): Nullable jika akses via Telegram anonim.
+- `channel` (text): Asal platform percakapan ('telegram' atau 'website').
 - `turns` (jsonb): Riwayat percakapan.
 - `last_access` (timestamptz): Penanda waktu untuk pembersihan sesi yang mati (idle cleanup).
 
 *Contoh Data*:
 ```json
-{"session_id": "tg-123456789", "turns": [{"role": "user", "content": "Halo"}, {"role": "assistant", "content": "Halo! Ada yang bisa saya bantu?"}], "last_access": "2026-07-27T10:00:00Z"}
+{"session_id": "tg-123456789", "mahasiswa_id": null, "channel": "telegram", "turns": [{"role": "user", "content": "Halo"}, {"role": "assistant", "content": "Halo!"}], "last_access": "2026-07-27T10:00:00Z"}
 ```
+
+**6. `chunk_edit_logs`** (Log Audit Perubahan Data dan Antrean Re-Embedding)
+- `log_id` (uuid, PK): ID log unik.
+- `child_id`, `parent_id` (text): ID dokumen yang diubah.
+- `admin_id` (uuid, FK ke `admin_users`): Admin yang melakukan perubahan.
+- `old_content`, `new_content` (text): Konten sebelum dan sesudah diedit.
+- `status` (text): Status proses ('pending', 'processing', 'success', 'failed').
+- `error_message` (text): Pesan error jika re-embedding gagal.
+- `edited_at`, `reembedded_at` (timestamptz): Penanda waktu.
 
 ---
 
 ## 3. Struktur Folder
 
 ```text
-penelitian-ilmiah/
+backend/
 ├── docker-compose.yml          : File orkestrasi container Docker.
 ├── Dockerfile                  : Instruksi build image container.
 ├── main.py                     : Entry point REST API & Webhook Telegram.
@@ -74,9 +99,11 @@ penelitian-ilmiah/
 ├── scripts/
 │   ├── supabase.sql            : Skema awal tabel dan fungsi RPC `hybrid_search`.
 │   ├── supabase_migration_quota_rpc.sql : Fungsi RPC untuk mengecek kuota rate-limit chatbot.
-│   └── supabase_session_migration.sql : Skema tabel memori sesi dan fungsi RPC pembersih (cleanup).
+│   ├── supabase_session_migration.sql : Skema tabel memori sesi dan fungsi RPC pembersih (cleanup).
+│   └── supabase_migration_multidomain.sql : Skema tabel untuk multi-domain, user, dan log edit.
 └── src/
     ├── api/
+
     │   ├── ai.py               : Endpoint `/chat` untuk melayani REST API HTTP.
     │   └── health.py           : Endpoint `/health` status server.
     ├── bot/
