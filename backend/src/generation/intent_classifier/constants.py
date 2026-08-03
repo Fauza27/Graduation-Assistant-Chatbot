@@ -7,8 +7,10 @@ TOPIC_SWITCH_SIGNALS = {
         "berbeda", "different", "lain", "other", "bukan", "not", "tapi", "but"
     ],
     "domain_keywords": {
-        "pi": ["pi", "penulisan ilmiah", "penelitian", "skripsi", "thesis"],
-        "kkp": ["kkp", "kuliah kerja praktik", "magang", "internship", "praktik"]
+        "pi": ["pi", "penulisan ilmiah", "penelitian", "thesis"],
+        "kkp": ["kkp", "kuliah kerja praktik", "magang", "internship", "praktik"],
+        "skripsi": ["skripsi", "tugas akhir", "ta"],
+        "non_skripsi": ["non skripsi", "non-skripsi", "karya ilmiah", "profesional", "wirausaha"]
     }
 }
 
