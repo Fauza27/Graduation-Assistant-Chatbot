@@ -5,7 +5,7 @@ Dokumen ini adalah *knowledge base* komprehensif dari sistem AI Chatbot Asisten 
 ---
 
 ## 1. Ringkasan Project
-Proyek ini adalah **AI Chatbot Asisten Akademik** yang dirancang untuk menjawab pertanyaan mahasiswa seputar pedoman Kuliah Kerja Praktik (KKP) dan Penulisan Ilmiah (PI) di STMIK Widya Cipta Dharma. Chatbot menggunakan sistem **Retrieval-Augmented Generation (RAG)** cerdas dengan hybrid search (Vector + Keyword) untuk memastikan jawaban akurat berdasarkan dokumen resmi kampus, tanpa halusinasi, dan menyimpan histori sesi obrolan.
+Proyek ini adalah **AI Chatbot Asisten Akademik** yang dirancang untuk menjawab pertanyaan mahasiswa seputar pedoman Kuliah Kerja Praktik (KKP), Penulisan Ilmiah (PI), Skripsi, dan Non-Skripsi di STMIK Widya Cipta Dharma. Chatbot menggunakan sistem **Retrieval-Augmented Generation (RAG)** cerdas dengan hybrid search (Vector + Keyword) untuk memastikan jawaban akurat berdasarkan dokumen resmi kampus, tanpa halusinasi, dan menyimpan histori sesi obrolan.
 
 **Tech Stack**:
 - **Bahasa**: Python 3
@@ -100,7 +100,8 @@ backend/
 │   ├── supabase.sql            : Skema awal tabel dan fungsi RPC `hybrid_search`.
 │   ├── supabase_migration_quota_rpc.sql : Fungsi RPC untuk mengecek kuota rate-limit chatbot.
 │   ├── supabase_session_migration.sql : Skema tabel memori sesi dan fungsi RPC pembersih (cleanup).
-│   └── supabase_migration_multidomain.sql : Skema tabel untuk multi-domain, user, dan log edit.
+│   ├── supabase_migration_multidomain.sql : Skema tabel untuk multi-domain, user, dan log edit.
+│   └── supabase_update_search.sql : Pembaruan fungsi RPC pencarian untuk mendukung filter source.
 └── src/
     ├── api/
 
@@ -265,6 +266,7 @@ ALGORITMA PROSES INGESTION & EMBEDDING (embedder.py)
    - JIKA semua dokumen sudah ada: Hentikan dan kembalikan 0.
    - JIKA ada yang baru: 
      - Susun datanya (ID, judul, isi, bagian, ID anak-anaknya).
+     - Ekstrak nilai domain ("PI", "KKP", "SKRIPSI", "NON_SKRIPSI") berdasarkan pola teks `parent_id`.
      - Sisipkan (Insert) ke database sekaligus (Bulk insert).
    - KEMBALIKAN jumlah dokumen induk yang berhasil masuk.
 
@@ -275,8 +277,9 @@ ALGORITMA PROSES INGESTION & EMBEDDING (embedder.py)
    - LOOP sisa anak-anak baru secara berkelompok (batch 20):
      - Untuk setiap *chunk* anak:
        - Cari siapa ID induknya (dari map).
+       - Ekstrak nilai domain dari ID induk.
        - Buat metadata JSON.
-       - Gabungkan teks, vektor, dan metadatanya menjadi 1 baris (row).
+       - Gabungkan teks, vektor, domain, dan metadatanya menjadi 1 baris (row).
      - Sisipkan baris-baris tersebut ke database Supabase.
    - KEMBALIKAN jumlah dokumen anak yang berhasil masuk.
 
@@ -506,13 +509,13 @@ ALGORITMA UTAMA SISTEM (main.py)
    - KEMBALIKAN jawaban, dokumen sumber, dan metadata proses.
 
 5. FUNGSI run_ingest(dataset: String)
-   - Peta letak file JSON dari chunk PDF untuk masing-masing dataset ("pi" dan "kkp").
+   - Peta letak file JSON dari chunk PDF untuk masing-masing dataset ("pi", "kkp", "skripsi", "non_skripsi").
    - FUNGSI LOKAL ingest_one(name):
      - Ambil path file child chunk dan parent chunk.
      - Jika file tidak ada, HENTIKAN program (error).
      - Jalankan `run_ingestion` untuk mengkonversi dan menyimpan teks ke database vektor (Supabase).
      - Cetak log berhasil beserta statistik baris data.
-   - Jika dataset = "both": Jalankan `ingest_one` untuk "pi" dan "kkp".
+   - Jika dataset = "both" atau "all": Jalankan `ingest_one` untuk semua domain di atas.
    - Selain itu: Jalankan `ingest_one` untuk dataset yang dipilih.
 
 6. FUNGSI run_eval(dataset) DAN run_eval_no_gt(dataset)
