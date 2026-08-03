@@ -95,6 +95,7 @@ class HybridSearcher:
             "vector_weight": settings.dense_weight,
             "rrf_k": RRF_K_DEFAULT,
             "filter_section": filters.get("section"),
+            "filter_source": filters.get("source"),
         }
 
         t1 = time.time()
@@ -116,6 +117,7 @@ class HybridSearcher:
                     "match_threshold": 0.0,
                     "match_count": k,
                     "filter_section": filters.get("section"),
+                    "filter_source": filters.get("source"),
                 },
             ).execute()
 
