@@ -129,19 +129,55 @@ _KKP_KEYWORDS = [
     "untuk kkp",
 ]
 
+_SKRIPSI_KEYWORDS = [
+    "skripsi",
+    "tugas akhir skripsi",
+    "pendadaran",
+    "seminar hasil",
+    "proposal skripsi",
+    "untuk skripsi",
+    "jalur skripsi",
+    "panduan skripsi",
+]
+
+_NON_SKRIPSI_KEYWORDS = [
+    "non skripsi",
+    "non-skripsi",
+    "karya ilmiah",
+    "jalur profesional",
+    "wirausaha",
+    "jurnal",
+    "prosiding",
+    "startup",
+    "tugas akhir non skripsi",
+    "jalur kelulusan alternatif",
+]
+
 _SOURCE_PI = "Panduan Penyusunan Penulisan Imliah (PI) Cetak"
 _SOURCE_KKP = "Panduan Penyusunan Kuliah Kerja Praktik (KKP) Cetak"
+_SOURCE_SKRIPSI = "Panduan Penyusunan Skripsi Cetak"
+_SOURCE_NON_SKRIPSI = "Panduan Penyusunan Tugas Akhir Non-Skripsi Cetak"
 
 
 def _detect_source(query_lower: str) -> str | None:
     """Tentukan source filter berdasarkan keyword query."""
     is_pi = any(kw in query_lower for kw in _PI_KEYWORDS)
     is_kkp = any(kw in query_lower for kw in _KKP_KEYWORDS)
+    is_skripsi = any(kw in query_lower for kw in _SKRIPSI_KEYWORDS)
+    is_non_skripsi = any(kw in query_lower for kw in _NON_SKRIPSI_KEYWORDS)
 
-    if is_pi and not is_kkp:
-        return _SOURCE_PI
-    if is_kkp and not is_pi:
-        return _SOURCE_KKP
+    sources = []
+    if is_pi:
+        sources.append(_SOURCE_PI)
+    if is_kkp:
+        sources.append(_SOURCE_KKP)
+    if is_skripsi:
+        sources.append(_SOURCE_SKRIPSI)
+    if is_non_skripsi:
+        sources.append(_SOURCE_NON_SKRIPSI)
+
+    if len(sources) == 1:
+        return sources[0]
     return None
 
 
@@ -287,9 +323,11 @@ def get_available_sections(
 def get_metadata_statistics() -> dict:
     """Statistik metadata untuk dokumentasi/debugging."""
     return {
-        "sources": [_SOURCE_PI, _SOURCE_KKP],
+        "sources": [_SOURCE_PI, _SOURCE_KKP, _SOURCE_SKRIPSI, _SOURCE_NON_SKRIPSI],
         "sections": list(SECTION_KEYWORDS.keys()),
         "pi_parent_chunks": 23,
         "kkp_parent_chunks": 23,
-        "total_parent_chunks": 46,
+        "skripsi_parent_chunks": 22,
+        "non_skripsi_parent_chunks": 29,
+        "total_parent_chunks": 97,
     }

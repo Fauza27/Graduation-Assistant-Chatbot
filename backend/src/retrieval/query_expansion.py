@@ -26,6 +26,7 @@ from loguru import logger
 UPPERCASE_ACRONYMS: dict[str, list[str]] = {
     "PI": ["Penulisan Ilmiah"],
     "KKP": ["Kuliah Kerja Praktik", "Kuliah Kerja Praktek"],
+    "TA": ["Tugas Akhir"],
     "SKS": ["Satuan Kredit Semester"],
     "IPK": ["Indeks Prestasi Kumulatif"],
     "KRS": ["Kartu Rencana Studi"],
@@ -41,6 +42,7 @@ LONG_FORM_TO_ACRONYM: dict[str, list[str]] = {
     "penulisan ilmiah": ["PI"],
     "kuliah kerja praktik": ["KKP"],
     "kuliah kerja praktek": ["KKP"],
+    "tugas akhir": ["TA"],
     "satuan kredit semester": ["SKS"],
     "indeks prestasi kumulatif": ["IPK"],
     "kartu rencana studi": ["KRS"],

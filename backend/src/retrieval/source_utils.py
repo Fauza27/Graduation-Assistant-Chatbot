@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from typing import Literal, Mapping
 
-PanduanType = Literal["PI", "KKP"]
+PanduanType = Literal["PI", "KKP", "SKRIPSI", "NON_SKRIPSI"]
 
 
 def detect_panduan_type(meta: Mapping | None) -> PanduanType:
@@ -29,6 +29,10 @@ def detect_panduan_type(meta: Mapping | None) -> PanduanType:
     # 1. Pakai field `source` kalau ada.
     source = (meta.get("source") or "").lower()
     if source:
+        if "non-skripsi" in source or "non skripsi" in source:
+            return "NON_SKRIPSI"
+        if "skripsi" in source:
+            return "SKRIPSI"
         if "kkp" in source or "kuliah kerja" in source:
             return "KKP"
         if "pi" in source or "penulisan ilmiah" in source or "penulisan imliah" in source:
@@ -36,9 +40,13 @@ def detect_panduan_type(meta: Mapping | None) -> PanduanType:
 
     # 2. Pakai prefix ID. Cek parent_id dulu, lalu id.
     pid = (meta.get("parent_id") or meta.get("id") or "").lower()
+    if pid.startswith("parent-non-skripsi") or pid.startswith("non-skripsi-"):
+        return "NON_SKRIPSI"
+    if pid.startswith("parent-skripsi") or pid.startswith("skripsi-"):
+        return "SKRIPSI"
     if pid.startswith("parent-kkp-") or pid.startswith("kkp-"):
         return "KKP"
     if pid.startswith("parent-") or pid.startswith("pi-"):
         return "PI"
 
-    return "KKP"
+    return "PI"

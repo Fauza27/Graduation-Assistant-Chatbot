@@ -105,6 +105,10 @@ BAB II:
   - hadir seminar
   - daftar hadir
   - kehadiran seminar
+  - pendadaran
+  - seminar hasil
+  - seminar proposal
+  - ujian skripsi
   # Penilaian
   - sistem penilaian
   - komponen penilaian
@@ -143,6 +147,15 @@ BAB III:
   - sistematika pi
   - sistematika kkp
   - sistematika laporan
+  - bentuk tugas akhir
+  - karya ilmiah
+  - jurnal
+  - prosiding
+  - profesional
+  - jalur profesional
+  - wirausaha
+  - jalur wirausaha
+  - startup
 
 BAB IV:
   # Bagian Awal
@@ -271,8 +284,8 @@ BAB V:
   # Daftar Pustaka
   - daftar pustaka
   - referensi
-  - apa
-  - american psychological
+  - format apa
+  - american psychological association
   - mendeley
   - tools reference
   - jumlah referensi
@@ -282,9 +295,6 @@ BAB V:
   - format buku
   - artikel website
   - bab buku
-  - skripsi
-  - tesis
-  - disertasi
   - media online
   - sumber elektronik
   - tidak dipublikasikan
@@ -294,11 +304,10 @@ BAB V:
 
 Lampiran:
   # Umum
-  - contoh
-  - lampiran
-  - formulir
-  - contoh format
+  - contoh lampiran
   - contoh formulir
+  - format formulir
+  - contoh format
   # Halaman Awal
   - contoh sampul
   - contoh cover
