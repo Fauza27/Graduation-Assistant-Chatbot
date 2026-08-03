@@ -76,12 +76,23 @@ def upsert_parent_chunks(parents: list[dict]) -> int:
 
     rows = []
     for p in new_parents:
+        pid = p["parent_id"].lower()
+        if pid.startswith("parent-non-skripsi"):
+            domain = "NON_SKRIPSI"
+        elif pid.startswith("parent-skripsi"):
+            domain = "SKRIPSI"
+        elif pid.startswith("parent-kkp"):
+            domain = "KKP"
+        else:
+            domain = "PI"
+
         rows.append({
             "parent_id": p["parent_id"],
             "title": p["title"],
             "content": p["content"],
             "section": p["section"],
             "child_ids": p["child_ids"],
+            "domain": domain,
         })
 
     supabase.table(table).insert(rows).execute()
@@ -129,6 +140,15 @@ def upsert_child_chunks_with_embeddings(
             child = children[idx]
             embedding = embeddings[idx]
             parent_id = child_to_parent_map.get(child["id"], "")
+            pid_lower = parent_id.lower()
+            if pid_lower.startswith("parent-non-skripsi"):
+                domain = "NON_SKRIPSI"
+            elif pid_lower.startswith("parent-skripsi"):
+                domain = "SKRIPSI"
+            elif pid_lower.startswith("parent-kkp"):
+                domain = "KKP"
+            else:
+                domain = "PI"
 
             child_with_parent = {**child, "parent_id": parent_id}
             metadata = _build_metadata_json(child_with_parent)
@@ -143,6 +163,7 @@ def upsert_child_chunks_with_embeddings(
                 "source": child.get("source", ""),
                 "metadata": metadata,
                 "embedding": embedding,
+                "domain": domain,
             })
 
         supabase.table(table).insert(rows).execute()

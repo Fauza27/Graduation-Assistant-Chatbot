@@ -166,8 +166,10 @@ def run_ingest(dataset: str = "both") -> None:
 
     project_root = Path(__file__).resolve().parent
     dataset_map = {
-        "pi": ("child_chunk_pi.json", "parent_chunk_pi.json"),
-        "kkp": ("child_chunk_kkp.json", "parent_chunk_kkp.json"),
+        "pi": ("PI/child_chunk_pi.json", "PI/parent_chunk_pi.json"),
+        "kkp": ("KKP/child_chunk_kkp.json", "KKP/parent_chunk_kkp.json"),
+        "skripsi": ("Skripsi/child_chunk_skripsi.json", "Skripsi/parent_chunk_skripsi.json"),
+        "non_skripsi": ("Non-Skripsi/child_chunk_non-skripsi.json", "Non-Skripsi/parent_chunk_non-skripsi.json"),
     }
 
     def ingest_one(name: str) -> None:
@@ -190,8 +192,8 @@ def run_ingest(dataset: str = "both") -> None:
         logger.info(f"Ingestion selesai untuk {name.upper()}!")
         logger.info(f"Stats: {stats}")
 
-    if dataset == "both":
-        for name in ("pi", "kkp"):
+    if dataset in ("both", "all"):
+        for name in dataset_map.keys():
             ingest_one(name)
     else:
         ingest_one(dataset)
@@ -241,13 +243,13 @@ def run_eval_no_gt(dataset: str = "both") -> None:
 
 
 def _print_answer(answer: str, num_docs: int) -> None:
-    print("─" * 60)
-    print("💡 JAWABAN:")
-    print("─" * 60)
+    print("-" * 60)
+    print("JAWABAN:")
+    print("-" * 60)
     print(answer)
-    print("─" * 60)
+    print("-" * 60)
     if num_docs > 0:
-        print(f"📚 Sumber: {num_docs} dokumen digunakan")
+        print(f"Sumber: {num_docs} dokumen digunakan")
 
 
 def run_interactive(debug: bool = False) -> None:
@@ -297,9 +299,9 @@ Contoh penggunaan:
   python main.py                                    # start FastAPI server (REST API + Telegram Bot)
   python main.py --cli                              # mode CLI interaktif
   python main.py --question "Apa syarat PI?"        # single question
-  python main.py --ingest --dataset both            # ingest data KKP + PI
+  python main.py --ingest --dataset all             # ingest semua data (pi, kkp, skripsi, non_skripsi)
   python main.py --ingest --dataset pi              # ingest data PI
-  python main.py --ingest --dataset kkp             # ingest data KKP
+  python main.py --ingest --dataset skripsi         # ingest data skripsi
   python main.py --evaluate                         # evaluasi dengan RAGAS
   python main.py --debug --question "..."           # debug mode
         """,
@@ -322,9 +324,9 @@ Contoh penggunaan:
     )
     parser.add_argument(
         "--dataset",
-        choices=["pi", "kkp", "both"],
-        default="both",
-        help="Dataset ingestion: pi, kkp, atau both",
+        choices=["pi", "kkp", "skripsi", "non_skripsi", "both", "all"],
+        default="all",
+        help="Dataset ingestion: pi, kkp, skripsi, non_skripsi, atau all",
     )
     parser.add_argument(
         "--evaluate",
@@ -364,11 +366,11 @@ Contoh penggunaan:
         run_eval_no_gt(dataset=args.dataset)
     elif args.question:
         result = run_rag_pipeline(args.question, debug=args.debug)
-        print("\n" + "─" * 60)
-        print("💡 JAWABAN:")
-        print("─" * 60)
+        print("\n" + "-" * 60)
+        print("JAWABAN:")
+        print("-" * 60)
         print(result["answer"])
-        print("─" * 60)
+        print("-" * 60)
     elif args.cli:
         run_interactive(debug=args.debug)
     else:
