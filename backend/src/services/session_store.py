@@ -101,23 +101,30 @@ class DatabaseSessionStore:
         
         return memory
     
-    def save_memory(self, session_id: str, memory: ConversationMemory) -> None:
+    def save_memory(self, session_id: str, memory: ConversationMemory, channel: str = "telegram", mahasiswa_id: Optional[str] = None) -> None:
         """
         Save conversation memory to database.
         
         Args:
             session_id: Unique session identifier
             memory: ConversationMemory to save
+            channel: origin of chat
+            mahasiswa_id: user id if logged in via website
         """
         try:
             turns_data = memory.to_dict()
             
-            # Upsert to database
-            self._supabase.table("conversation_sessions").upsert({
+            payload = {
                 "session_id": session_id,
                 "turns": turns_data,
+                "channel": channel,
                 "last_access": datetime.now(timezone.utc).isoformat()
-            }).execute()
+            }
+            if mahasiswa_id:
+                payload["mahasiswa_id"] = mahasiswa_id
+
+            # Upsert to database
+            self._supabase.table("conversation_sessions").upsert(payload).execute()
             
             # Update cache
             with self._cache_lock:

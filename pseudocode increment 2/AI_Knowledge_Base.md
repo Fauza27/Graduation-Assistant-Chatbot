@@ -588,6 +588,7 @@ ALGORITMA INISIALISASI SERVER APLIKASI (application.py)
 
 5. FUNGSI _register_routers(app)
    - Daftarkan router `/api` (untuk endpoint sistem AI dan chat).
+   - Daftarkan router `/auth` (untuk endpoint otentikasi login).
    - Daftarkan router `/health` (untuk mengecek kesehatan server).
    
    - DEFINISI ENDPOINT POST `/api/telegram/webhook`:
@@ -671,34 +672,50 @@ ALGORITMA ENDPOINT HEALTH CHECK & MONITORING (health.py)
 ALGORITMA ROUTER API CHATBOT (ai.py)
 
 1. IMPOR PUSTAKA
-   - FastAPI (APIRouter, HTTPException)
+   - FastAPI (APIRouter, HTTPException, Request, Header)
    - Pydantic (BaseModel, Field) untuk validasi skema request/response.
    - Fungsi `chat_service` dari modul `src.services.ai_services`.
+   - Modul auth `verify_access_token`, konfigurasi `settings`, dan Supabase.
 
 2. INISIALISASI ROUTER
    - Buat `APIRouter` dengan prefix "/ai" dan tag "AI Chatbot".
+   - Buat koneksi Supabase untuk pengecekan kuota.
 
 3. DEFINISI SKEMA REQUEST (ChatRequest)
    - Kolom `query` (Teks wajib): Pertanyaan dari pengguna (minimal 1 karakter).
    - Kolom `session_id` (Teks wajib): ID unik untuk sesi chat pengguna.
+   - Kolom `channel` (Teks): Asal platform percakapan (default: "website").
 
 4. DEFINISI SKEMA RESPONSE (ChatResponse)
    - Kolom `answer` (Teks): Jawaban teks dari bot.
    - Kolom `num_docs` (Angka): Jumlah dokumen yang dijadikan referensi.
    - Kolom `session_id` (Teks): ID sesi.
    - Kolom `sources` (Daftar/Array kamus, default kosong): Rincian referensi sumber.
-   - Kolom opsional `intent`, `confidence`, `reasoning`: Data analitik terkait maksud pertanyaan dari LLM (pengklasifikasi niat).
+   - Kolom opsional `intent`, `confidence`, `reasoning`.
 
 5. ENDPOINT POST "/chat"
    - Path tujuan: `/ai/chat`.
-   - Input Payload: Objek `ChatRequest`.
+   - Input Payload: Objek `ChatRequest` dan HTTP Request.
    - Proses Asinkron (async):
      - COBA (Try):
-       - Panggil logika utama bot: `chat_service(query, session_id)`.
-       - Ambil hasil keluaran (result) dari fungsi tersebut.
-       - KEMBALIKAN respons dengan format `ChatResponse` yang memuat jawaban, jumlah dokumen, sumber, intent, dan reasoning.
+       - TAHAP 1: Cek Channel
+         - Jika channel "telegram", tolak akses (403) karena harus lewat webhook.
+         - Jika channel "website", pastikan ada header "Authorization: Bearer <token>".
+         - Ekstrak token, verifikasi via `verify_access_token`.
+         - Cek role (jika bukan "mahasiswa", tolak akses).
+         - Ambil `mahasiswa_id` dan `username` dari token.
+       
+       - TAHAP 2: Cek Kuota
+         - Gunakan koneksi Supabase untuk memanggil RPC `increment_quota_if_under_limit` menggunakan `mahasiswa_id`.
+         - Jika gagal/habis kuota (False), lemparkan error 429 (Terlalu Banyak Permintaan).
+       
+       - TAHAP 3: Teruskan ke Chat Service
+         - Panggil logika utama bot: `chat_service(query, session_id, username, channel, mahasiswa_id)`.
+         - KEMBALIKAN respons `ChatResponse` yang memuat jawaban, jumlah dokumen, sumber, dsb.
+         
      - JIKA GAGAL (Catch/Except):
-       - Hasilkan respon HTTP Error (status code 500: Internal Server Error) dengan pesan error dari pengecualian yang ditangkap.
+       - Jika error berasal dari HTTPException, teruskan (raise).
+       - Jika error lainnya, hasilkan respon HTTP Error (status code 500: Internal Server Error).
 ```
 
 #### File: `src/bot/application.py`
@@ -765,22 +782,17 @@ ALGORITMA PENANGANAN CHAT BOT (chat_handler.py)
    - JIKA respons gagal (limit habis), kembalikan FALSE.
    - JIKA koneksi ke database error/gagal (exception), anggap saja kuota tersedia (fallback True) agar pengguna tidak terblokir karena masalah infrastruktur.
 
-4. FUNGSI log_chat_to_db(user_id, username, question, answer)
-   - Buka koneksi ke tabel `chat_logs`.
-   - Masukkan ID pengguna, nama pengguna, teks pertanyaan, dan jawaban LLM.
-   - Jika gagal, tulis ke log error saja (tidak mengganggu jalannya bot).
-
-5. FUNGSI cmd_start(update, context)
+4. FUNGSI cmd_start(update, context)
    - Eksekusi ketika user mengetik `/start`.
    - Balas pesan dengan `messages.WELCOME` dan format dengan nama depan pengguna.
 
-6. FUNGSI _format_source_line(source) -> Teks
+5. FUNGSI _format_source_line(source) -> Teks
    - Konversi dan format rincian referensi dokumen menjadi teks yang aman (menghindari error HTML Parse di Telegram).
    - Jika dokumen punya Judul dan Bab berbeda, gabungkan.
    - Gunakan fungsi `html.escape` untuk mengamankan tanda-tanda baca unik (<, >, &).
    - KEMBALIKAN teks string "* [Nama Bagian] (Buku Panduan [PI/KKP])\n".
 
-7. FUNGSI handle_text_chat(update, context)
+6. FUNGSI handle_text_chat(update, context)
    - Dieksekusi otomatis ketika ada pesan teks biasa (bukan perintah garis miring /).
    - Pastikan teksnya tidak kosong.
    
@@ -793,7 +805,8 @@ ALGORITMA PENANGANAN CHAT BOT (chat_handler.py)
      - Kirim pesan teks sementara (loading message) dari `messages.LOADING`.
      
    - TAHAP 3: AI Proses & Database
-     - Panggil AI Service (`chat(query, session_id)`) secara asinkron di thread terpisah.
+     - Ambil username (atau nama depan jika tidak ada).
+     - Panggil AI Service (`chat(query, session_id, username, channel="telegram", mahasiswa_id=None)`) secara asinkron di thread terpisah.
      - Ambil teks jawaban. Jika jawaban LLM kosong, isi dengan `messages.EMPTY_ANSWER_FALLBACK`.
      - Gunakan `html.escape` pada teks jawaban agar tidak bikin error saat dikirim via Telegram (karena parse_mode=HTML).
      - JIKA bot memberikan list dokumen sumber (sources):
@@ -804,17 +817,13 @@ ALGORITMA PENANGANAN CHAT BOT (chat_handler.py)
      - Ubah (edit_text) pesan loading tadi dengan teks jawaban final AI.
      - Catat jumlah dokumen referensi yang dipakai di log (jika lebih dari 0).
      
-   - TAHAP 5: Pencatatan Log Chat
-     - Buat background task non-blocking (`asyncio.create_task`) untuk memanggil `log_chat_to_db` (menyimpan chat ke database).
-     - Beri callback jika tugas pencatatan tersebut gagal untuk di-*log* di konsol.
-     
    - PENANGANAN KESALAHAN UMUM (Except):
      - JIKA di proses atas terjadi exception apa pun:
        - Tulis log error.
        - Coba ubah pesan loading dengan pesan ERROR UMUM.
        - Jika tidak ada pesan loading, langsung reply dengan pesan ERROR UMUM.
 
-8. FUNGSI build_text_chat_handler()
+7. FUNGSI build_text_chat_handler()
    - KEMBALIKAN objek filter bawaan Telegram yang akan memanggil fungsi `handle_text_chat` setiap kali mendeteksi pesan masuk berupa TEKS dan BUKAN PERINTAH (`~filters.COMMAND`).
 ```
 

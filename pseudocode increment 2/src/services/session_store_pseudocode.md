@@ -27,8 +27,10 @@ ALGORITMA PENYIMPANAN SESI DATABASE (session_store.py)
        - Perbarui kolom waktu akses terakhir (last_access) di Database secara diam-diam (*fire and forget*) menggunakan representasi waktu UTC *timezone-aware* (`datetime.now(timezone.utc).isoformat()`).
        - Kembalikan memori.
 
-   - `save_memory(session_id, memory)`:
+   - `save_memory(session_id, memory, channel, mahasiswa_id)`:
      - Ubah `memory` jadi bentuk JSON (dict).
+     - Persiapkan muatan (payload) yang berisi `session_id`, `turns`, `channel`, `last_access`.
+     - JIKA `mahasiswa_id` ada nilainya, tambahkan ke payload.
      - Lakukan *Upsert* (Insert atau Update) ke database Supabase.
      - Perbarui Cache lokal.
      - Jika gagal (koneksi terputus dll), lempar error (tapi aplikasinya dirancang untuk mengabaikan error ini agar chat tetap jalan).

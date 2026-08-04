@@ -17,6 +17,7 @@ from config.settings import get_settings
 from src.bot.application import create_bot, post_init
 from src.api import ai
 from src.api.health import router as health_router
+from src.api import auth
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -86,6 +87,7 @@ def _register_routers(app: FastAPI):
     API_PREFIX = "/api"
 
     app.include_router(ai.router, prefix=API_PREFIX)
+    app.include_router(auth.router, prefix=API_PREFIX)
     app.include_router(health_router)
 
 

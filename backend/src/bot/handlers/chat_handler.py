@@ -53,18 +53,6 @@ def check_and_update_quota(user_id: str) -> bool:
         return True
 
 
-def log_chat_to_db(user_id: str, username: str, question: str, answer: str) -> None:
-    try:
-        supabase = _get_supabase_client()
-        supabase.table("chat_logs").insert({
-            "user_id": user_id,
-            "username": username,
-            "question": question,
-            "answer": answer,
-        }).execute()
-    except Exception as e:
-        logger.error(f"Gagal menyimpan log chat untuk user {user_id}: {e}")
-
 
 async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user = update.effective_user
@@ -124,11 +112,14 @@ async def handle_text_chat(update: Update, context: ContextTypes.DEFAULT_TYPE) -
             parse_mode=ParseMode.HTML,
         )
 
-        # `chat()` melakukan I/O sinkron (OpenAI + Supabase), pindahkan ke thread pool.
+        username = update.effective_user.username or update.effective_user.full_name or "Unknown"
         response = await asyncio.to_thread(
             chat,
             query=text,
             session_id=user_id,
+            username=username,
+            channel="telegram",
+            mahasiswa_id=None
         )
 
         reply_text = (response.get("answer", "")).strip()
@@ -155,23 +146,7 @@ async def handle_text_chat(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         if num_docs > 0:
             logger.info(f"Chat response sent to user {user_id}, used {num_docs} documents")
 
-        # Catat ke database untuk monitoring (jangan blok event loop).
-        # Track task agar exception dari logging tidak hilang diam-diam.
-        username = update.effective_user.username or update.effective_user.first_name or "Unknown"
-        log_task = asyncio.create_task(
-            asyncio.to_thread(log_chat_to_db, user_id, username, text, reply_text)
-        )
 
-        def _on_log_done(task: asyncio.Task) -> None:
-            if task.cancelled():
-                return
-            exc = task.exception()
-            if exc is not None:
-                logger.error(
-                    f"Background chat log task failed for user {user_id}: {exc}"
-                )
-
-        log_task.add_done_callback(_on_log_done)
 
     except Exception:
         logger.exception(f"Unexpected error in text chat handler for user {user_id}")

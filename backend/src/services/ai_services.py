@@ -99,11 +99,11 @@ def get_or_create_memory(session_id: str) -> ConversationMemory:
         return memory
 
 
-def _save_memory_if_needed(session_id: str, memory: ConversationMemory) -> None:
+def _save_memory_if_needed(session_id: str, memory: ConversationMemory, channel: str = "telegram", mahasiswa_id: Optional[str] = None) -> None:
     """Save memory to persistent storage if using database sessions."""
     if settings.USE_DATABASE_SESSIONS:
         try:
-            _session_store.save_memory(session_id, memory)
+            _session_store.save_memory(session_id, memory, channel=channel, mahasiswa_id=mahasiswa_id)
         except Exception as e:
             logger.error(f"Failed to save session {session_id}: {e}")
 
@@ -144,7 +144,7 @@ def cleanup_sessions() -> int:
         return _evict_idle_sessions(now)
 
 
-def chat(query: str, session_id: str) -> Dict[str, Any]:
+def chat(query: str, session_id: str, username: str, channel: str = "telegram", mahasiswa_id: Optional[str] = None) -> Dict[str, Any]:
     """
     Main chat function implementing Retrieval-First Architecture.
     """
@@ -220,11 +220,25 @@ def chat(query: str, session_id: str) -> Dict[str, Any]:
         else:
             memory.add_assistant_turn(content=answer)
             
-        _save_memory_if_needed(session_id, memory)
+        _save_memory_if_needed(session_id, memory, channel=channel, mahasiswa_id=mahasiswa_id)
         
         t_total_end = time.time()
         logger.info(f"[session={session_id}] Total process time [⏱️ {t_total_end - t_start:.2f}s]")
         
+        # 6. Catat chat log
+        try:
+            if settings.USE_DATABASE_SESSIONS:
+                user_id_log = str(mahasiswa_id) if mahasiswa_id else str(session_id)
+                # Gunakan supabase client dari session_store
+                _session_store._supabase.table("chat_logs").insert({
+                    "user_id": user_id_log,
+                    "username": username,
+                    "question": question,
+                    "answer": answer,
+                }).execute()
+        except Exception as e:
+            logger.error(f"Gagal menyimpan log chat untuk user {user_id_log}: {e}")
+
         return {
             "answer": answer,
             "num_docs": len(retrieval_docs),

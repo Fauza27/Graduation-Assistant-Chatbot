@@ -16,8 +16,8 @@ ALGORITMA LAYANAN KECERDASAN BUATAN (ai_services.py)
      - Jika belum ada, buat objek `ConversationMemory` baru dengan maksimal 5 turn (10 pesan).
      - Kembalikan memori.
    
-   - `_save_memory_if_needed(session_id, memory)`:
-     - (Hanya jika pakai DB): Simpan ulang memori yang ter-update ke Database.
+   - `_save_memory_if_needed(session_id, memory, channel, mahasiswa_id)`:
+     - (Hanya jika pakai DB): Simpan ulang memori yang ter-update ke Database dengan menyertakan asal `channel` (telegram/website) dan UUID pengguna (`mahasiswa_id`).
      - Tangkap error secara diam-diam agar chat tidak gagal hanya karena gagal menyimpan riwayat.
    
    - `clear_session(session_id)`:
@@ -26,7 +26,7 @@ ALGORITMA LAYANAN KECERDASAN BUATAN (ai_services.py)
    - Pembersihan Sesi Tua (Cleanup):
      - Membuang memori obrolan dari user yang sudah terlalu lama tidak aktif agar RAM / Database tidak penuh.
 
-3. FUNGSI UTAMA chat(query, session_id)
+3. FUNGSI UTAMA chat(query, session_id, username, channel, mahasiswa_id)
    - Fungsi utama yang dipanggil oleh Bot Telegram atau API eksternal saat user bertanya.
    - JIKA `query` atau `session_id` kosong: Kembalikan pesan error seketika.
    
@@ -49,9 +49,12 @@ ALGORITMA LAYANAN KECERDASAN BUATAN (ai_services.py)
    - TAHAP 5: LLM Generation
      - Panggil RAG Chain (`_rag_chain.invoke_with_history`) dengan memasukkan histori percakapan dan dokumen hasil cari (bisa kosong jika gagal Rerank/Threshold).
      - Simpan jawaban AI (berserta teks isi dokumen referensi) ke memori.
-     - Simpan memori ke Database.
+     - Simpan memori ke Database dengan channel dan mahasiswa_id.
+     
+   - TAHAP 6: Catat Log
+     - Catat chat ke tabel `chat_logs` di database. Masukkan `user_id`, `username`, `query`, dan `answer`.
    
-   - TAHAP 6: Kembalikan Jawaban
+   - TAHAP 7: Kembalikan Jawaban
      - Siapkan dictionary hasil yang berisi: Teks Jawaban, Metode Rewrite, Jumlah Dokumen, dan Maksimal 3 Dokumen Sumber Referensi terbaik.
      - JIKA ada error: Tangkap dan kembalikan pesan error *fallback*.
 

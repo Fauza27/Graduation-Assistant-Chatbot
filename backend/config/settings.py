@@ -52,6 +52,7 @@ class Settings(BaseSettings):
     table_user_quotas: str = Field(default="user_quotas")
     table_chat_logs: str = Field(default="chat_logs")
     table_conversation_sessions: str = Field(default="conversation_sessions")
+    table_mahasiswa_accounts: str = Field(default="mahasiswa_accounts")
 
     # Retrieval Configuration
     retrieval_top_k: int = Field(default=30, ge=5, le=100, description="Number of chunks to retrieve")
@@ -87,6 +88,12 @@ class Settings(BaseSettings):
     # Rate Limiting
     RATE_LIMIT_REQUESTS: int = Field(default=100, ge=1, le=100, description="Requests per day per user")
     RATE_LIMIT_WINDOW: int = Field(default=86400, ge=3600, le=604800, description="Rate limit window in seconds")
+
+    # Authentication Configuration
+    JWT_SECRET_KEY: str = Field(default="super-secret-key-change-in-production", description="Secret key for JWT generation")
+    JWT_ALGORITHM: str = Field(default="HS256", description="Algorithm for JWT generation")
+    JWT_EXPIRATION_MINUTES: int = Field(default=1440, description="JWT expiration time in minutes")
+    GOOGLE_CLIENT_ID: str = Field(default="", description="Google OAuth Client ID")
 
     # Performance Settings
     MAX_CONCURRENT_REQUESTS: int = Field(default=10, ge=1, le=50)

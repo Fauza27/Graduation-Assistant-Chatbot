@@ -29,7 +29,11 @@ ALGORITMA KONFIGURASI SISTEM (config/settings.py)
      
    - KONFIGURASI DATABASE SUPABASE (Wajib Diisi):
      - supabase_url, supabase_service_key
-     - Nama-nama tabel database (parent_documents, child_documents, user_quotas, chat_logs, conversation_sessions)
+     - Nama-nama tabel database (parent_documents, child_documents, user_quotas, chat_logs, conversation_sessions, table_mahasiswa_accounts)
+     
+   - KONFIGURASI JWT DAN GOOGLE AUTH:
+     - JWT_SECRET_KEY, JWT_ALGORITHM (default HS256), JWT_EXPIRATION_MINUTES (default 1440).
+     - GOOGLE_CLIENT_ID (Wajib diisi jika fitur login via Google aktif).
      
    - PENGATURAN RETRIEVAL (Pencarian RAG):
      - retrieval_top_k: jumlah potongan dokumen maksimal dicari (default 30)
