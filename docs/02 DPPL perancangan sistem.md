@@ -260,8 +260,7 @@ Semua metrik ini dihitung dengan query SQL langsung (agregasi `COUNT`/`GROUP BY`
 ### 5.2 Endpoint Baru — Autentikasi Mahasiswa (Google OAuth)
 | Method | Path | Deskripsi | Auth |
 |---|---|---|---|
-| GET | `/api/auth/google/login` | Redirect ke consent Google | Publik |
-| GET | `/api/auth/google/callback` | Tukar code → verifikasi → buat/update `mahasiswa_accounts` → JWT | Publik |
+| POST | `/api/auth/google/verify` | Verifikasi `id_token` Google → buat/update `mahasiswa_accounts` → terbitkan JWT | Publik |
 | POST | `/api/auth/logout` | Invalidasi sesi mahasiswa | Mahasiswa |
 | GET | `/api/auth/me` | Profil mahasiswa yang login | Mahasiswa |
 
@@ -396,19 +395,20 @@ Mockup interaktif lengkap: `mockup-ui-sidebar.html` (menyertai dokumen ini). Per
 sequenceDiagram
     participant M as Mahasiswa (Browser)
     participant FE as frontend/ (Next.js)
+    participant GIS as Google Identity Services
     participant API as backend/api/auth/*
-    participant G as Google OAuth
     participant DB as Supabase
 
     M->>FE: Klik "Login dengan Google"
-    FE->>API: GET /api/auth/google/login
-    API-->>M: Redirect ke consent Google
-    M->>G: Login & izinkan akses
-    G-->>API: GET /api/auth/google/callback?code=...
-    API->>G: Tukar code → profil user
-    API->>DB: cari/insert mahasiswa_accounts
-    API->>API: terbitkan JWT
-    API-->>FE: set cookie/JWT, redirect ke /chat
+    FE->>GIS: Tampilkan pop-up login Google
+    M->>GIS: Login & izinkan akses
+    GIS-->>FE: Kembalikan `id_token` (JWT dari Google)
+    FE->>API: POST /api/auth/google/verify {id_token}
+    API->>API: Verifikasi `id_token`
+    API->>DB: cari/upsert mahasiswa_accounts
+    API->>API: terbitkan JWT internal
+    API-->>FE: kembalikan {access_token}
+    FE->>FE: simpan di sessionStorage, redirect ke /chat
 ```
 
 ### 8.2 Mahasiswa Bertanya via Website (Empty State → Active Chat)
