@@ -63,10 +63,10 @@ graph LR
 
 | | |
 |---|---|
-| **Lingkup masuk** | Scaffold `frontend/app/(site)`; alur Google OAuth; halaman chat sesuai `mockup-ui-sidebar.html` — **empty state tanpa sapaan** saat baru buka, **pesan bot tanpa bubble** (teks polos + avatar kecil), user tetap bubble; sidebar dengan menu Dokumen Panduan; bucket Supabase Storage `panduan-dokumen` + halaman `/panduan` (fetch langsung, tanpa lewat backend); endpoint `/api/ai/chat` terima `channel:"website"` + validasi token |
-| **Requirement terkait** | FR-WEB-01 s/d FR-WEB-08 |
-| **Definition of Done** | Mahasiswa login Google, chat baru dimulai tanpa sapaan bot, jawaban bot tampil tanpa bubble dengan sumber, menu Dokumen Panduan terbukti **tidak** memicu request ke `/api/ai/chat` (dicek lewat network tab) |
-| **Testing** | Black Box Testing: alur login, alur chat kosong→terisi, alur buka Dokumen Panduan (pastikan 0 request ke `/api/ai/chat` saat baca dokumen) |
+| **Lingkup masuk** | Scaffold `frontend/app/(site)`; alur Google OAuth; halaman chat sesuai `mockup-ui-sidebar.html` — **empty state tanpa sapaan** saat baru buka, **pesan bot tanpa bubble** (teks polos + avatar kecil), user tetap bubble; sidebar dengan menu Dokumen Panduan; bucket Supabase Storage `panduan-dokumen` + halaman `/panduan` (fetch langsung, tanpa lewat backend); endpoint `/api/ai/chat` terima `channel:"website"` + validasi token; fitur riwayat percakapan (`/api/sessions`) |
+| **Requirement terkait** | FR-WEB-01 s/d FR-WEB-09 |
+| **Definition of Done** | Mahasiswa login Google, chat baru dimulai tanpa sapaan bot, jawaban bot tampil tanpa bubble dengan sumber, menu Dokumen Panduan terbukti **tidak** memicu request ke `/api/ai/chat` (dicek lewat network tab), mahasiswa dapat melihat dan membuka riwayat obrolannya yang lama. |
+| **Testing** | Black Box Testing: alur login, alur chat kosong→terisi, alur buka Dokumen Panduan (pastikan 0 request ke `/api/ai/chat` saat baca dokumen), pengujian load session (riwayat chat) |
 | **Estimasi durasi** | 2.5–3 minggu |
 
 ### Increment 3 — Admin Dashboard: Kelola Chunk & Autentikasi

@@ -263,6 +263,9 @@ Semua metrik ini dihitung dengan query SQL langsung (agregasi `COUNT`/`GROUP BY`
 | POST | `/api/auth/google/verify` | Verifikasi `id_token` Google → buat/update `mahasiswa_accounts` → terbitkan JWT | Publik |
 | POST | `/api/auth/logout` | Invalidasi sesi mahasiswa | Mahasiswa |
 | GET | `/api/auth/me` | Profil mahasiswa yang login | Mahasiswa |
+| GET | `/api/sessions` | Mengambil riwayat percakapan mahasiswa (Website) | Mahasiswa |
+| GET | `/api/sessions/{id}` | Memuat isi satu sesi percakapan mahasiswa (Website) | Mahasiswa |
+| DELETE | `/api/sessions/{id}` | Menghapus sesi percakapan dari riwayat | Mahasiswa |
 
 ### 5.3 Endpoint Baru — Admin
 | Method | Path | Deskripsi | Auth |
@@ -432,6 +435,24 @@ sequenceDiagram
     AIS-->>API: jawaban
     API-->>FE: response JSON
     Note over FE: Tampilkan sebagai teks tanpa bubble + source chip
+
+### 8.4 Mahasiswa Membuka Riwayat Chat
+```mermaid
+sequenceDiagram
+    participant M as Mahasiswa (Web)
+    participant FE as frontend/
+    participant API as /api/sessions
+    participant DB as Supabase
+
+    M->>FE: Buka menu Riwayat Chat
+    FE->>API: GET /api/sessions + Bearer token
+    API->>DB: Query `conversation_sessions` (orderBy updated_at)
+    API-->>FE: Kembalikan daftar sesi (session_id, judul)
+    M->>FE: Klik salah satu sesi
+    FE->>API: GET /api/sessions/{id} + Bearer token
+    API->>DB: Query `conversation_sessions` dimana session_id = id
+    API-->>FE: Kembalikan daftar turns/pesan
+    FE->>FE: Update UI chat dengan riwayat lama
 ```
 
 ### 8.3 Admin Mengedit Chunk
