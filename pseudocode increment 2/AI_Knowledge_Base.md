@@ -759,7 +759,7 @@ ALGORITMA ROUTER SESSIONS (sessions.py)
        - Panggil Supabase: `SELECT turns FROM conversation_sessions WHERE session_id = ? AND mahasiswa_id = ?`.
        - Jika tidak ditemukan, kembalikan HTTP 404 (Not Found).
      - TAHAP 3: Pemrosesan Data
-       - Format ulang `turns` agar sesuai dengan yang diharapkan oleh frontend (ganti nama field: `content` menjadi `text`, dan `role: "assistant"` menjadi `role: "bot"`).
+       - Format ulang `turns` agar sesuai dengan yang diharapkan oleh frontend (ganti nama field: `content` menjadi `text`, `role: "assistant"` menjadi `role: "bot"`, dan `retrieved_doc_contents` menjadi `sources`).
        - KEMBALIKAN daftar pesan lengkap untuk ditampilkan di UI percakapan.
 
 5. ENDPOINT DELETE "/{session_id}"
