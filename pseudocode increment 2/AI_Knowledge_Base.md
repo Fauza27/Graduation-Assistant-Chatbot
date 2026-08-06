@@ -585,7 +585,7 @@ ALGORITMA INISIALISASI SERVER APLIKASI (application.py)
 
 4. FUNGSI _register_middleware(app)
    - Tambahkan middleware SlowAPI (penanganan limit request).
-   - Tambahkan middleware CORS (Cross-Origin Resource Sharing) untuk mengizinkan aplikasi diakses dari berbagai origin (*).
+   - Tambahkan middleware CORS (Cross-Origin Resource Sharing) untuk mengizinkan aplikasi diakses HANYA dari origin frontend secara eksplisit (seperti Vercel atau localhost).
 
 5. FUNGSI _register_routers(app)
    - Daftarkan router `/api` (untuk endpoint sistem AI dan chat).
@@ -712,7 +712,7 @@ ALGORITMA ROUTER API CHATBOT (ai.py)
          - Jika gagal/habis kuota (False), lemparkan error 429 (Terlalu Banyak Permintaan).
        
        - TAHAP 3: Teruskan ke Chat Service
-         - Panggil logika utama bot: `chat_service(query, session_id, username, channel, mahasiswa_id)`.
+         - Panggil logika utama bot: `chat(query=request.query, session_id=request.session_id, username=username, channel=request.channel, mahasiswa_id=mahasiswa_id)`.
          - KEMBALIKAN respons `ChatResponse` yang memuat jawaban, jumlah dokumen, sumber, dsb.
          
      - JIKA GAGAL (Catch/Except):
@@ -1011,15 +1011,10 @@ ALGORITMA PENYIMPANAN MEMORI PERCAKAPAN (memory.py)
 
    - `add_user_turn(content, intent)`:
      - Tambahkan pesan dari user ke daftar `_turns`.
-     - Panggil `_enforce_window()` agar memori tidak kepenuhan secara internal.
 
    - `add_assistant_turn(content, retrieved_doc_contents)`:
      - Tambahkan pesan balasan bot beserta dokumen sumber ke daftar `_turns`.
-     - Panggil `_enforce_window()`.
-
-   - `_enforce_window()`:
-     - Pastikan jumlah `_turns` tidak melebihi 2 * `max_turns` (1 turn = user + bot = 2 pesan).
-     - Jika lebih, hapus pesan yang paling lama (FIFO).
+     - **PENTING**: Array `_turns` dibiarkan tumbuh tak terbatas tanpa dipotong, agar semua riwayat tersimpan utuh secara permanen di database.
 
    - `get_history_for_llm()`:
      - Ambil histori pesan untuk disuapkan ke LLM (format dict).

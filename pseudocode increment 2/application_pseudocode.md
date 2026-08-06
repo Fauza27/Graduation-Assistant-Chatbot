@@ -33,7 +33,7 @@ ALGORITMA INISIALISASI SERVER APLIKASI (application.py)
 
 4. FUNGSI _register_middleware(app)
    - Tambahkan middleware SlowAPI (penanganan limit request).
-   - Tambahkan middleware CORS (Cross-Origin Resource Sharing) untuk mengizinkan aplikasi diakses dari berbagai origin (*).
+   - Tambahkan middleware CORS (Cross-Origin Resource Sharing) untuk mengizinkan aplikasi diakses HANYA dari origin frontend secara eksplisit (seperti Vercel atau localhost).
 
 5. FUNGSI _register_routers(app)
    - Daftarkan router `/api` (untuk endpoint sistem AI dan chat).
