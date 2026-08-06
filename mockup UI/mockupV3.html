@@ -1,0 +1,1132 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Asisten WCD — STMIK Widya Cipta Dharma</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   0. DESIGN TOKENS — dari "7. Design System" pada mockup
+   ============================================================ */
+:root{
+  --purple-primary:#6D28D9;
+  --purple-primary-hover:#5B21B6;
+  --purple-primary-active:#4C1D95;
+  --purple-muda:#EDE5FB;   /* Ungu Muda */
+  --purple-soft:#F5F1FC;   /* Ungu Soft */
+  --gray-700:#374151;
+  --gray-500:#6B7280;
+  --gray-400:#9CA3AF;
+  --gray-200:#E5E7EB;
+  --gray-100:#F3F4F6;
+  --white:#FFFFFF;
+  --border:#E7E5EF;
+  --danger:#DC2626;
+
+  --radius-sm:8px;
+  --radius-md:12px;
+  --radius-lg:16px;
+  --shadow-sm:0 1px 2px rgba(20,10,40,.05);
+  --shadow-md:0 8px 24px rgba(35,15,70,.10);
+  --shadow-lg:0 20px 48px rgba(35,15,70,.18);
+
+  --sidebar-w:264px;
+  --panel-w:400px;
+  --header-h:56px;
+}
+
+*,*::before,*::after{box-sizing:border-box;}
+html,body{height:100%;}
+body{
+  margin:0;
+  font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  color:var(--gray-700);
+  background:var(--white);
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,p{margin:0;}
+button{font-family:inherit;cursor:pointer;}
+input{font-family:inherit;}
+ul{margin:0;padding:0;}
+a{color:inherit;text-decoration:none;}
+img,svg{display:block;}
+
+/* Typography scale from design system */
+.h1{font-size:32px;font-weight:700;line-height:1.25;}
+.h2{font-size:24px;font-weight:600;line-height:1.3;}
+.h3{font-size:18px;font-weight:600;line-height:1.4;}
+.body1{font-size:16px;font-weight:400;line-height:1.55;}
+.body2{font-size:14px;font-weight:400;line-height:1.55;}
+.caption{font-size:12px;font-weight:400;line-height:1.4;color:var(--gray-400);}
+
+:focus-visible{outline:2px solid var(--purple-primary);outline-offset:2px;border-radius:6px;}
+
+/* icon sizing helper */
+.icon{width:18px;height:18px;flex-shrink:0;}
+.icon-sm{width:16px;height:16px;flex-shrink:0;}
+svg:not(.brand-mark){fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+
+/* ============================================================
+   1. COMPONENTS — dari "KOMPONEN"
+   ============================================================ */
+.btn-primary{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  background:var(--purple-primary);color:var(--white);
+  border:none;border-radius:10px;padding:11px 16px;
+  font-size:14px;font-weight:600;
+  transition:background .15s ease, transform .05s ease;
+}
+.btn-primary:hover{background:var(--purple-primary-hover);}
+.btn-primary:active{background:var(--purple-primary-active);transform:scale(.98);}
+
+.btn-outline{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  background:var(--white);color:var(--purple-primary);
+  border:1.5px solid var(--purple-primary);border-radius:10px;padding:10px 16px;
+  font-size:14px;font-weight:600;
+  transition:background .15s ease;
+}
+.btn-outline:hover{background:var(--purple-soft);}
+
+.input-field{
+  display:flex;align-items:center;gap:10px;
+  background:var(--white);border:1.5px solid var(--gray-200);border-radius:12px;
+  padding:12px 14px;
+}
+.input-field:focus-within{border-color:var(--purple-primary);box-shadow:0 0 0 3px var(--purple-soft);}
+.input-field input{border:none;outline:none;flex:1;font-size:14px;color:var(--gray-700);background:transparent;min-width:0;}
+.input-field input::placeholder{color:var(--gray-400);}
+
+.icon-btn{
+  display:flex;align-items:center;justify-content:center;
+  width:34px;height:34px;border-radius:9px;border:none;background:transparent;color:var(--gray-500);
+  transition:background .15s ease,color .15s ease;
+}
+.icon-btn:hover{background:var(--gray-100);color:var(--gray-700);}
+
+/* ============================================================
+   2. APP SHELL / LAYOUT
+   ============================================================ */
+.app{display:flex;height:100vh;width:100%;overflow:hidden;background:var(--white);position:relative;}
+
+/* ---------- Sidebar ---------- */
+.sidebar{
+  width:var(--sidebar-w);flex-shrink:0;
+  display:flex;flex-direction:column;
+  border-right:1px solid var(--border);
+  background:var(--white);
+  padding:18px 14px;
+  gap:14px;
+  z-index:60;
+}
+.sidebar-header{display:flex;align-items:center;gap:10px;padding:2px 6px 6px;}
+.brand-mark{width:34px;height:34px;border-radius:50%;flex-shrink:0;}
+.brand-text{line-height:1.25;}
+.brand-text .b1{font-size:13px;font-weight:700;color:var(--gray-700);}
+.brand-text .b2{font-size:10.5px;font-weight:500;color:var(--gray-500);letter-spacing:.02em;}
+.sidebar-close{display:none;margin-left:auto;}
+
+.sidebar-nav{display:flex;flex-direction:column;gap:2px;overflow-y:auto;flex:1;}
+.nav-item{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 10px;border-radius:9px;border:none;background:transparent;
+  font-size:14px;font-weight:500;color:var(--gray-700);width:100%;text-align:left;
+  transition:background .15s ease;
+}
+.nav-item .icon{color:var(--gray-500);}
+.nav-item:hover{background:var(--gray-100);}
+.nav-item.active{background:var(--purple-soft);color:var(--purple-primary);}
+.nav-item.active .icon{color:var(--purple-primary);}
+
+.nav-section{margin-top:6px;}
+.nav-section-header{
+  display:flex;align-items:center;justify-content:space-between;width:100%;
+  border:none;background:transparent;padding:8px 10px;
+  font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--gray-400);
+  text-transform:uppercase;
+}
+.nav-section-header .icon-sm{transition:transform .18s ease;color:var(--gray-400);}
+.nav-section-header.collapsed .icon-sm{transform:rotate(-90deg);}
+.nav-section-list{display:flex;flex-direction:column;gap:2px;overflow:hidden;transition:max-height .2s ease;}
+.doc-item{
+  display:flex;align-items:center;gap:10px;padding:9px 10px 9px 12px;border-radius:9px;border:none;
+  background:transparent;font-size:13.5px;font-weight:500;color:var(--gray-700);width:100%;text-align:left;
+  transition:background .15s ease;
+}
+.doc-item:hover{background:var(--gray-100);}
+.doc-item.active{background:var(--purple-muda);color:var(--purple-primary-active);}
+.doc-icon{width:24px;height:24px;border-radius:6px;background:var(--purple-muda);color:var(--purple-primary);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.doc-icon svg{width:13px;height:13px;}
+
+.sidebar-footer{display:flex;flex-direction:column;gap:2px;padding-top:10px;border-top:1px solid var(--border);}
+
+/* ---------- Main panel (Chat / Riwayat / Dokumen / Profil views) ---------- */
+.main-panel{flex:1;min-width:0;display:flex;flex-direction:column;background:var(--white);position:relative;}
+
+/* Header floats above the scrollable content (no border) with a frosted blur,
+   so content passes visibly underneath it as it scrolls. */
+.main-header{
+  position:absolute;top:0;left:0;right:0;height:var(--header-h);z-index:15;
+  display:flex;align-items:center;gap:10px;padding:0 20px;
+  background:rgba(255,255,255,.68);
+  -webkit-backdrop-filter:blur(14px) saturate(1.4);backdrop-filter:blur(14px) saturate(1.4);
+}
+.main-header h2{flex:1;}
+.header-icon-btn{margin-left:auto;}
+.mobile-only{display:none;}
+.tablet-mobile-only{display:none;}
+
+/* ----- Chat view ----- */
+.view{display:none;flex:1;min-height:0;flex-direction:column;}
+.view.active{display:flex;}
+
+/* Empty-state: whole block (greeting + composer) centers together in the middle,
+   like a fresh chat screen. Once a conversation starts, layout switches to the
+   normal "messages fill from top, composer pinned to bottom" mode. */
+#view-chat.chat-empty{justify-content:center;}
+#view-chat.chat-empty .chat-scroll{flex:none;overflow:visible;}
+
+.chat-scroll{flex:1;overflow-y:auto;padding:calc(var(--header-h) + 20px) 22px 28px;}
+.chat-inner{max-width:760px;margin:0 auto;width:100%;display:flex;flex-direction:column;gap:18px;}
+
+.empty-state{margin:0 auto;text-align:center;max-width:380px;display:flex;flex-direction:column;align-items:center;gap:16px;}
+.empty-badge{width:64px;height:64px;border-radius:50%;background:var(--purple-soft);color:var(--purple-primary);
+  display:flex;align-items:center;justify-content:center;}
+.empty-badge svg{width:28px;height:28px;}
+.empty-state .h3{color:var(--gray-700);}
+.empty-state .body2{color:var(--gray-500);}
+.suggestion-row{display:none;flex-wrap:wrap;gap:8px;justify-content:center;margin:2px 0 4px;}
+#view-chat.chat-empty .suggestion-row{display:flex;}
+.chip{
+  border:1.5px solid var(--gray-200);background:var(--white);color:var(--gray-700);
+  border-radius:999px;padding:8px 14px;font-size:12.5px;font-weight:500;transition:.15s ease;
+}
+.chip:hover{border-color:var(--purple-primary);color:var(--purple-primary);background:var(--purple-soft);}
+
+.msg-row{display:flex;}
+.msg-row.user{align-self:flex-end;max-width:78%;}
+.msg-row.bot{width:100%;}
+.msg-col{display:flex;flex-direction:column;gap:4px;min-width:0;width:100%;}
+.msg-row.user .msg-col{align-items:flex-end;}
+
+/* User messages keep a bubble; bot answers are plain text, full-width, no avatar/bubble */
+.bubble{border-radius:16px;padding:12px 16px;font-size:14px;line-height:1.6;}
+.msg-row.user .bubble{background:var(--purple-primary);color:var(--white);border-bottom-right-radius:5px;}
+
+.bot-text{color:var(--gray-700);font-size:14px;line-height:1.65;}
+.bot-text ol{margin:8px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:4px;}
+.bot-text p+.bubble-label{margin-top:10px;}
+.bubble-label{font-size:12.5px;font-weight:600;color:var(--gray-500);margin-top:12px;margin-bottom:6px;}
+.msg-time{padding:0 4px;}
+
+.citation-card{
+  display:flex;align-items:center;gap:12px;background:var(--white);border:1px solid var(--border);
+  border-radius:12px;padding:12px 14px;cursor:pointer;transition:.15s ease;box-shadow:var(--shadow-sm);max-width:340px;
+}
+.citation-card:hover{border-color:var(--purple-primary);box-shadow:var(--shadow-md);}
+.citation-icon{width:34px;height:34px;border-radius:8px;background:var(--purple-muda);color:var(--purple-primary);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.citation-icon svg{width:16px;height:16px;}
+.citation-text{flex:1;min-width:0;}
+.citation-title{font-size:13.5px;font-weight:600;color:var(--gray-700);}
+.citation-sub{display:flex;align-items:center;gap:6px;margin-top:2px;flex-wrap:wrap;}
+.citation-sub span:first-child{font-size:12px;color:var(--gray-500);}
+.page-pill{background:var(--purple-muda);color:var(--purple-primary-active);font-size:11px;font-weight:600;
+  padding:2px 8px;border-radius:999px;}
+.citation-card .icon-btn{color:var(--gray-400);pointer-events:none;}
+
+.typing-dots{display:flex;align-items:center;gap:5px;padding:4px 0 2px;}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--gray-400);animation:bounce 1.2s infinite ease-in-out;}
+.dot:nth-child(2){animation-delay:.15s;}
+.dot:nth-child(3){animation-delay:.3s;}
+@keyframes bounce{0%,60%,100%{transform:translateY(0);opacity:.5;}30%{transform:translateY(-4px);opacity:1;}}
+
+.composer{padding:14px 22px 10px;flex-shrink:0;}
+.composer-inner{max-width:760px;margin:0 auto;width:100%;}
+.composer .input-field{padding:8px 8px 8px 16px;}
+.send-btn{
+  width:38px;height:38px;border-radius:10px;background:var(--purple-primary);color:var(--white);
+  display:flex;align-items:center;justify-content:center;border:none;flex-shrink:0;transition:.15s ease;
+}
+.send-btn:hover{background:var(--purple-primary-hover);}
+.send-btn:disabled{background:var(--gray-200);color:var(--gray-400);cursor:not-allowed;}
+.composer-hint{text-align:center;padding:8px 0 4px;}
+
+/* Doc panel open (desktop, 3rd column) -> content shifts and goes flush edge-to-edge
+   instead of staying in a centered, gutter'd column (there isn't room to spare). */
+.main-panel.doc-open .chat-inner,
+.main-panel.doc-open .composer-inner{max-width:none;}
+
+
+/* ----- Riwayat Chat view ----- */
+.riwayat-body{flex:1;overflow-y:auto;padding:calc(var(--header-h) + 16px) 22px 24px;}
+.riwayat-search{margin-bottom:18px;}
+.riwayat-group + .riwayat-group{margin-top:18px;}
+.riwayat-group-label{font-size:11.5px;font-weight:700;color:var(--gray-400);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;padding:0 4px;}
+.riwayat-item{
+  display:flex;align-items:center;gap:12px;width:100%;border:none;background:transparent;
+  padding:11px 10px;border-radius:10px;text-align:left;transition:.15s ease;
+}
+.riwayat-item:hover{background:var(--gray-100);}
+.riwayat-item .doc-icon{width:32px;height:32px;}
+.riwayat-item .doc-icon svg{width:15px;height:15px;}
+.riwayat-title{flex:1;font-size:13.5px;font-weight:500;color:var(--gray-700);}
+.riwayat-time{font-size:11.5px;color:var(--gray-400);flex-shrink:0;}
+.riwayat-item .icon-sm{color:var(--gray-300,#D1D5DB);flex-shrink:0;}
+
+/* ----- Dokumen (mobile list) view ----- */
+.dokumen-body{flex:1;overflow-y:auto;padding:calc(var(--header-h) + 10px) 16px 24px;}
+.dokumen-row{
+  display:flex;align-items:center;gap:12px;width:100%;border:none;background:transparent;
+  padding:14px 10px;border-radius:10px;text-align:left;border-bottom:1px solid var(--gray-100);
+}
+.dokumen-row .doc-icon{width:34px;height:34px;}
+.dokumen-row .doc-icon svg{width:16px;height:16px;}
+.dokumen-row-title{flex:1;font-size:14.5px;font-weight:500;}
+.dokumen-row .icon-sm{color:var(--gray-400);}
+
+/* ----- Profil view ----- */
+.profil-body{flex:1;overflow-y:auto;padding:calc(var(--header-h) + 28px) 22px 28px;display:flex;flex-direction:column;align-items:center;gap:18px;}
+.profil-avatar{width:76px;height:76px;border-radius:50%;background:var(--purple-muda);color:var(--purple-primary);
+  display:flex;align-items:center;justify-content:center;}
+.profil-avatar svg{width:34px;height:34px;}
+.profil-name{font-size:16px;font-weight:700;}
+.profil-meta{font-size:13px;color:var(--gray-500);text-align:center;}
+.profil-card{width:100%;max-width:320px;border:1px solid var(--border);border-radius:12px;padding:4px;margin-top:6px;}
+.profil-card .nav-item{width:100%;}
+.profil-card .nav-item svg{color:var(--gray-500);}
+.profil-card .logout-item{color:var(--danger);}
+.profil-card .logout-item svg{color:var(--danger);}
+
+/* ============================================================
+   3. DOCUMENT PANEL
+   ============================================================ */
+.doc-panel{
+  width:0;flex-shrink:0;overflow:hidden;
+  border-left:1px solid var(--border);
+  transition:width .22s ease;
+  background:var(--white);
+  z-index:70;
+}
+.doc-panel.open{width:var(--panel-w);}
+.doc-panel-inner{width:var(--panel-w);height:100%;display:flex;flex-direction:column;}
+
+.doc-panel-header{display:flex;align-items:center;gap:10px;padding:16px 18px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.doc-panel-header h3{flex:1;}
+
+.doc-tabs{display:flex;gap:22px;padding:0 18px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.doc-tab{
+  border:none;background:transparent;padding:12px 2px;font-size:13.5px;font-weight:600;color:var(--gray-400);
+  border-bottom:2px solid transparent;margin-bottom:-1px;transition:.15s ease;
+}
+.doc-tab.active{color:var(--purple-primary);border-bottom-color:var(--purple-primary);}
+
+.doc-tab-panel{display:none;flex:1;min-height:0;flex-direction:column;}
+.doc-tab-panel.active{display:flex;}
+
+.doc-chip-row{padding:14px 18px 10px;}
+.doc-chip{
+  display:flex;align-items:center;gap:10px;background:var(--gray-100);border-radius:10px;padding:9px 12px;
+  font-size:13px;font-weight:600;color:var(--gray-700);
+}
+.doc-chip svg{color:var(--purple-primary);width:15px;height:15px;}
+
+.doc-toolbar{display:flex;align-items:center;gap:4px;padding:8px 14px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);flex-shrink:0;}
+.doc-toolbar .spacer{flex:1;}
+.page-indicator{
+  font-size:12.5px;font-weight:600;color:var(--gray-700);background:var(--white);border:1px solid var(--gray-200);
+  border-radius:8px;padding:6px 10px;min-width:56px;text-align:center;
+}
+
+.doc-page-scroll{flex:1;overflow-y:auto;padding:22px 20px 12px;}
+.doc-page{background:var(--white);}
+.doc-page .bab{text-align:center;font-size:13px;font-weight:700;letter-spacing:.03em;color:var(--gray-700);}
+.doc-page .bab-title{text-align:center;font-size:14.5px;font-weight:700;letter-spacing:.02em;color:var(--gray-700);margin-top:2px;margin-bottom:18px;}
+.doc-page .sect-num{font-size:12.5px;font-weight:700;color:var(--gray-700);}
+.doc-page .sect-title{font-size:12.5px;font-weight:700;color:var(--gray-700);}
+.doc-page p{font-size:12px;line-height:1.7;color:var(--gray-700);margin-top:6px;}
+.doc-page ol{margin:8px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:5px;}
+.doc-page ol li{font-size:12px;line-height:1.6;color:var(--gray-700);}
+.doc-page-footer{text-align:center;padding:6px 0 16px;font-size:11.5px;color:var(--gray-400);border-top:1px solid var(--gray-100);margin-top:14px;}
+
+.doc-halaman-baru .doc-page-scroll{background:var(--gray-100);}
+.doc-halaman-baru .doc-page{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:26px 22px;box-shadow:var(--shadow-sm);}
+
+.doc-overlay,.sidebar-overlay,.sheet-overlay{
+  position:fixed;inset:0;background:rgba(20,10,40,.35);opacity:0;pointer-events:none;transition:opacity .2s ease;z-index:55;
+}
+.doc-overlay.show,.sidebar-overlay.show{opacity:1;pointer-events:auto;}
+
+/* action sheet (mobile) */
+.sheet-overlay{z-index:90;display:flex;align-items:flex-end;justify-content:center;}
+.action-sheet{
+  background:var(--white);width:100%;max-width:480px;border-radius:18px 18px 0 0;padding:10px 10px 22px;
+  transform:translateY(100%);transition:transform .22s ease;box-shadow:var(--shadow-lg);
+}
+.sheet-overlay.show{opacity:1;pointer-events:auto;}
+.sheet-overlay.show .action-sheet{transform:translateY(0);}
+.sheet-grabber{width:36px;height:4px;border-radius:99px;background:var(--gray-200);margin:6px auto 14px;}
+.sheet-item{
+  display:flex;align-items:center;gap:14px;width:100%;border:none;background:transparent;padding:13px 14px;
+  border-radius:10px;font-size:14.5px;font-weight:500;color:var(--gray-700);
+}
+.sheet-item:hover{background:var(--gray-100);}
+.sheet-item svg{color:var(--gray-500);}
+
+/* dropdown for chat header kebab */
+.dropdown{position:relative;}
+.dropdown-menu{
+  position:absolute;top:calc(100% + 6px);right:0;background:var(--white);border:1px solid var(--border);
+  border-radius:10px;box-shadow:var(--shadow-md);padding:6px;min-width:180px;display:none;z-index:40;
+}
+.dropdown-menu.show{display:block;}
+.dropdown-menu button{
+  display:flex;align-items:center;gap:10px;width:100%;border:none;background:transparent;padding:9px 10px;
+  border-radius:7px;font-size:13.5px;font-weight:500;color:var(--gray-700);text-align:left;
+}
+.dropdown-menu button:hover{background:var(--gray-100);}
+.dropdown-menu button.danger{color:var(--danger);}
+
+/* mobile top bar — floats above content with a frosted blur (no border) */
+.mobile-topbar{
+  display:none;position:absolute;top:0;left:0;right:0;height:var(--header-h);z-index:15;
+  align-items:center;gap:12px;padding:0 14px;
+  background:rgba(255,255,255,.68);
+  -webkit-backdrop-filter:blur(14px) saturate(1.4);backdrop-filter:blur(14px) saturate(1.4);
+}
+.mobile-topbar h1{font-size:15px;font-weight:700;flex:1;text-align:center;margin-right:34px;}
+
+/* bottom nav */
+.bottom-nav{
+  display:none;border-top:1px solid var(--border);background:var(--white);flex-shrink:0;
+  padding:6px 4px calc(env(safe-area-inset-bottom,0px) + 6px);
+}
+.bottom-nav-inner{display:flex;}
+.bn-item{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;border:none;background:transparent;
+  padding:7px 4px;color:var(--gray-400);
+}
+.bn-item svg{width:21px;height:21px;}
+.bn-item span{font-size:10.5px;font-weight:600;}
+.bn-item.active{color:var(--purple-primary);}
+
+/* ============================================================
+   4. RESPONSIVE — "8. Responsive Behavior"
+   ============================================================ */
+
+/* Tablet 768–1023px: doc panel becomes an overlay drawer */
+@media (max-width:1023px){
+  :root{--panel-w:420px;}
+  .doc-panel{
+    position:fixed;top:0;right:0;height:100%;width:min(var(--panel-w),100%);
+    transform:translateX(100%);transition:transform .24s ease;box-shadow:var(--shadow-lg);
+    border-left:1px solid var(--border);
+  }
+  .doc-panel.open{transform:translateX(0);}
+  .doc-panel-inner{width:100%;}
+}
+
+/* Mobile ≤767px: sidebar becomes a left drawer, bottom nav + view switching appears */
+@media (max-width:767px){
+  .sidebar{
+    position:fixed;top:0;left:0;height:100%;width:min(288px,86%);
+    transform:translateX(-100%);transition:transform .24s ease;box-shadow:var(--shadow-lg);
+    border-right:1px solid var(--border);
+  }
+  .sidebar.open{transform:translateX(0);}
+  .sidebar-close{display:flex;}
+
+  .main-header{display:none;}
+  .mobile-topbar{display:flex;}
+  .bottom-nav{display:block;}
+  .tablet-mobile-only{display:flex;}
+
+  .msg-row.user{max-width:88%;}
+  .doc-panel{width:100%;}
+  :root{--panel-w:100%;}
+
+  .composer{padding:12px 14px 8px;}
+  .chat-scroll{padding-left:14px;padding-right:14px;}
+  .riwayat-body,.dokumen-body,.profil-body{padding-left:14px;padding-right:14px;}
+}
+
+@media (min-width:768px){
+  .mobile-only{display:none !important;}
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- =============== SIDEBAR =============== -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <svg class="brand-mark" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="20" cy="20" r="19" fill="#F5F1FC" stroke="#6D28D9" stroke-width="1.4"/>
+        <circle cx="20" cy="20" r="12.5" fill="none" stroke="#6D28D9" stroke-width="1.4"/>
+        <circle cx="20" cy="20" r="4" fill="#6D28D9"/>
+      </svg>
+      <div class="brand-text">
+        <div class="b1">STMIK</div>
+        <div class="b2">WIDYA CIPTA DHARMA</div>
+      </div>
+      <button class="icon-btn sidebar-close" id="sidebarClose" aria-label="Tutup menu">
+        <svg class="icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+    <button class="btn-primary" id="chatBaruBtn">
+      <svg class="icon-sm" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Chat Baru
+    </button>
+
+    <nav class="sidebar-nav">
+      <button class="nav-item" id="navRiwayat" data-view="riwayat">
+        <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/></svg>
+        Riwayat Chat
+      </button>
+
+      <div class="nav-section">
+        <button class="nav-section-header" id="dokumenToggle">
+          DOKUMEN PANDUAN
+          <svg class="icon-sm" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="nav-section-list" id="dokumenList">
+          <!-- filled by JS -->
+        </div>
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button class="nav-item" data-view="profil">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Profil
+      </button>
+      <button class="nav-item" id="logoutBtn">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Logout
+      </button>
+    </div>
+  </aside>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- =============== MAIN PANEL =============== -->
+  <main class="main-panel">
+
+    <!-- mobile topbar -->
+    <div class="mobile-topbar">
+      <button class="icon-btn" id="hamburgerBtn" aria-label="Buka menu">
+        <svg class="icon" viewBox="0 0 24 24"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+      </button>
+      <h1 id="mobileTitle">Asisten WCD</h1>
+      <button class="icon-btn" id="mobileNewChat" aria-label="Chat baru">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 1 1 17 .5z"/><line x1="12" y1="8.5" x2="12" y2="13.5"/><line x1="9.5" y1="11" x2="14.5" y2="11"/></svg>
+      </button>
+    </div>
+
+    <!-- desktop/tablet header -->
+    <div class="main-header">
+      <h2 class="h2">Chat</h2>
+      <div class="dropdown">
+        <button class="icon-btn header-icon-btn" id="chatMenuBtn" aria-label="Opsi percakapan">
+          <svg class="icon" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>
+        </button>
+        <div class="dropdown-menu" id="chatMenu">
+          <button id="menuClear">
+            <svg class="icon-sm" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            Hapus Percakapan
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ---------- VIEW: CHAT ---------- -->
+    <section class="view active chat-empty" id="view-chat">
+      <div class="chat-scroll" id="chatScroll">
+        <div class="chat-inner" id="chatInner">
+          <div class="empty-state" id="emptyState">
+            <div class="empty-badge">
+              <svg viewBox="0 0 24 24"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 1 1 17 .5z"/><line x1="12" y1="8.5" x2="12" y2="13.5"/><line x1="9.5" y1="11" x2="14.5" y2="11"/></svg>
+            </div>
+            <h3 class="h3">Mulai percakapan baru</h3>
+            <p class="body2">Tanyakan apa saja seputar PI, KKP, Skripsi, atau Jalur Lulus Non Skripsi.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="composer">
+        <div class="composer-inner">
+          <div class="input-field">
+            <button class="icon-btn" aria-label="Lampirkan file" style="flex-shrink:0;">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M21.4 11.05 12.2 20.24a6 6 0 0 1-8.49-8.49l9.19-9.2a4 4 0 0 1 5.66 5.67l-9.2 9.19a2 2 0 0 1-2.82-2.83l8.49-8.48"/></svg>
+            </button>
+            <input type="text" id="chatInput" placeholder="Ketik pertanyaan Anda..." autocomplete="off">
+            <button class="send-btn" id="sendBtn" aria-label="Kirim pertanyaan">
+              <svg class="icon" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            </button>
+          </div>
+          <div class="suggestion-row" id="suggestionRow">
+            <button class="chip" data-ask="Apa saja syarat pengajuan judul Skripsi?">Syarat judul Skripsi</button>
+            <button class="chip" data-ask="Apa syarat pendaftaran KKP?">Syarat pendaftaran KKP</button>
+            <button class="chip" data-ask="Apa ketentuan Jalur Lulus Non Skripsi?">Jalur Non Skripsi</button>
+          </div>
+          <p class="caption composer-hint">Chatbot dapat membuat kesalahan. Jawaban selalu berdasarkan dokumen resmi.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- VIEW: RIWAYAT CHAT ---------- -->
+    <section class="view" id="view-riwayat">
+      <div class="riwayat-body">
+        <div class="input-field riwayat-search">
+          <svg class="icon" viewBox="0 0 24 24" style="color:var(--gray-400);"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" placeholder="Cari percakapan...">
+        </div>
+        <div id="riwayatGroups"></div>
+      </div>
+    </section>
+
+    <!-- ---------- VIEW: DOKUMEN (mobile list) ---------- -->
+    <section class="view" id="view-dokumen">
+      <div class="dokumen-body" id="dokumenBody"></div>
+    </section>
+
+    <!-- ---------- VIEW: PROFIL ---------- -->
+    <section class="view" id="view-profil">
+      <div class="profil-body">
+        <div class="profil-avatar">
+          <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>
+        <div style="text-align:center;">
+          <div class="profil-name">Mahasiswa STMIK WCD</div>
+          <div class="profil-meta">mahasiswa@stmikwcd.ac.id</div>
+        </div>
+        <div class="profil-card">
+          <button class="nav-item">
+            <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/></svg>
+            Riwayat Chat Saya
+          </button>
+          <button class="nav-item">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            Dokumen Panduan
+          </button>
+          <button class="nav-item logout-item" id="logoutBtn2">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Logout
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- =============== BOTTOM NAV (mobile) =============== -->
+    <nav class="bottom-nav">
+      <div class="bottom-nav-inner">
+        <button class="bn-item active" data-view="chat">
+          <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-4.5 7.5 8.5 8.5 0 0 1-9-1L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 8.5-8.5h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+          <span>Chat</span>
+        </button>
+        <button class="bn-item" data-view="riwayat">
+          <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/></svg>
+          <span>Riwayat</span>
+        </button>
+        <button class="bn-item" data-view="dokumen">
+          <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <span>Dokumen</span>
+        </button>
+        <button class="bn-item" data-view="profil">
+          <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <span>Profil</span>
+        </button>
+      </div>
+    </nav>
+
+  </main>
+
+  <!-- =============== DOCUMENT PANEL =============== -->
+  <aside class="doc-panel" id="docPanel">
+    <div class="doc-panel-inner">
+      <div class="doc-panel-header">
+        <button class="icon-btn mobile-only" id="docBackBtn" aria-label="Kembali">
+          <svg class="icon" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        </button>
+        <h3 class="h3">Dokumen Panduan</h3>
+        <button class="icon-btn" id="docCloseBtn" aria-label="Tutup dokumen">
+          <svg class="icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <div class="doc-tabs">
+        <button class="doc-tab active" data-tab="panel">Panel</button>
+        <button class="doc-tab" data-tab="halaman">Halaman Baru</button>
+      </div>
+
+      <!-- Tab: Panel (sampling) -->
+      <div class="doc-tab-panel active" id="tab-panel">
+        <div class="doc-chip-row">
+          <div class="doc-chip">
+            <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <span id="panelDocName">Panduan Skripsi</span>
+          </div>
+        </div>
+        <div class="doc-toolbar">
+          <button class="icon-btn" aria-label="Cari dalam dokumen"><svg class="icon-sm" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>
+          <button class="icon-btn" data-zoom="-1" aria-label="Perkecil"><svg class="icon-sm" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+          <button class="icon-btn" data-zoom="1" aria-label="Perbesar"><svg class="icon-sm" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+          <div class="spacer"></div>
+          <span class="page-indicator" id="pageIndicatorPanel">18 / 76</span>
+          <div class="spacer"></div>
+          <button class="icon-btn" id="openHalamanBaru" aria-label="Buka di tab baru"><svg class="icon-sm" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></button>
+          <button class="icon-btn" id="docKebabBtn" aria-label="Opsi lainnya"><svg class="icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg></button>
+        </div>
+        <div class="doc-page-scroll" id="docPageScrollPanel"></div>
+      </div>
+
+      <!-- Tab: Halaman Baru (full page) -->
+      <div class="doc-tab-panel doc-halaman-baru" id="tab-halaman">
+        <div class="doc-chip-row" style="padding-bottom:0;">
+          <div class="doc-chip">
+            <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <span id="halamanDocFile">Panduan Skripsi.pdf</span>
+          </div>
+        </div>
+        <div class="doc-toolbar">
+          <button class="icon-btn" aria-label="Cari dalam dokumen"><svg class="icon-sm" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>
+          <button class="icon-btn" data-zoom="-1" aria-label="Perkecil"><svg class="icon-sm" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+          <div class="spacer"></div>
+          <span class="page-indicator" id="pageIndicatorHalaman">18 / 76</span>
+          <div class="spacer"></div>
+          <button class="icon-btn" data-zoom="1" aria-label="Perbesar"><svg class="icon-sm" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+          <button class="icon-btn" id="downloadBtn" aria-label="Unduh dokumen"><svg class="icon-sm" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
+        </div>
+        <div class="doc-page-scroll" id="docPageScrollHalaman"></div>
+      </div>
+    </div>
+  </aside>
+  <div class="doc-overlay" id="docOverlay"></div>
+
+</div>
+
+<!-- =============== ACTION SHEET (mobile doc options) =============== -->
+<div class="sheet-overlay" id="sheetOverlay">
+  <div class="action-sheet">
+    <div class="sheet-grabber"></div>
+    <button class="sheet-item" id="sheetDownload">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Unduh Dokumen (PDF)
+    </button>
+    <button class="sheet-item" id="sheetNewTab">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      Buka di Tab Baru
+    </button>
+    <button class="sheet-item" id="sheetShare">
+      <svg class="icon" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+      Bagikan Dokumen
+    </button>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   DATA
+   ============================================================ */
+const DOCS = {
+  skripsi: {
+    title:"Panduan Skripsi", file:"Panduan Skripsi.pdf", page:18, total:76,
+    bab:"BAB II", babTitle:"PENGAJUAN JUDUL", citeLabel:"BAB II - Pengajuan Judul",
+    sectNum:"2.1", sectTitle:"Ketentuan Pengajuan Judul",
+    intro:"Mahasiswa yang akan mengajukan judul Skripsi harus memenuhi persyaratan sebagai berikut:",
+    list:["Telah menempuh minimal 110 SKS.","Tidak ada nilai E pada mata kuliah yang telah diambil.","IPK minimal 2.75.","Mengajukan minimal 3 judul penelitian."],
+    answerIntro:"Berikut syarat pengajuan judul Skripsi di STMIK Widya Cipta Dharma:"
+  },
+  kkp: {
+    title:"Panduan KKP", file:"Panduan KKP.pdf", page:5, total:42,
+    bab:"BAB I", babTitle:"KETENTUAN UMUM KKP", citeLabel:"BAB I - Ketentuan Umum KKP",
+    sectNum:"1.1", sectTitle:"Syarat Pendaftaran KKP",
+    intro:"Mahasiswa dapat mendaftar Kuliah Kerja Praktik (KKP) apabila memenuhi ketentuan berikut:",
+    list:["Telah menempuh minimal 90 SKS.","Telah lulus mata kuliah Metodologi Penelitian.","IPK minimal 2.50.","Mengisi formulir pendaftaran KKP melalui SIAKAD."],
+    answerIntro:"Berikut syarat pendaftaran KKP di STMIK Widya Cipta Dharma:"
+  },
+  pi: {
+    title:"Panduan PI", file:"Panduan PI.pdf", page:3, total:30,
+    bab:"BAB I", babTitle:"PRAKTIK INDUSTRI", citeLabel:"BAB I - Praktik Industri",
+    sectNum:"1.1", sectTitle:"Syarat Mengikuti PI",
+    intro:"Mahasiswa dapat mengikuti Praktik Industri (PI) apabila memenuhi persyaratan berikut:",
+    list:["Telah menempuh minimal 70 SKS.","Tidak sedang mengambil cuti akademik.","Mendapat persetujuan dosen pembimbing akademik.","Mengajukan proposal ke instansi/perusahaan tujuan."],
+    answerIntro:"Berikut syarat mengikuti Praktik Industri (PI) di STMIK Widya Cipta Dharma:"
+  },
+  nonskripsi: {
+    title:"Panduan Non Skripsi", file:"Panduan Non Skripsi.pdf", page:9, total:38,
+    bab:"BAB II", babTitle:"JALUR LULUS NON SKRIPSI", citeLabel:"BAB II - Jalur Lulus Non Skripsi",
+    sectNum:"2.1", sectTitle:"Ketentuan Jalur Wirausaha",
+    intro:"Mahasiswa dapat memilih Jalur Lulus Non Skripsi (Wirausaha) apabila memenuhi ketentuan berikut:",
+    list:["Telah menempuh minimal 130 SKS.","Memiliki usaha aktif minimal 6 bulan dengan bukti legal.","Menyusun laporan kewirausahaan sesuai format kampus.","Mengikuti sidang kelayakan usaha di hadapan penguji."],
+    answerIntro:"Berikut ketentuan Jalur Lulus Non Skripsi (Wirausaha) di STMIK Widya Cipta Dharma:"
+  }
+};
+
+const RIWAYAT = [
+  {group:"Hari ini", items:[
+    {title:"Syarat pengajuan judul Skripsi", time:"10:30", doc:"skripsi"},
+    {title:"Bimbingan Skripsi", time:"09:15", doc:"skripsi"},
+  ]},
+  {group:"Kemarin", items:[
+    {title:"Panduan KKP", time:"16:45", doc:"kkp"},
+    {title:"Jalur Non Skripsi - Wirausaha", time:"14:20", doc:"nonskripsi"},
+  ]},
+  {group:"3 hari lalu", items:[
+    {title:"Format Laporan PI", time:"11:02", doc:"pi"},
+  ]},
+];
+
+const DOC_ORDER = ["pi","kkp","skripsi","nonskripsi"];
+
+const DOC_ICON = '<svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
+const CHEVRON_SM = '<svg class="icon-sm" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>';
+
+/* ============================================================
+   STATE
+   ============================================================ */
+let state = { currentView:"chat", docKey:null, docTab:"panel" };
+
+/* ============================================================
+   INIT: build sidebar doc list, riwayat list, dokumen list
+   ============================================================ */
+const dokumenListEl = document.getElementById('dokumenList');
+DOC_ORDER.forEach(key=>{
+  const btn = document.createElement('button');
+  btn.className = 'doc-item';
+  btn.dataset.doc = key;
+  btn.innerHTML = `<span class="doc-icon">${DOC_ICON}</span><span>${DOCS[key].title}</span>`;
+  btn.addEventListener('click', ()=> openDoc(key,'panel'));
+  dokumenListEl.appendChild(btn);
+});
+
+const dokumenBodyEl = document.getElementById('dokumenBody');
+DOC_ORDER.forEach(key=>{
+  const row = document.createElement('button');
+  row.className = 'dokumen-row';
+  row.innerHTML = `<span class="doc-icon">${DOC_ICON}</span><span class="dokumen-row-title">${DOCS[key].title}</span>${CHEVRON_SM}`;
+  row.addEventListener('click', ()=> openDoc(key,'panel', true));
+  dokumenBodyEl.appendChild(row);
+});
+
+const riwayatGroupsEl = document.getElementById('riwayatGroups');
+RIWAYAT.forEach(g=>{
+  const wrap = document.createElement('div');
+  wrap.className = 'riwayat-group';
+  const label = document.createElement('div');
+  label.className = 'riwayat-group-label';
+  label.textContent = g.group;
+  wrap.appendChild(label);
+  g.items.forEach(item=>{
+    const btn = document.createElement('button');
+    btn.className = 'riwayat-item';
+    btn.innerHTML = `<span class="doc-icon">${DOC_ICON}</span><span class="riwayat-title">${item.title}</span><span class="riwayat-time">${item.time}</span>${CHEVRON_SM}`;
+    btn.addEventListener('click', ()=> loadConversation(item));
+    wrap.appendChild(btn);
+  });
+  riwayatGroupsEl.appendChild(wrap);
+});
+
+/* ============================================================
+   VIEW SWITCHING (chat / riwayat / dokumen / profil)
+   ============================================================ */
+const viewTitles = {chat:"Asisten WCD", riwayat:"Riwayat Chat", dokumen:"Dokumen Panduan", profil:"Profil"};
+
+function setView(view){
+  state.currentView = view;
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+view).classList.add('active');
+  document.getElementById('mobileTitle').textContent = viewTitles[view] || 'Asisten WCD';
+  document.querySelectorAll('.bn-item').forEach(b=> b.classList.toggle('active', b.dataset.view===view));
+  document.querySelectorAll('.nav-item[data-view]').forEach(b=> b.classList.toggle('active', b.dataset.view===view));
+  document.querySelector('.main-header h2').textContent = view==='chat' ? 'Chat' : (viewTitles[view]||'Chat');
+  closeSidebarDrawer();
+}
+
+document.querySelectorAll('[data-view]').forEach(el=>{
+  el.addEventListener('click', ()=> setView(el.dataset.view));
+});
+
+/* ============================================================
+   SIDEBAR: collapse "Dokumen Panduan" section + drawer (mobile)
+   ============================================================ */
+const dokumenToggle = document.getElementById('dokumenToggle');
+dokumenToggle.addEventListener('click', ()=>{
+  dokumenToggle.classList.toggle('collapsed');
+  const list = document.getElementById('dokumenList');
+  if(dokumenToggle.classList.contains('collapsed')){
+    list.style.maxHeight = '0px';
+  } else {
+    list.style.maxHeight = list.scrollHeight + 'px';
+  }
+});
+// start expanded
+document.getElementById('dokumenList').style.maxHeight = '999px';
+
+const sidebar = document.getElementById('sidebar');
+const sidebarOverlay = document.getElementById('sidebarOverlay');
+function openSidebarDrawer(){ sidebar.classList.add('open'); sidebarOverlay.classList.add('show'); }
+function closeSidebarDrawer(){ sidebar.classList.remove('open'); sidebarOverlay.classList.remove('show'); }
+document.getElementById('hamburgerBtn').addEventListener('click', openSidebarDrawer);
+document.getElementById('sidebarClose').addEventListener('click', closeSidebarDrawer);
+sidebarOverlay.addEventListener('click', closeSidebarDrawer);
+
+document.getElementById('chatBaruBtn').addEventListener('click', ()=>{
+  resetChat();
+  setView('chat');
+});
+document.getElementById('mobileNewChat').addEventListener('click', ()=>{
+  resetChat();
+  setView('chat');
+});
+
+['logoutBtn','logoutBtn2'].forEach(id=>{
+  document.getElementById(id).addEventListener('click', ()=>{
+    alert('Anda telah keluar dari Asisten WCD. (Demo — tidak ada sesi nyata yang dihentikan.)');
+  });
+});
+
+/* chat header kebab dropdown */
+const chatMenuBtn = document.getElementById('chatMenuBtn');
+const chatMenu = document.getElementById('chatMenu');
+chatMenuBtn.addEventListener('click', (e)=>{ e.stopPropagation(); chatMenu.classList.toggle('show'); });
+document.addEventListener('click', ()=> chatMenu.classList.remove('show'));
+document.getElementById('menuClear').addEventListener('click', resetChat);
+
+/* ============================================================
+   CHAT
+   ============================================================ */
+const chatScroll = document.getElementById('chatScroll');
+const chatInner = document.getElementById('chatInner');
+const emptyState = document.getElementById('emptyState');
+const chatViewEl = document.getElementById('view-chat');
+const chatInput = document.getElementById('chatInput');
+const sendBtn = document.getElementById('sendBtn');
+
+function timeNow(){
+  const d = new Date();
+  return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');
+}
+
+function resetChat(){
+  chatInner.innerHTML = '';
+  chatInner.appendChild(emptyState);
+  chatViewEl.classList.add('chat-empty');
+  chatInput.value = '';
+}
+
+function scrollToBottom(){
+  chatScroll.scrollTop = chatScroll.scrollHeight;
+}
+
+function ensureEmptyStateRemoved(){
+  if(emptyState.parentNode === chatInner){ chatInner.removeChild(emptyState); }
+  chatViewEl.classList.remove('chat-empty');
+}
+
+function addUserMessage(text){
+  ensureEmptyStateRemoved();
+  const row = document.createElement('div');
+  row.className = 'msg-row user';
+  row.innerHTML = `
+    <div class="msg-col">
+      <div class="bubble body2">${escapeHtml(text)}</div>
+      <span class="caption msg-time">${timeNow()}</span>
+    </div>`;
+  chatInner.appendChild(row);
+  scrollToBottom();
+}
+
+function addTypingIndicator(){
+  const row = document.createElement('div');
+  row.className = 'msg-row bot typing-row';
+  row.id = 'typingRow';
+  row.innerHTML = `
+    <div class="msg-col">
+      <div class="typing-dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+    </div>`;
+  chatInner.appendChild(row);
+  scrollToBottom();
+}
+
+function removeTypingIndicator(){
+  const row = document.getElementById('typingRow');
+  if(row) row.remove();
+}
+
+function addBotMessage(intro, listItems, docKey){
+  const doc = DOCS[docKey];
+  const row = document.createElement('div');
+  row.className = 'msg-row bot';
+  const listHtml = listItems.map(li=>`<li>${escapeHtml(li)}</li>`).join('');
+  row.innerHTML = `
+    <div class="msg-col">
+      <div class="bot-text">
+        <p>${escapeHtml(intro)}</p>
+        <ol>${listHtml}</ol>
+        ${doc ? '<div class="bubble-label">Sumber:</div>' : ''}
+      </div>
+      ${doc ? `
+      <div class="citation-card" data-cite="${docKey}">
+        <span class="citation-icon">${DOC_ICON}</span>
+        <div class="citation-text">
+          <div class="citation-title">${doc.title}</div>
+          <div class="citation-sub"><span>${doc.citeLabel}</span><span class="page-pill">Halaman ${doc.page}</span></div>
+        </div>
+        <span class="icon-btn"><svg class="icon-sm" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></span>
+      </div>` : ''}
+      <span class="caption msg-time">${timeNow()}</span>
+    </div>`;
+  chatInner.appendChild(row);
+  if(doc){
+    row.querySelector('.citation-card').addEventListener('click', ()=> openDoc(docKey,'halaman'));
+  }
+  scrollToBottom();
+}
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function detectDoc(text){
+  const t = text.toLowerCase();
+  if(t.includes('non skripsi') || t.includes('wirausaha') || t.includes('non-skripsi')) return 'nonskripsi';
+  if(t.includes('skripsi')) return 'skripsi';
+  if(t.includes('kkp')) return 'kkp';
+  if(t.includes(' pi ') || t.startsWith('pi ') || t.includes('praktik industri') || t.endsWith(' pi') || t.includes('pi?') || t.includes('pi.')) return 'pi';
+  return null;
+}
+
+function sendMessage(text){
+  const trimmed = text.trim();
+  if(!trimmed) return;
+  addUserMessage(trimmed);
+  chatInput.value = '';
+  addTypingIndicator();
+  const docKey = detectDoc(trimmed);
+  setTimeout(()=>{
+    removeTypingIndicator();
+    if(docKey){
+      const doc = DOCS[docKey];
+      addBotMessage(doc.answerIntro, doc.list, docKey);
+    } else {
+      addBotMessage('Maaf, saya belum menemukan jawaban pasti untuk pertanyaan tersebut di dokumen resmi. Coba tanyakan seputar PI, KKP, Skripsi, atau Jalur Lulus Non Skripsi.', [], null);
+    }
+  }, 900);
+}
+
+sendBtn.addEventListener('click', ()=> sendMessage(chatInput.value));
+chatInput.addEventListener('keydown', (e)=>{
+  if(e.key==='Enter'){ e.preventDefault(); sendMessage(chatInput.value); }
+});
+document.querySelectorAll('.chip').forEach(chip=>{
+  chip.addEventListener('click', ()=> sendMessage(chip.dataset.ask));
+});
+
+function loadConversation(item){
+  setView('chat');
+  resetChat();
+  addUserMessage(item.title + '?');
+  addTypingIndicator();
+  setTimeout(()=>{
+    removeTypingIndicator();
+    const doc = DOCS[item.doc];
+    addBotMessage(doc.answerIntro, doc.list, item.doc);
+  }, 700);
+}
+
+/* ============================================================
+   DOCUMENT PANEL
+   ============================================================ */
+const docPanel = document.getElementById('docPanel');
+const docOverlay = document.getElementById('docOverlay');
+const mainPanelEl = document.querySelector('.main-panel');
+
+function renderDocPage(container, doc){
+  container.innerHTML = `
+    <div class="doc-page">
+      <div class="bab">${doc.bab}</div>
+      <div class="bab-title">${doc.babTitle}</div>
+      <div><span class="sect-num">${doc.sectNum}&nbsp;&nbsp;</span><span class="sect-title">${doc.sectTitle}</span></div>
+      <p>${doc.intro}</p>
+      <ol>${doc.list.map(li=>`<li>${li}</li>`).join('')}</ol>
+    </div>
+    <div class="doc-page-footer">${doc.page}</div>`;
+}
+
+function openDoc(key, tab='panel', fromMobileList=false){
+  state.docKey = key;
+  const doc = DOCS[key];
+  document.getElementById('panelDocName').textContent = doc.title;
+  document.getElementById('halamanDocFile').textContent = doc.file;
+  document.getElementById('pageIndicatorPanel').textContent = `${doc.page} / ${doc.total}`;
+  document.getElementById('pageIndicatorHalaman').textContent = `${doc.page} / ${doc.total}`;
+  renderDocPage(document.getElementById('docPageScrollPanel'), doc);
+  renderDocPage(document.getElementById('docPageScrollHalaman'), doc);
+
+  document.querySelectorAll('.doc-item').forEach(b=> b.classList.toggle('active', b.dataset.doc===key));
+  setDocTab(tab);
+  docPanel.classList.add('open');
+  mainPanelEl.classList.add('doc-open');
+  if(window.innerWidth<=1023){ docOverlay.classList.add('show'); }
+  document.getElementById('docBackBtn').style.display = (window.innerWidth<=767) ? 'flex' : 'none';
+  closeSidebarDrawer();
+}
+
+function closeDoc(){
+  docPanel.classList.remove('open');
+  mainPanelEl.classList.remove('doc-open');
+  docOverlay.classList.remove('show');
+}
+
+
+function setDocTab(tab){
+  state.docTab = tab;
+  document.querySelectorAll('.doc-tab').forEach(t=> t.classList.toggle('active', t.dataset.tab===tab));
+  document.getElementById('tab-panel').classList.toggle('active', tab==='panel');
+  document.getElementById('tab-halaman').classList.toggle('active', tab==='halaman');
+}
+
+document.querySelectorAll('.doc-tab').forEach(t=>{
+  t.addEventListener('click', ()=> setDocTab(t.dataset.tab));
+});
+document.getElementById('openHalamanBaru').addEventListener('click', ()=> setDocTab('halaman'));
+document.getElementById('docCloseBtn').addEventListener('click', closeDoc);
+document.getElementById('docBackBtn').addEventListener('click', closeDoc);
+docOverlay.addEventListener('click', closeDoc);
+
+/* doc kebab -> action sheet (also used for download button on mobile) */
+const sheetOverlay = document.getElementById('sheetOverlay');
+function openSheet(){ sheetOverlay.classList.add('show'); }
+function closeSheet(){ sheetOverlay.classList.remove('show'); }
+document.getElementById('docKebabBtn').addEventListener('click', openSheet);
+document.getElementById('downloadBtn').addEventListener('click', openSheet);
+sheetOverlay.addEventListener('click', (e)=>{ if(e.target===sheetOverlay) closeSheet(); });
+['sheetDownload','sheetNewTab','sheetShare'].forEach(id=>{
+  document.getElementById(id).addEventListener('click', closeSheet);
+});
+
+/* ============================================================
+   RESIZE HOUSEKEEPING
+   ============================================================ */
+window.addEventListener('resize', ()=>{
+  if(window.innerWidth>1023){
+    docOverlay.classList.remove('show');
+    closeSidebarDrawer();
+  }
+  document.getElementById('docBackBtn').style.display = (window.innerWidth<=767 && docPanel.classList.contains('open')) ? 'flex' : 'none';
+});
+
+/* initial view */
+setView('chat');
+</script>
+</body>
+</html>
