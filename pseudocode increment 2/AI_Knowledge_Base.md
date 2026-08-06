@@ -432,7 +432,8 @@ ALGORITMA MIGRASI PENYIMPANAN SESI KE DATABASE (supabase_session_migration.sql)
    - INPUT: Batas waktu tunggu/TTL dalam detik (p_ttl_seconds, default 3600 detik/1 jam).
    - OUTPUT: Jumlah sesi yang berhasil dihapus (Integer).
    - ALGORITMA:
-     - HAPUS baris dari tabel `conversation_sessions` DI MANA `last_access` lebih lama dari (WAKTU_SEKARANG dikurangi interval detik p_ttl_seconds).
+     - HAPUS baris dari tabel `conversation_sessions` DI MANA `last_access` lebih lama dari (WAKTU_SEKARANG dikurangi interval detik p_ttl_seconds) DAN (`mahasiswa_id IS NULL` ATAU `channel != 'website'`).
+     - (PENTING: Jangan hapus sesi Website milik mahasiswa agar riwayat mereka tetap ada secara permanen).
      - Simpan jumlah baris yang berhasil dihapus ke dalam variabel.
      - Tampilkan log peringatan (NOTICE) ke konsol sistem.
      - KEMBALIKAN jumlah baris yang dihapus.
@@ -557,7 +558,7 @@ ALGORITMA INISIALISASI SERVER APLIKASI (application.py)
 1. IMPOR PUSTAKA
    - Impor FastAPI, middleware CORS, Limiter (rate limit), JSONResponse, HTTPException
    - Impor framework Telegram bot, konfigurasi (settings)
-   - Impor routers (`ai`, `health`)
+   - Impor routers (`ai`, `health`, `auth`, `sessions`)
 
 2. CONTEXT MANAGER lifespan(app)
    - Lifespan menangani kode yang dijalankan saat server mulai (startup) dan server mati (shutdown).
@@ -589,6 +590,7 @@ ALGORITMA INISIALISASI SERVER APLIKASI (application.py)
 5. FUNGSI _register_routers(app)
    - Daftarkan router `/api` (untuk endpoint sistem AI dan chat).
    - Daftarkan router `/auth` (untuk endpoint otentikasi login).
+   - Daftarkan router `/sessions` (untuk endpoint riwayat chat).
    - Daftarkan router `/health` (untuk mengecek kesehatan server).
    
    - DEFINISI ENDPOINT POST `/api/telegram/webhook`:
@@ -716,6 +718,62 @@ ALGORITMA ROUTER API CHATBOT (ai.py)
      - JIKA GAGAL (Catch/Except):
        - Jika error berasal dari HTTPException, teruskan (raise).
        - Jika error lainnya, hasilkan respon HTTP Error (status code 500: Internal Server Error).
+```
+
+#### File: `src/api/sessions.py`
+
+```markdown
+ALGORITMA ROUTER SESSIONS (sessions.py)
+
+1. IMPOR PUSTAKA
+   - FastAPI (APIRouter, Depends, HTTPException, Request)
+   - Konfigurasi aplikasi dan Supabase client.
+   - Modul auth `verify_access_token`.
+
+2. INISIALISASI ROUTER
+   - Buat `APIRouter` dengan prefix "/sessions" dan tag "Sessions".
+   - Buat koneksi Supabase.
+
+3. ENDPOINT GET "/"
+   - Path: `/sessions`
+   - Tujuan: Mengambil riwayat percakapan pengguna (dikelompokkan berdasarkan sesi).
+   - ALGORITMA:
+     - TAHAP 1: Otorisasi
+       - Ambil header "Authorization: Bearer <token>".
+       - Ekstrak token, verifikasi via `verify_access_token`.
+       - Ambil `mahasiswa_id` dari payload token.
+     - TAHAP 2: Query Database
+       - Panggil Supabase: `SELECT session_id, last_access, turns FROM conversation_sessions WHERE mahasiswa_id = ? ORDER BY last_access DESC`.
+     - TAHAP 3: Pemrosesan Data
+       - Loop melalui data hasil kueri.
+       - Ekstrak pertanyaan pertama (cari pesan dengan `role=="user"`) dari array `turns` sebagai "judul" sesi (potong max 40 karakter).
+       - KEMBALIKAN daftar sesi berupa array JSON dengan format `[{session_id, title, last_access}]`.
+
+4. ENDPOINT GET "/{session_id}"
+   - Path: `/sessions/{session_id}`
+   - Tujuan: Memuat seluruh isi pesan dari satu sesi spesifik.
+   - ALGORITMA:
+     - TAHAP 1: Otorisasi
+       - Sama seperti di atas, dapatkan `mahasiswa_id`.
+     - TAHAP 2: Query Database
+       - Panggil Supabase: `SELECT turns FROM conversation_sessions WHERE session_id = ? AND mahasiswa_id = ?`.
+       - Jika tidak ditemukan, kembalikan HTTP 404 (Not Found).
+     - TAHAP 3: Pemrosesan Data
+       - Format ulang `turns` agar sesuai dengan yang diharapkan oleh frontend (ganti nama field: `content` menjadi `text`, dan `role: "assistant"` menjadi `role: "bot"`).
+       - KEMBALIKAN daftar pesan lengkap untuk ditampilkan di UI percakapan.
+
+5. ENDPOINT DELETE "/{session_id}"
+   - Path: `/sessions/{session_id}`
+   - Tujuan: Menghapus sesi percakapan dari database.
+   - ALGORITMA:
+     - TAHAP 1: Otorisasi
+       - Ambil `mahasiswa_id` dari token.
+     - TAHAP 2: Query Database
+       - Panggil Supabase: `DELETE FROM conversation_sessions WHERE session_id = ? AND mahasiswa_id = ?`.
+       - Cek jumlah baris yang berhasil dihapus (row count).
+     - TAHAP 3: Respons
+       - JIKA row count == 0: Kembalikan HTTP 404 (Not Found).
+       - JIKA BERHASIL: KEMBALIKAN pesan sukses.
 ```
 
 #### File: `src/bot/application.py`
