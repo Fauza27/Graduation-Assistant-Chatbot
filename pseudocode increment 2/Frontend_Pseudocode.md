@@ -122,14 +122,23 @@ ALGORITMA LAYOUT UTAMA (APP SHELL)
 ALGORITMA HALAMAN CHAT
 
 1. STATE GLOBAL (di `lib/store.ts` menggunakan Zustand)
-   - `session_id`: ID unik percakapan. Jika belum ada, diisi null. Disimpan ke `localStorage` agar tidak hilang saat di-refresh.
-   - `messages`: Daftar pesan obrolan. Disimpan ke `localStorage`.
-   - `isLoading`: Status loading pesan.
-   - FUNGSI `resetSession()`: Meng-generate UUID baru ke `session_id` dan mengosongkan `messages` (perubahan akan otomatis tersimpan di `localStorage`).
+   - `session_id`: ID unik percakapan (string | null), inisialisasi dengan `null`.
+   - `messages`: Daftar pesan obrolan (array of object), inisialisasi kosong `[]`.
+   - `hasHydrated`: Status rehidrasi `localStorage` (boolean), inisialisasi `false`.
+   - **Konfigurasi Middleware Persist**:
+     - Gunakan middleware `persist` dari Zustand agar data `session_id` dan `messages` otomatis disimpan ke `localStorage`.
+     - Manfaatkan callback `onRehydrateStorage` untuk mengubah `hasHydrated` menjadi `true` setelah proses muat data selesai (mencegah *race condition* di Next.js).
+   - **Aksi (Actions)**:
+     - `addMessage(role, text, sources)`: Menambahkan pesan baru ke array `messages`.
+     - `setMessages(messages)`: Mengganti seluruh pesan sekaligus (saat memuat riwayat).
+     - `resetSession()`: Menghapus array `messages` dan set `session_id` ke UUID baru.
+     - `setHydrated()`: Set status hidrasi.
 
 2. EFEK SAMPING (useEffect)
    - Scroll ke bagian bawah (bottom) setiap kali `messages` bertambah.
-   - Jika halaman chat pertama kali dimuat dan `session_id` masih null, panggil `resetSession()`.
+   - Jika halaman chat pertama kali dimuat:
+     - TUNGGU hingga `hasHydrated` bernilai `true` (menghindari penimpaan sesi yang sedang direstorasi dari *local storage*).
+     - Jika `hasHydrated` bernilai `true` DAN `session_id` masih null, panggil `resetSession()`.
 
 3. FUNGSI handleSendMessage()
    - JIKA `inputValue` kosong, abaikan.
@@ -145,11 +154,13 @@ ALGORITMA HALAMAN CHAT
      - Tambahkan pesan bot berisi error (misal kuota habis).
 
 4. FUNGSI handleDeleteSession()
-   - Tampilkan dialog konfirmasi (`confirm('Apakah Anda yakin ingin menghapus percakapan ini?')`).
-   - JIKA pengguna membatalkan (Cancel), abaikan.
-   - Panggil `DELETE NEXT_PUBLIC_API_BASE_URL/api/sessions/{session_id}` dengan Bearer token.
-   - Jika berhasil, panggil `resetSession()`.
-   - Jika gagal, tampilkan notifikasi error.
+   - Munculkan tombol "Hapus Percakapan" pada menu dropdown (kebab icon di pojok kanan atas layar chat).
+   - (*Catatan: Sesuai desain v4, penghapusan HANYA dapat dilakukan dari dalam sesi aktif ini, bukan dari daftar riwayat di sidebar*).
+   - Saat tombol ditekan, munculkan konfirmasi `window.confirm`.
+   - Jika `Yes`: 
+     - Panggil API `DELETE NEXT_PUBLIC_API_BASE_URL/api/sessions/{session_id}` dengan Bearer token.
+     - Tunggu respon API, lalu panggil `resetSession()` agar UI kembali bersih dan membuat ID baru.
+     - Jika gagal, tampilkan notifikasi error.
 
 5. RENDER TAMPILAN
    - Header Desktop ("Chat").
