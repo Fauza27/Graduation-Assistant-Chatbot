@@ -18,6 +18,7 @@ class Turn:
     content: str
     intent: IntentType | None = None
     retrieved_doc_contents: list[str] = field(default_factory=list)
+    sources: list[dict] = field(default_factory=list)
     timestamp: float = field(default_factory=time.time)
 
     def to_lc_message(self) -> dict:
@@ -40,11 +41,13 @@ class ConversationMemory:
         self,
         content: str,
         retrieved_doc_contents: list[str] | None = None,
+        sources: list[dict] | None = None,
     ) -> None:
         self._turns.append(Turn(
             role="assistant",
             content=content,
             retrieved_doc_contents=retrieved_doc_contents or [],
+            sources=sources or [],
         ))
 
     def get_history_for_llm(self) -> list[dict]:
@@ -132,6 +135,7 @@ class ConversationMemory:
                 "content": turn.content,
                 "intent": turn.intent.value if turn.intent else None,
                 "retrieved_doc_contents": turn.retrieved_doc_contents,
+                "sources": turn.sources,
                 "timestamp": turn.timestamp
             }
             for turn in self._turns
@@ -147,6 +151,7 @@ class ConversationMemory:
                 content=turn_data["content"],
                 intent=IntentType(turn_data["intent"]) if turn_data.get("intent") else None,
                 retrieved_doc_contents=turn_data.get("retrieved_doc_contents", []),
+                sources=turn_data.get("sources", []),
                 timestamp=turn_data.get("timestamp", time.time())
             )
             memory._turns.append(turn)

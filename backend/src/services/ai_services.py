@@ -77,10 +77,10 @@ def _evict_lru_if_full() -> None:
     logger.info(f"Evicted {overflow} LRU session(s) due to MAX_ACTIVE_SESSIONS cap")
 
 
-def get_or_create_memory(session_id: str) -> ConversationMemory:
+def get_or_create_memory(session_id: str, mahasiswa_id: Optional[str] = None) -> ConversationMemory:
     """Get or create conversation memory for a session."""
     if settings.USE_DATABASE_SESSIONS:
-        return _session_store.load_memory(session_id)
+        return _session_store.load_memory(session_id, mahasiswa_id=mahasiswa_id)
     
     # Legacy in-memory session storage
     now = time.time()
@@ -171,7 +171,7 @@ def chat(query: str, session_id: str, username: str, channel: str = "telegram", 
         
         # SLOW PATH: Load memory early for query rewrite
         if rewrite_needed:
-            memory = get_or_create_memory(session_id)
+            memory = get_or_create_memory(session_id, mahasiswa_id=mahasiswa_id)
             memory.add_user_turn(question)
             
             t_rewrite_start = time.time()
@@ -196,7 +196,7 @@ def chat(query: str, session_id: str, username: str, channel: str = "telegram", 
 
         # FAST PATH: Load memory here if not loaded yet
         if memory is None:
-            memory = get_or_create_memory(session_id)
+            memory = get_or_create_memory(session_id, mahasiswa_id=mahasiswa_id)
             memory.add_user_turn(question)
             
         # 4. LLM Generation
@@ -211,11 +211,23 @@ def chat(query: str, session_id: str, username: str, channel: str = "telegram", 
         
         answer = result["answer"]
         
+        # Prepare sources metadata
+        sources_list = [
+            {
+                "section": p.get("section", ""),
+                "title": p.get("title", ""),
+                "parent_id": p.get("parent_id", ""),
+                "score": p.get("cross_encoder_score", 0.0),
+            }
+            for p in retrieval_docs[:3]
+        ] if retrieval_docs else []
+
         # 5. Save state
         if retrieval_docs:
             memory.add_assistant_turn(
                 content=answer,
                 retrieved_doc_contents=[p["content"] for p in retrieval_docs],
+                sources=sources_list,
             )
         else:
             memory.add_assistant_turn(content=answer)
@@ -243,15 +255,7 @@ def chat(query: str, session_id: str, username: str, channel: str = "telegram", 
             "answer": answer,
             "num_docs": len(retrieval_docs),
             "rewrite_method": rewrite_method,
-            "sources": [
-                {
-                    "section": p.get("section", ""),
-                    "title": p.get("title", ""),
-                    "parent_id": p.get("parent_id", ""),
-                    "score": p.get("cross_encoder_score", 0.0),
-                }
-                for p in retrieval_docs[:3]
-            ] if retrieval_docs else [],
+            "sources": sources_list,
         }
         
     except Exception as e:

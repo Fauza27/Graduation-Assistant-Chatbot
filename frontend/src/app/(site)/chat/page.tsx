@@ -35,7 +35,7 @@ export default function ChatPage() {
 
     try {
       const response = await sendChatMessage(currentInput, session_id);
-      addMessage('bot', response.response || '...', response.sources || []);
+      addMessage('bot', response.answer || '...', response.sources || []);
     } catch (err: any) {
       addMessage('bot', `**Error:** ${err.message || 'Gagal terhubung ke server.'}`);
     } finally {
@@ -122,7 +122,7 @@ export default function ChatPage() {
                                     <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                                   </div>
                                   <div className="citation-text">
-                                    <div className="citation-title">{src.substring(0, 40)}...</div>
+                                    <div className="citation-title">{src.title ? src.title.substring(0, 60) + (src.title.length > 60 ? '...' : '') : 'Sumber Referensi'}</div>
                                   </div>
                                 </div>
                               ))}
