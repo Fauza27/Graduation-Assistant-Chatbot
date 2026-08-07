@@ -104,9 +104,13 @@ backend/
 │   └── supabase_update_search.sql : Pembaruan fungsi RPC pencarian untuk mendukung filter source.
 └── src/
     ├── api/
-
     │   ├── ai.py               : Endpoint `/chat` untuk melayani REST API HTTP.
+    │   ├── auth.py             : Endpoint otentikasi Google (`/auth/google/verify`, dll).
+    │   ├── sessions.py         : Endpoint manajemen histori percakapan (CRUD sesi obrolan).
     │   └── health.py           : Endpoint `/health` status server.
+    ├── auth/
+    │   ├── google_oauth.py     : Logika validasi token Google (id_token).
+    │   └── jwt_utils.py        : Utility pembuatan dan verifikasi internal JWT aplikasi (dengan pyjwt).
     ├── bot/
     │   ├── application.py      : Inisialisasi Bot Telegram (Command handlers).
     │   ├── messages.py         : Teks statis/template balasan bot.
@@ -610,6 +614,80 @@ ALGORITMA INISIALISASI SERVER APLIKASI (application.py)
      - KEMBALIKAN JSON pesan selamat datang, versi, dan alamat URL dokumentasi (/docs).
 ```
 
+#### File: `src/api/auth.py`
+
+```markdown
+ALGORITMA ENDPOINT AUTENTIKASI GOOGLE (auth.py)
+
+1. IMPOR PUSTAKA
+   - FastAPI, Pydantic, Supabase client.
+   - Konfigurasi aplikasi.
+   - Fungsi `verify_google_id_token` dan fungsi JWT util.
+
+2. INISIALISASI ROUTER
+   - Buat `APIRouter` dengan prefix `/auth` dan tag "Auth".
+
+3. ENDPOINT POST `/google/verify`
+   - Terima payload JSON berisi `id_token`.
+   - TAHAP 1: Verifikasi token -> Profil Google dengan menanyakan ke SDK Google (`verify_google_id_token`).
+   - TAHAP 2: Simpan/Perbarui Database (`mahasiswa_accounts`):
+     - Gunakan mekanisme upsert atomik (`ON CONFLICT (google_sub) DO UPDATE`) untuk mencegah *race condition*.
+     - Update field `avatar_url`, `nama`, dan `last_login`.
+   - TAHAP 3: Terbitkan JWT internal:
+     - Masukkan `mahasiswa_id`, `name`, `email`, dan `role`="mahasiswa" ke dalam payload.
+     - Enkripsi dengan `create_access_token`.
+   - KEMBALIKAN token beserta informasi dasar.
+
+4. ENDPOINT GET `/me`
+   - Validasi Authorization Header berisi Bearer token.
+   - Ekstrak token, dekripsi dengan `verify_access_token`.
+   - Ambil profil spesifik (opsional dari tabel `mahasiswa_accounts` di Supabase).
+   - Kembalikan data user.
+```
+
+#### File: `src/auth/google_oauth.py`
+
+```markdown
+ALGORITMA GOOGLE OAUTH (google_oauth.py)
+
+1. IMPOR PUSTAKA
+   - `google.oauth2.id_token`
+   - `google.auth.transport.requests`
+   - Konfigurasi aplikasi (GOOGLE_CLIENT_ID).
+
+2. FUNGSI verify_google_id_token(token_string) -> Dictionary
+   - COBA (Try):
+     - Panggil `id_token.verify_oauth2_token(token_string, requests.Request(), GOOGLE_CLIENT_ID)`
+     - KEMBALIKAN hasil balasan JSON (berisi `sub` (Google ID), `email`, `name`, `picture`).
+   - JIKA GAGAL:
+     - Lemparkan error otentikasi (Token tidak valid atau kedaluwarsa).
+```
+
+#### File: `src/auth/jwt_utils.py`
+
+```markdown
+ALGORITMA JWT UTILS (jwt_utils.py)
+
+1. IMPOR PUSTAKA
+   - `jwt` (PyJWT)
+   - `datetime`, `timezone`
+   - Konfigurasi rahasia dari `settings.JWT_SECRET` dan `settings.JWT_ALGORITHM`.
+
+2. FUNGSI create_access_token(data: dict, expires_delta=None) -> str
+   - Salin data asli.
+   - Jika `expires_delta` diberikan, gunakan itu. Jika tidak, gunakan `JWT_EXPIRATION_MINUTES` dari konfigurasi (misalnya 4320 menit / 3 hari).
+   - Tambahkan key `exp` ke dalam dictionary data yang berisi target waktu kedaluwarsa.
+   - Enkripsi (Encode) menggunakan PyJWT dengan Secret Key dan Algoritma (misalnya HS256).
+   - Kembalikan token *string*.
+
+3. FUNGSI verify_access_token(token: str) -> dict
+   - COBA:
+     - Dekripsi (Decode) menggunakan PyJWT.
+     - Jika berhasil, kembalikan isinya.
+   - JIKA GAGAL (Kadaluwarsa / Signature Tidak Cocok):
+     - Kembalikan `None`.
+```
+
 #### File: `src/api/health.py`
 
 ```markdown
@@ -705,7 +783,7 @@ ALGORITMA ROUTER API CHATBOT (ai.py)
          - Jika channel "website", pastikan ada header "Authorization: Bearer <token>".
          - Ekstrak token, verifikasi via `verify_access_token`.
          - Cek role (jika bukan "mahasiswa", tolak akses).
-         - Ambil `mahasiswa_id` dan `username` dari token.
+         - Ambil `mahasiswa_id` (dari klaim `sub`) dan `username` dari token.
        
        - TAHAP 2: Cek Kuota
          - Gunakan koneksi Supabase untuk memanggil RPC `increment_quota_if_under_limit` menggunakan `mahasiswa_id`.
@@ -741,7 +819,7 @@ ALGORITMA ROUTER SESSIONS (sessions.py)
      - TAHAP 1: Otorisasi
        - Ambil header "Authorization: Bearer <token>".
        - Ekstrak token, verifikasi via `verify_access_token`.
-       - Ambil `mahasiswa_id` dari payload token.
+       - Ambil `mahasiswa_id` dari klaim `sub` pada payload token.
      - TAHAP 2: Query Database
        - Panggil Supabase: `SELECT session_id, last_access, turns FROM conversation_sessions WHERE mahasiswa_id = ? ORDER BY last_access DESC`.
      - TAHAP 3: Pemrosesan Data
@@ -754,7 +832,7 @@ ALGORITMA ROUTER SESSIONS (sessions.py)
    - Tujuan: Memuat seluruh isi pesan dari satu sesi spesifik.
    - ALGORITMA:
      - TAHAP 1: Otorisasi
-       - Sama seperti di atas, dapatkan `mahasiswa_id`.
+       - Sama seperti di atas, dapatkan `mahasiswa_id` dari klaim `sub`.
      - TAHAP 2: Query Database
        - Panggil Supabase: `SELECT turns FROM conversation_sessions WHERE session_id = ? AND mahasiswa_id = ?`.
        - Jika tidak ditemukan, kembalikan HTTP 404 (Not Found).
@@ -767,7 +845,7 @@ ALGORITMA ROUTER SESSIONS (sessions.py)
    - Tujuan: Menghapus sesi percakapan dari database.
    - ALGORITMA:
      - TAHAP 1: Otorisasi
-       - Ambil `mahasiswa_id` dari token.
+       - Ambil `mahasiswa_id` dari klaim `sub` pada token.
      - TAHAP 2: Query Database
        - Panggil Supabase: `DELETE FROM conversation_sessions WHERE session_id = ? AND mahasiswa_id = ?`.
        - Cek jumlah baris yang berhasil dihapus (row count).
@@ -953,21 +1031,23 @@ ALGORITMA PENYIMPANAN SESI DATABASE (session_store.py)
      - Siapkan Cache lokal (`_cache`) dan waktu akses (`_cache_access`).
      - Jalankan `_test_connection()` (cek apakah tabel ada).
    
-   - `load_memory(session_id)`:
+   - `load_memory(session_id, mahasiswa_id=None)`:
      - TAHAP 1: Cek Cache Lokal.
        - Jika data sesi ini ada di RAM, perbarui waktu aksesnya, lalu langsung kembalikan datanya (sangat cepat).
      - TAHAP 2: Jika tidak ada di RAM, Cek Database.
        - Lakukan query ke Supabase (tabel `conversation_sessions`).
-       - JIKA ADA: bangun kembali objek `ConversationMemory` dari data JSON tersebut.
-       - JIKA TIDAK ADA / ERROR: Buat `ConversationMemory` baru yang kosong.
+       - JIKA ADA: 
+         - **Keamanan (IDOR):** Jika `mahasiswa_id` diberikan dan tidak sama dengan pemilik di database, lemparkan error 403 (Akses Ditolak). Exception ini akan diteruskan langsung ke framework (FastAPI).
+         - Bangun kembali objek `ConversationMemory` dari data JSON tersebut.
+       - JIKA TIDAK ADA / ERROR (Selain 403): Buat `ConversationMemory` baru yang kosong.
      - TAHAP 3: Simpan ke Cache Lokal.
        - Masukkan data tadi ke Cache lokal lewat `_add_to_cache()`.
        - Perbarui kolom waktu akses terakhir (last_access) di Database secara diam-diam (*fire and forget*) menggunakan representasi waktu UTC *timezone-aware* (`datetime.now(timezone.utc).isoformat()`).
        - Kembalikan memori.
 
-   - `save_memory(session_id, memory)`:
+   - `save_memory(session_id, memory, channel=None, mahasiswa_id=None)`:
      - Ubah `memory` jadi bentuk JSON (dict).
-     - Lakukan *Upsert* (Insert atau Update) ke database Supabase.
+     - Lakukan *Upsert* (Insert atau Update) ke database Supabase (sertakan `mahasiswa_id` dan `channel`).
      - Perbarui Cache lokal.
      - Jika gagal (koneksi terputus dll), lempar error (tapi aplikasinya dirancang untuk mengabaikan error ini agar chat tetap jalan).
 
@@ -1002,6 +1082,7 @@ ALGORITMA PENYIMPANAN MEMORI PERCAKAPAN (memory.py)
      - `content`: isi pesan (teks).
      - `intent`: tipe tujuan (opsional).
      - `retrieved_doc_contents`: daftar teks dokumen yang digunakan bot untuk menjawab (jika ada).
+     - `sources`: daftar metadata terstruktur (judul, bab, skor) dari dokumen yang ditarik.
      - `timestamp`: waktu pesan dibuat.
 
 2. KELAS ConversationMemory
@@ -1012,8 +1093,8 @@ ALGORITMA PENYIMPANAN MEMORI PERCAKAPAN (memory.py)
    - `add_user_turn(content, intent)`:
      - Tambahkan pesan dari user ke daftar `_turns`.
 
-   - `add_assistant_turn(content, retrieved_doc_contents)`:
-     - Tambahkan pesan balasan bot beserta dokumen sumber ke daftar `_turns`.
+   - `add_assistant_turn(content, retrieved_doc_contents, sources)`:
+     - Tambahkan pesan balasan bot beserta dokumen sumber (teks dan metadatanya) ke daftar `_turns`.
      - **PENTING**: Array `_turns` dibiarkan tumbuh tak terbatas tanpa dipotong, agar semua riwayat tersimpan utuh secara permanen di database.
 
    - `get_history_for_llm()`:
@@ -2170,8 +2251,8 @@ Endpoint utama `/api/ai/chat` berjalan sebagai **endpoint publik** yang tidak me
 
 
 ## Checklist Kelengkapan File
-- Total file di project: **33** (Tidak termasuk file data seperti section_keywords.yaml)
-- Total file yang ada pseudocode-nya di dokumen ini: **33**
+- Total file di project: **37** (Tidak termasuk file data seperti section_keywords.yaml)
+- Total file yang ada pseudocode-nya di dokumen ini: **37**
 
 > [!NOTE]
 > Semua file (100%) kode program sudah terwakili secara lengkap dalam dokumen ini.

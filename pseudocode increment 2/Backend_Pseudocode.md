@@ -47,11 +47,11 @@ ALGORITMA GOOGLE OAUTH (google_oauth.py)
    - `google.auth.transport.requests`
    - Konfigurasi aplikasi (GOOGLE_CLIENT_ID).
 
-2. FUNGSI verify_google_id_token(id_token_string) -> Dictionary
+2. FUNGSI verify_google_id_token(token_string) -> Dictionary
    - COBA (Try):
-     - Panggil `id_token.verify_oauth2_token(id_token_string, requests.Request(), GOOGLE_CLIENT_ID)`
+     - Panggil `id_token.verify_oauth2_token(token_string, requests.Request(), GOOGLE_CLIENT_ID)`
      - KEMBALIKAN hasil balasan JSON (berisi `sub` (Google ID), `email`, `name`, `picture`).
-   - JIKA GAGAL (ValueError):
+   - JIKA GAGAL:
      - Lemparkan error otentikasi (Token tidak valid atau kedaluwarsa).
 ```
 
@@ -74,7 +74,7 @@ ALGORITMA ROUTER OAUTH (auth.py)
 
 3. ENDPOINT POST `/google/verify`
    - Terima payload JSON berisi `id_token`.
-   - TAHAP 1: Verifikasi token -> Profil Google (`verify_google_id_token`).
+   - TAHAP 1: Verifikasi token -> Profil Google dengan menanyakan ke SDK Google (`verify_google_id_token`).
    - TAHAP 2: Simpan/Perbarui Database (`mahasiswa_accounts`):
      - Gunakan mekanisme upsert atomik (`ON CONFLICT (google_sub) DO UPDATE... RETURNING mahasiswa_id`) untuk mencegah *race condition*.
      - Update field `avatar_url`, `nama`, dan `last_login`.
@@ -134,11 +134,17 @@ Sistem kini harus merekam *channel* asal obrolan dan ID mahasiswanya (hanya butu
 ```markdown
 ALGORITMA PEMBARUAN PENYIMPANAN SESI (session_store.py)
 
-1. FUNGSI save_memory(...) (Modifikasi Parameter)
+1. FUNGSI load_memory(...) (Pencegahan IDOR)
+   - UBAH PARAMETER DARI: `(session_id)`
+   - MENJADI: `(session_id, mahasiswa_id=None)`
+   - JIKA data ditemukan di tabel, cek apakah `mahasiswa_id` di baris database SAMA DENGAN `mahasiswa_id` pemohon (dari JWT token).
+   - JIKA BEDA: Lemparkan error HTTP 403 Forbidden (Mencegah peretas memuat atau menimpa ID sesi orang lain).
+
+2. FUNGSI save_memory(...) (Modifikasi Parameter)
    - UBAH PARAMETER DARI: `(session_id, memory)`
    - MENJADI: `(session_id, memory, channel="telegram", mahasiswa_id=None)`
    
-2. ALGORITMA PENYIMPANAN
+3. ALGORITMA PENYIMPANAN
    - Saat menyimpan (upsert) objek `ConversationMemory` (riwayat percakapan) ke tabel `conversation_sessions`, sisipkan nilai `channel`.
    - JIKA `mahasiswa_id` tidak kosong, masukkan ke kolom `mahasiswa_id`.
    - Proses upsert tetap dilakukan 1x (secara keseluruhan) agar tidak mengubah model penyimpanannya.
@@ -159,8 +165,21 @@ ALGORITMA PEMBARUAN AI SERVICES (ai_services.py)
    - Panggil `log_chat_to_db(user_id=(str(mahasiswa_id) jika website, chat_id jika telegram), username=username, query=query, answer=answer)`.
    - Hal ini memastikan log percakapan tercatat baik dari Telegram maupun Website dengan informasi pengguna yang sesuai.
 
-3. PENYIMPANAN HISTORI SESI
+3. PEMUATAN DAN PENYIMPANAN HISTORI SESI
+   - Saat perlu memuat memori (untuk rewrite/generate): Panggil `get_or_create_memory(session_id, mahasiswa_id)` yang akan memvalidasi kepemilikan sesi.
    - Saat menyimpan memory, panggil `session_store.save_memory(session_id, memory, channel, mahasiswa_id)`.
+
+### File: `backend/src/api/sessions.py` (Fix Token Payload)
+Menangani pengambilan daftar dan detail riwayat *chat*.
+
+```markdown
+ALGORITMA RIWAYAT SESI (sessions.py)
+1. FUNGSI get_current_mahasiswa(request)
+   - Verifikasi Bearer token JWT.
+   - Ambil identitas pengguna DARI klaim `sub` (BUKAN `mahasiswa_id`, karena payload JWT standar menggunakan `sub` sebagai ID subjek utama).
+2. ENDPOINT GET `/sessions/` dan `/sessions/{session_id}`
+   - Gunakan filter `.eq("mahasiswa_id", str(mahasiswa_id))` dalam query Supabase untuk memastikan pengguna hanya bisa melihat data miliknya sendiri.
+```
 ```
 
 ### File: `backend/src/bot/handlers/chat_handler.py`

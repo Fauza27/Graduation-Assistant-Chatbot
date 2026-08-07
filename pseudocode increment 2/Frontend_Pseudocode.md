@@ -40,7 +40,7 @@ frontend/src/
 ALGORITMA OTENTIKASI & TOKEN
 
 1. FUNGSI handleGoogleLogin(credentialResponse)
-   - Terima token dari Google Identity Services.
+   - Terima token dari Google Identity Services (dari komponen `<GoogleLogin />`).
    - PANGGIL POST `NEXT_PUBLIC_API_BASE_URL/api/auth/google/verify` ke backend dengan body `{ id_token: credentialResponse.credential }`.
    - JIKA sukses:
      - Simpan `access_token` ke dalam `localStorage.setItem('access_token', token)`.
@@ -86,7 +86,7 @@ ALGORITMA HALAMAN LOGIN
 1. RENDER TAMPILAN
    - Tampilkan logo kampus.
    - Tampilkan judul "Selamat datang di Asisten WICIDA".
-   - Tampilkan tombol Google Sign-In (menggunakan pustaka `@react-oauth/google`).
+   - Tampilkan komponen `<GoogleLogin />` (menggunakan pustaka `@react-oauth/google`).
 2. EVENT onSuccess (Google Sign-In)
    - Panggil fungsi `handleGoogleLogin(credentialResponse)` dari `lib/auth.ts`.
 3. EVENT onError
@@ -174,6 +174,7 @@ ALGORITMA HALAMAN CHAT
          - Gunakan `react-markdown` untuk me-render teks jawaban agar format (bold, list) dari LLM tampil rapi.
          - Tampilkan avatar bot kecil di sebelah kiri.
          - JIKA ada array `sources`: Tampilkan komponen `<CitationCard />`.
+           - **Perbaikan UI:** Pastikan referensi (`src`) dibungkus dengan `String(src)` sebelum melakukan `.substring()` karena data sumber (terutama dari riwayat database) dapat berupa objek atau array.
      - JIKA `isLoading` true: Tampilkan animasi "typing" bot.
    - Composer (Input Teks + Tombol Kirim).
 ```
