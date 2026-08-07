@@ -35,7 +35,6 @@ class ConversationMemory:
         intent: IntentType | None = None,
     ) -> None:
         self._turns.append(Turn(role="user", content=content, intent=intent))
-        self._enforce_window()
 
     def add_assistant_turn(
         self,
@@ -47,12 +46,6 @@ class ConversationMemory:
             content=content,
             retrieved_doc_contents=retrieved_doc_contents or [],
         ))
-        self._enforce_window()
-
-    def _enforce_window(self) -> None:
-        max_messages = self.max_turns * 2
-        if len(self._turns) > max_messages:
-            self._turns = self._turns[-max_messages:]
 
     def get_history_for_llm(self) -> list[dict]:
         from config.settings import get_settings

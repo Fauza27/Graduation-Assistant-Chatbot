@@ -92,7 +92,7 @@ class Settings(BaseSettings):
     # Authentication Configuration
     JWT_SECRET_KEY: str = Field(default="super-secret-key-change-in-production", description="Secret key for JWT generation")
     JWT_ALGORITHM: str = Field(default="HS256", description="Algorithm for JWT generation")
-    JWT_EXPIRATION_MINUTES: int = Field(default=1440, description="JWT expiration time in minutes")
+    JWT_EXPIRATION_MINUTES: int = Field(default=4320, description="JWT expiration time in minutes")
     GOOGLE_CLIENT_ID: str = Field(default="", description="Google OAuth Client ID")
 
     # Performance Settings

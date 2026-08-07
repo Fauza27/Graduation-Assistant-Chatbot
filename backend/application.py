@@ -16,8 +16,9 @@ from telegram import Update
 from config.settings import get_settings
 from src.bot.application import create_bot, post_init
 from src.api import ai
-from src.api.health import router as health_router
+from src.api import health as health_router
 from src.api import auth
+from src.api import sessions
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -77,7 +78,8 @@ def _register_middleware(app: FastAPI, settings):
     app.add_middleware(SlowAPIMiddleware)
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=["http://localhost:3000", "http://localhost:3001", "http://127.0.0.1:3000", "http://127.0.0.1:3001"],
+        allow_origin_regex=r"https://.*\.vercel\.app",
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -88,7 +90,8 @@ def _register_routers(app: FastAPI):
 
     app.include_router(ai.router, prefix=API_PREFIX)
     app.include_router(auth.router, prefix=API_PREFIX)
-    app.include_router(health_router)
+    app.include_router(sessions.router, prefix=API_PREFIX)
+    app.include_router(health_router.router)
 
 
     @app.post(
