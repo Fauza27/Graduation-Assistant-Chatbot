@@ -10,6 +10,7 @@ from functools import lru_cache
 from loguru import logger
 from supabase import create_client, Client
 from datetime import datetime, timezone
+from fastapi import HTTPException
 
 from src.generation.memory import ConversationMemory
 from config.settings import get_settings
@@ -52,15 +53,19 @@ class DatabaseSessionStore:
             logger.error(f"Failed to connect to session database: {e}")
             raise RuntimeError(f"Session database connection failed: {e}")
     
-    def load_memory(self, session_id: str) -> ConversationMemory:
+    def load_memory(self, session_id: str, mahasiswa_id: Optional[str] = None) -> ConversationMemory:
         """
-        Load conversation memory for a session.
+        Load conversation memory for a session and verify ownership.
         
         Args:
             session_id: Unique session identifier
+            mahasiswa_id: The ID of the currently logged in user requesting the session
             
         Returns:
             ConversationMemory instance (new if session doesn't exist)
+            
+        Raises:
+            RuntimeError: If session belongs to a different user (IDOR prevention)
         """
         now = time.time()
         
@@ -74,22 +79,38 @@ class DatabaseSessionStore:
         # Load from database
         try:
             result = self._supabase.table("conversation_sessions")\
-                .select("turns")\
+                .select("turns, mahasiswa_id")\
                 .eq("session_id", session_id)\
                 .single()\
                 .execute()
             
-            if result.data and result.data.get("turns"):
-                turns_data = result.data["turns"]
-                memory = ConversationMemory.from_dict(turns_data, max_turns=5)
-                logger.debug(f"Session {session_id} loaded from database with {len(turns_data)} turns")
+            if result.data:
+                # IDOR Protection
+                owner_id = result.data.get("mahasiswa_id")
+                if mahasiswa_id and owner_id and owner_id != mahasiswa_id:
+                    logger.warning(f"IDOR attempt: User {mahasiswa_id} tried to access session {session_id} belonging to {owner_id}")
+                    raise HTTPException(status_code=403, detail="Akses ditolak: Anda tidak memiliki akses ke sesi ini.")
+                    
+                if result.data.get("turns"):
+                    turns_data = result.data["turns"]
+                    memory = ConversationMemory.from_dict(turns_data, max_turns=5)
+                    logger.debug(f"Session {session_id} loaded from database with {len(turns_data)} turns")
+                else:
+                    memory = ConversationMemory(max_turns=5)
+                    logger.debug(f"New session {session_id} created")
             else:
                 memory = ConversationMemory(max_turns=5)
                 logger.debug(f"New session {session_id} created")
                 
+        except HTTPException:
+            raise  # Let FastAPI handle 403 Forbidden natively
         except Exception as e:
-            # If session doesn't exist or any error, create new memory
-            logger.warning(f"Failed to load session {session_id} from database: {e}")
+            # If session doesn't exist or any other db error, create new memory
+            # (Note: single() raises an error if 0 rows returned)
+            if "JSON object requested, multiple (or no) rows returned" in str(e):
+                logger.debug(f"New session {session_id} created (row not found)")
+            else:
+                logger.warning(f"Failed to load session {session_id} from database: {e}")
             memory = ConversationMemory(max_turns=5)
         
         # Add to cache
