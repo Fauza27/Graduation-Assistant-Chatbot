@@ -141,6 +141,7 @@ Sistem tetap satu backend FastAPI yang sama (reuse total investasi dari PI), tet
 | FR-WEB-06 | Website tunduk pada rate limit yang sama dengan Telegram, dihitung per akun mahasiswa (bukan per `session_id` anonim). |
 | FR-WEB-07 | Tampilan responsif — dapat diakses dari desktop maupun mobile browser. |
 | FR-WEB-08 | Website menampilkan sidebar navigasi berisi menu "Dokumen Panduan" (PI/KKP/Skripsi/Non-Skripsi) yang membuka dokumen asli secara statis — **tidak** memicu request ke endpoint chat/LLM, murni pengambilan file. |
+| FR-WEB-09 | Mahasiswa dapat mengakses daftar riwayat obrolan terdahulu (terkelompok berdasarkan waktu) dan dapat menghapus percakapan dari sistem. |
 
 ### 3.3 Modul Admin Dashboard
 
@@ -220,7 +221,7 @@ graph LR
 | ID Kebutuhan | Rencana di Increment |
 |---|---|
 | FR-CORE-01 s/d FR-CORE-05 | Increment 1 |
-| FR-WEB-01 s/d FR-WEB-08 | Increment 2 |
+| FR-WEB-01 s/d FR-WEB-09 | Increment 2 |
 | FR-ADM-01 s/d FR-ADM-04 | Increment 3 |
 | FR-ADM-05 s/d FR-ADM-06 | Increment 4 |
 
