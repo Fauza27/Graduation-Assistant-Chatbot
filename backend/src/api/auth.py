@@ -24,7 +24,7 @@ async def verify_google_auth(request: GoogleAuthRequest):
     Verify Google id_token, upsert to database, and return JWT token.
     """
     try:
-        # 1. Verify token with Google
+        # 1. Verify token with Google (using id_token)
         google_profile = verify_google_id_token(request.id_token)
         google_sub = google_profile.get("sub")
         email = google_profile.get("email")

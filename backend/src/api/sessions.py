@@ -26,7 +26,7 @@ def get_current_mahasiswa(request: Request) -> Dict[str, Any]:
 @router.get("/")
 def get_sessions(current_user: dict = Depends(get_current_mahasiswa)):
     """Get all conversation sessions for the current user."""
-    mahasiswa_id = current_user.get("mahasiswa_id")
+    mahasiswa_id = current_user.get("sub")
     if not mahasiswa_id:
         raise HTTPException(status_code=400, detail="Invalid token payload")
         
@@ -64,7 +64,7 @@ def get_sessions(current_user: dict = Depends(get_current_mahasiswa)):
 @router.get("/{session_id}")
 def get_session_details(session_id: str, current_user: dict = Depends(get_current_mahasiswa)):
     """Get details of a specific conversation session."""
-    mahasiswa_id = current_user.get("mahasiswa_id")
+    mahasiswa_id = current_user.get("sub")
     
     session_store = get_session_store()
     try:
@@ -89,7 +89,7 @@ def get_session_details(session_id: str, current_user: dict = Depends(get_curren
             messages.append({
                 "role": role,
                 "text": turn.get("content"),
-                "sources": turn.get("retrieved_doc_contents", [])
+                "sources": turn.get("sources", turn.get("retrieved_doc_contents", []))
             })
             
         return {"ok": True, "messages": messages}
@@ -103,7 +103,7 @@ def get_session_details(session_id: str, current_user: dict = Depends(get_curren
 @router.delete("/{session_id}")
 def delete_session(session_id: str, current_user: dict = Depends(get_current_mahasiswa)):
     """Delete a specific conversation session."""
-    mahasiswa_id = current_user.get("mahasiswa_id")
+    mahasiswa_id = current_user.get("sub")
     
     session_store = get_session_store()
     try:
