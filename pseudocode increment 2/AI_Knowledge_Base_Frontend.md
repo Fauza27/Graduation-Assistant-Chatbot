@@ -89,7 +89,7 @@ frontend/
 ---
 
 ## 5. Pertimbangan & Batasan (Caveats)
-1. **Keamanan URL Hash di iframe**: Parameter *Search* PDF via URL (e.g. `#search="kata"`) adalah dukungan standar penampil peramban (contoh: Chrome PDFium). Namun, dukungan fitur ini tidak konsisten lintas-browser dan viewer PDF, terutama ketika PDF dimuat di dalam sebuah `iframe` (contohnya Chrome PDF Viewer seringkali memiliki perilaku berbeda dan mengabaikan parameter URL pada *iframe*). Selain itu, pencarian teks yang presisi (*exact match*) sangat rentan gagal jika referensi teks diambil dari variabel yang tidak sama persis (verbatim) dengan isi PDF.
+1. **Keterbatasan `#search=` pada Chrome PDF Viewer**: Pengujian langsung membuktikan bahwa parameter URL `#search=teks` **tidak berfungsi** pada Chrome PDF Viewer — bahkan ketika URL dibuka langsung di tab baru (tanpa iframe). Teks yang dicari terbukti ada di dalam dokumen (diverifikasi dengan Ctrl+F), namun viewer PDF bawaan Chrome tidak merespons fragmen `#search=`. Ini adalah keterbatasan viewer PDF bawaan browser, bukan masalah kode aplikasi, iframe, maupun kebijakan cross-origin. Kode tetap menyertakan `#search=` sebagai *best-effort* untuk browser/viewer yang mungkin mendukungnya di masa depan. Fitur utama (*fallback*) yang diandalkan adalah membuka dokumen PDF yang tepat berdasarkan domain sitasi.
 2. **Keterbatasan CSS Overlay**: *Overlay* kegelapan (`doc-overlay`) hanya boleh menyala di mode *mobile/tablet* (`<=1023px`). Pada *desktop*, interaksi chat tetap harus aktif meski panel kanan sedang membaca dokumen. Ini diatur paksa di `@media (min-width:1024px)` pada `globals.css`.
 3. **Penghentian Otomatis SSR Layout**: Fitur DOM bawaan seperti `window.localStorage` dalam file yang tidak dikhususkan `'use client'` akan menyebabkan *error* hidrasi Next.js. Semua komponen berstatus stateful harus memiliki *directive* `'use client'` di atas filenya.
 
@@ -370,7 +370,7 @@ ALGORITMA PANEL DOKUMEN PANDUAN
 ### Modul: `app/(site)/chat/page.tsx` (Klik Sitasi → Buka Dokumen)
 - Setiap `CitationCard` yang diklik memanggil `handleCitationClick(src)`.
 - Fungsi tersebut membaca `src.parent_id`, mendeteksi domain (pi/kkp/skripsi/non-skripsi), lalu memanggil `openDocument(url)` untuk membuka panel dengan PDF yang relevan.
-- **Catatan implementasi:** Navigasi ke halaman atau teks spesifik dalam PDF (via `#page=N` atau `#search=`) tidak dapat selalu diandalkan karena dukungan fitur ini tidak konsisten lintas-browser/viewer PDF ketika dimuat di dalam `iframe`. Implementasi ditekankan pada *fallback* yang aman, yakni pembukaan dokumen secara penuh berdasarkan domain.
+- **Catatan implementasi (terverifikasi):** Navigasi ke teks spesifik dalam PDF via `#search=` telah diuji dan **tidak berfungsi** pada Chrome PDF Viewer, baik di dalam iframe maupun di tab baru secara langsung (meskipun teks target terbukti ada via Ctrl+F). Ini adalah keterbatasan viewer PDF bawaan browser. Kode tetap menyertakan `#search=` sebagai *best-effort*, namun fitur utama yang diandalkan adalah pembukaan dokumen PDF yang tepat berdasarkan domain sitasi.
 
 ### Interface `CitationSource` (di `lib/store.ts`)
 ```typescript
