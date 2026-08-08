@@ -17,7 +17,7 @@ Karena fitur-fitur ini membutuhkan konfigurasi tambahan, pastikan variabel berik
 # JWT Settings (sudah saya berikan nilai bawaan, tapi lebih baik dikustomisasi di .env)
 JWT_SECRET_KEY="super-secret-key-change-in-production"
 JWT_ALGORITHM="HS256"
-JWT_EXPIRATION_MINUTES="1440"
+JWT_EXPIRATION_MINUTES="4320"
 
 # Google Auth (Diperlukan jika ingin tes frontend nanti)
 GOOGLE_CLIENT_ID="<client-id-google-anda>"

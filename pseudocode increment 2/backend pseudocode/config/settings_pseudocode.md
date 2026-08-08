@@ -32,7 +32,7 @@ ALGORITMA KONFIGURASI SISTEM (config/settings.py)
      - Nama-nama tabel database (parent_documents, child_documents, user_quotas, chat_logs, conversation_sessions, table_mahasiswa_accounts)
      
    - KONFIGURASI JWT DAN GOOGLE AUTH:
-     - JWT_SECRET_KEY, JWT_ALGORITHM (default HS256), JWT_EXPIRATION_MINUTES (default 1440).
+     - JWT_SECRET_KEY, JWT_ALGORITHM (default HS256), JWT_EXPIRATION_MINUTES (default 4320).
      - GOOGLE_CLIENT_ID (Wajib diisi jika fitur login via Google aktif).
      
    - PENGATURAN RETRIEVAL (Pencarian RAG):
