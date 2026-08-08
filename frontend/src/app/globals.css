@@ -365,8 +365,8 @@ svg:not(.brand-mark){fill:none;stroke:currentColor;stroke-width:2;stroke-linecap
   background:var(--white);
   z-index:70;
 }
-.doc-panel.open{width:var(--panel-w);}
-.doc-panel-inner{width:var(--panel-w);height:100%;display:flex;flex-direction:column;}
+.doc-panel.open{width:var(--panel-w);overflow:hidden;}
+.doc-panel-inner{width:var(--panel-w);height:100%;display:flex;flex-direction:column;overflow:hidden;}
 
 .doc-panel-header{display:flex;align-items:center;gap:10px;padding:16px 18px;border-bottom:1px solid var(--border);flex-shrink:0;}
 .doc-panel-header h3{flex:1;}
@@ -395,7 +395,7 @@ svg:not(.brand-mark){fill:none;stroke:currentColor;stroke-width:2;stroke-linecap
   border-radius:8px;padding:6px 10px;min-width:56px;text-align:center;
 }
 
-.doc-page-scroll{flex:1;overflow-y:auto;padding:22px 20px 12px;}
+.doc-page-scroll{flex:1;min-height:0;overflow-y:auto;padding:22px 20px 12px;}
 .doc-page{background:var(--white);}
 .doc-page .bab{text-align:center;font-size:13px;font-weight:700;letter-spacing:.03em;color:var(--gray-700);}
 .doc-page .bab-title{text-align:center;font-size:14.5px;font-weight:700;letter-spacing:.02em;color:var(--gray-700);margin-top:2px;margin-bottom:18px;}
@@ -413,6 +413,11 @@ svg:not(.brand-mark){fill:none;stroke:currentColor;stroke-width:2;stroke-linecap
   position:fixed;inset:0;background:rgba(20,10,40,.35);opacity:0;pointer-events:none;transition:opacity .2s ease;z-index:55;
 }
 .doc-overlay.show,.sidebar-overlay.show{opacity:1;pointer-events:auto;}
+
+/* Pada desktop (≥1024px) doc-panel bukan overlay → sembunyikan doc-overlay agar chat bisa di-scroll */
+@media (min-width:1024px){
+  .doc-overlay{display:none !important;}
+}
 
 /* action sheet (mobile) */
 .sheet-overlay{z-index:90;display:flex;align-items:flex-end;justify-content:center;}

@@ -1,12 +1,13 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useAppStore } from '../../../lib/store';
+import { useAppStore, CitationSource } from '../../../lib/store';
 import { sendChatMessage, deleteSession } from '../../../lib/api';
 import ReactMarkdown from 'react-markdown';
+import { DOCUMENTS } from '../../../lib/documentSources';
 
 export default function ChatPage() {
-  const { session_id, messages, hasHydrated, addMessage, resetSession } = useAppStore();
+  const { session_id, messages, hasHydrated, addMessage, resetSession, openDocument } = useAppStore();
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -63,6 +64,19 @@ export default function ChatPage() {
     }
   };
 
+  const handleCitationClick = (src: CitationSource | string) => {
+    const srcObj = typeof src === 'string' ? { title: src } : src;
+    let domain = 'skripsi'; // default
+    if (srcObj.parent_id) {
+      const pid = srcObj.parent_id.toLowerCase();
+      if (pid.includes('kkp')) domain = 'kkp';
+      else if (pid.includes('non-skripsi') || pid.includes('nonskripsi')) domain = 'non-skripsi';
+      else if (pid.includes('pi')) domain = 'pi';
+    }
+    const docUrl = DOCUMENTS.find(d => d.id === domain)?.fileUrl || DOCUMENTS[2].fileUrl;
+    openDocument(docUrl);
+  };
+
   // Prevent flicker during hydration
   if (!hasHydrated) return null;
 
@@ -116,16 +130,20 @@ export default function ChatPage() {
                           <>
                             <div className="bubble-label">Sumber Referensi</div>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                              {msg.sources.map((src, i) => (
-                                <div key={i} className="citation-card">
-                                  <div className="citation-icon">
-                                    <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                              {msg.sources.map((src, i) => {
+                                const srcObj = typeof src === 'string' ? { title: src, parent_id: '', section: '' } : src as CitationSource;
+                                const displayTitle = srcObj.title || srcObj.section || 'Sumber Referensi';
+                                return (
+                                  <div key={i} className="citation-card" onClick={() => handleCitationClick(src)} style={{ cursor: 'pointer' }}>
+                                    <div className="citation-icon">
+                                      <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                                    </div>
+                                    <div className="citation-text">
+                                      <div className="citation-title">{displayTitle.substring(0, 60)}{displayTitle.length > 60 ? '...' : ''}</div>
+                                    </div>
                                   </div>
-                                  <div className="citation-text">
-                                    <div className="citation-title">{src.title ? src.title.substring(0, 60) + (src.title.length > 60 ? '...' : '') : 'Sumber Referensi'}</div>
-                                  </div>
-                                </div>
-                              ))}
+                                );
+                              })}
                             </div>
                           </>
                         )}

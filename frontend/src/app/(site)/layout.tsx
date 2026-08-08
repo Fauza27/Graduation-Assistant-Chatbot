@@ -6,14 +6,20 @@ import { getAuthToken, logout } from '../../lib/auth';
 import { useAppStore } from '../../lib/store';
 import Link from 'next/link';
 import { jwtDecode } from 'jwt-decode';
+import { DOCUMENTS } from '../../lib/documentSources';
 
 export default function SiteLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isDocPanelOpen, setIsDocPanelOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
-  const resetSession = useAppStore((state) => state.resetSession);
+  const {
+    isDocPanelOpen, 
+    activeDoc, 
+    setDocPanelOpen, 
+    setActiveDoc, 
+    resetSession
+  } = useAppStore();
 
   // Authentication check
   useEffect(() => {
@@ -74,7 +80,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
           </Link>
 
           <div className="nav-section">
-            <button className="nav-section-header" onClick={() => setIsDocPanelOpen(!isDocPanelOpen)}>
+            <button className="nav-section-header" onClick={() => setDocPanelOpen(!isDocPanelOpen)}>
               DOKUMEN PANDUAN
               <svg className="icon-sm" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
             </button>
@@ -134,22 +140,68 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
       <aside className={`doc-panel ${isDocPanelOpen ? 'open' : ''}`}>
         <div className="doc-panel-inner">
           <div className="doc-panel-header">
-            <button className="icon-btn mobile-only" onClick={() => setIsDocPanelOpen(false)}>
-              <svg className="icon" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-            </button>
+            {activeDoc ? (
+              <button className="icon-btn" onClick={() => setActiveDoc(null)} title="Kembali ke Daftar Dokumen">
+                <svg className="icon" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+              </button>
+            ) : (
+              <button className="icon-btn mobile-only" onClick={() => setDocPanelOpen(false)}>
+                <svg className="icon" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+              </button>
+            )}
+            
             <h3 className="h3">Dokumen Panduan</h3>
-            <button className="icon-btn" onClick={() => setIsDocPanelOpen(false)}>
+            
+            <button className="icon-btn" onClick={() => setDocPanelOpen(false)}>
               <svg className="icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
           </div>
-          <div className="doc-page-scroll">
-            <p className="body2" style={{ color: 'var(--gray-500)', textAlign: 'center', marginTop: '40px' }}>
-              Fitur dokumen panduan sedang dalam pengembangan.
-            </p>
+          
+          <div className="doc-page-scroll" style={{ padding: activeDoc ? '0' : '20px 14px' }}>
+            {activeDoc ? (
+              <iframe 
+                key={activeDoc}
+                src={activeDoc} 
+                style={{ width: '100%', height: '100%', border: 'none', minHeight: 'calc(100vh - 70px)' }}
+                title="PDF Viewer"
+              />
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <p className="body2" style={{ color: 'var(--gray-500)', marginBottom: '16px' }}>
+                  Pilih dokumen panduan untuk dibaca langsung di sini.
+                </p>
+                {DOCUMENTS.map((doc) => (
+                  <button 
+                    key={doc.id}
+                    className="doc-item" 
+                    onClick={() => setActiveDoc(doc.fileUrl)}
+                    style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '12px', 
+                      padding: '16px', 
+                      background: '#F9FAFB', 
+                      border: '1px solid #E5E7EB', 
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      textAlign: 'left'
+                    }}
+                  >
+                    <div className="doc-icon" style={{ flexShrink: 0, color: 'var(--primary-600)' }}>
+                      <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                    </div>
+                    <div style={{ flexGrow: 1 }}>
+                      <div className="body1" style={{ fontWeight: 600, color: 'var(--gray-900)' }}>{doc.title}</div>
+                    </div>
+                    <svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--gray-400)" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </aside>
-      <div className={`doc-overlay ${isDocPanelOpen ? 'show' : ''}`} onClick={() => setIsDocPanelOpen(false)} />
+      <div className={`doc-overlay ${isDocPanelOpen ? 'show' : ''}`} onClick={() => setDocPanelOpen(false)} />
     </div>
   );
 }
