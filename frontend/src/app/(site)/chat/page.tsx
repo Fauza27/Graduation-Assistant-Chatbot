@@ -193,12 +193,15 @@ export default function ChatPage() {
             
             <div className="input-field">
               <input 
+                id="chat-input"
+                name="chat-input"
                 type="text" 
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Ketik pertanyaan Anda..." 
                 disabled={isLoading}
+                autoComplete="off"
               />
               <button className="send-btn" onClick={handleSend} disabled={!inputValue.trim() || isLoading}>
                 <svg className="icon" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
