@@ -145,6 +145,24 @@ backend/
     └── services/
         ├── ai_services.py      : Penghubung utama antara Controller (Bot/API) dengan Niat, Pencarian, & LLM.
         └── session_store.py    : Melakukan operasi *Read/Write* memori obrolan ke Supabase.
+
+frontend/
+├── package.json                : Dependensi project Next.js.
+└── src/
+    ├── app/
+    │   ├── globals.css         : Styling global dan variabel desain (termasuk styling `doc-panel`).
+    │   ├── layout.tsx          : Layout utama aplikasi web.
+    │   └── (site)/
+    │       ├── layout.tsx      : Layout untuk halaman yang butuh otentikasi. Memuat Sidebar dan **DocPanel (Penampil Dokumen)**.
+    │       ├── chat/page.tsx   : Halaman chat utama dengan fitur klik-sitasi ke dokumen sumber.
+    │       └── riwayat/page.tsx: Halaman histori percakapan berdasar tanggal.
+    ├── lib/
+    │   ├── api.ts              : Utilitas koneksi ke backend FastAPI.
+    │   ├── auth.ts             : Utilitas JWT dan session otentikasi.
+    │   ├── documentSources.ts  : Pemetaan dokumen PDF dari Supabase Storage (`panduan-pi.pdf`, dll).
+    │   └── store.ts            : Global state management menggunakan Zustand (Zustand store untuk chat, histori, dan state `activeDoc`).
+    └── components/
+        └── [Berbagai komponen UI modular]
 ```
 
 > **Catatan Tambahan**: Sebelumnya terdapat file `demo_review.py` di direktori proyek yang berfungsi mengevaluasi struktur format Microsoft Word (menggunakan `python-docx`). File tersebut merupakan skrip CLI *utility* lokal dan tidak menjadi bagian dari alur RAG chatbot, sehingga *pseudocode*-nya tidak dimasukkan ke dalam dokumen ini.
