@@ -152,9 +152,16 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
             
             <h3 className="h3">Dokumen Panduan</h3>
             
-            <button className="icon-btn" onClick={() => setDocPanelOpen(false)}>
-              <svg className="icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-            </button>
+            <div style={{ display: 'flex', gap: '4px' }}>
+              {activeDoc && (
+                <a href={activeDoc} target="_blank" rel="noopener noreferrer" className="icon-btn" title="Buka di Tab Baru">
+                  <svg className="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                </a>
+              )}
+              <button className="icon-btn" onClick={() => setDocPanelOpen(false)}>
+                <svg className="icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
           </div>
           
           <div className="doc-page-scroll" style={{ padding: activeDoc ? '0' : '20px 14px' }}>
