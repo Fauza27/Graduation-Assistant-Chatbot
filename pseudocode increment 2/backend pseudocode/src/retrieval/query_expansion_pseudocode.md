@@ -9,6 +9,11 @@ ALGORITMA PERLUASAN KATA KUNCI (query_expansion.py)
 2. KONSTANTA DAFTAR SINGKATAN
    - `UPPERCASE_ACRONYMS`: Kamus singkatan huruf besar ke kepanjangannya. (PI -> Penulisan Ilmiah, KKP -> Kuliah Kerja Praktik, SKS -> Satuan Kredit Semester, dll).
    - `LONG_FORM_TO_ACRONYM`: Kamus kepanjangan ke singkatan (penulisan ilmiah -> PI, dll).
+   - `SYNONYMS`: Kamus sinonim/istilah alternatif yang sering dipakai mahasiswa tapi punya istilah resmi berbeda di dokumen. Contoh:
+     - "pendadaran" → ["ujian skripsi", "sidang skripsi", "ujian tugas akhir", "seminar pendadaran"]
+     - "sidang" → ["ujian skripsi", "pendadaran"]
+     - "pembimbing" → ["dosen pembimbing"]
+     - "penguji" → ["dosen penguji"]
 
 3. FUNGSI _has_uppercase_token(text, token)
    - Mengecek apakah sebuah singkatan huruf kapital (misal "PI") benar-benar muncul sebagai kata utuh di dalam teks, bukan sebagai bagian dari kata lain (seperti "PINTAR").
@@ -33,6 +38,12 @@ ALGORITMA PERLUASAN KATA KUNCI (query_expansion.py)
        - JIKA teks punya frase utuh (contoh ada kata "kuliah kerja praktik"):
          - LOOP semua kemungkinan singkatannya (contoh "KKP").
          - JIKA singkatan itu tidak ada secara kapital di teks dan belum ditambahkan: Tambahkan ke `additions`.
+   
+   - Aturan 3: Sinonim / Istilah Alternatif
+     - LOOP semua kata di `SYNONYMS`:
+       - JIKA kata tersebut muncul sebagai kata utuh (Regex Boundary `\b`) di teks:
+         - LOOP semua padanan resminya.
+         - JIKA padanan belum ada di teks dan belum ditambahkan: Tambahkan ke `additions`.
    
    - JIKA tidak ada tambahan: Kembalikan teks asli.
    - JIKA ada: Gabungkan teks asli dengan tambahan (diberi spasi). Log aksi ini.

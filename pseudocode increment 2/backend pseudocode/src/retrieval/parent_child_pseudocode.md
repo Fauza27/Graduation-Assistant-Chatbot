@@ -30,11 +30,18 @@ ALGORITMA PENGAMBILAN DOKUMEN INDUK (parent_child.py)
        - Catat profil waktu eksekusi pengambilan ke Supabase (`time.time()`).
        - Cek (Log Warning) jika ada `parent_id` yang ditarik tidak ditemukan fisiknya di tabel database (anomali).
 
+     - TAHAP 2.5: AMBIL NOMOR HALAMAN DARI CHILD YANG COCOK
+       - Kumpulkan semua `child_id` dari `matched_children` di semua parent.
+       - Query tabel `child_documents` untuk mengambil kolom `id`, `parent_id`, dan `pages` dari child yang cocok.
+       - Bangun kamus `child_pages_map`: kunci = `parent_id`, nilai = gabungan semua nomor halaman dari child yang cocok.
+       - Tangkap error secara diam-diam agar proses utama tidak gagal hanya karena gagal mengambil data halaman.
+
      - TAHAP 3: TAMBAHKAN METADATA & URUTKAN KEMBALI
        - LOOP setiap dokumen induk yang didapat:
          - Ambil skor anak terbaiknya dari kamus `parent_scores`.
          - Ambil daftar ID anak yang memicu dokumen ini.
-         - Sisipkan data tersebut ke dalam dokumen induk (kolom sementara: `best_child_score` dan `matched_children`).
+         - Ambil nomor halaman dari `child_pages_map`, urutkan dan hapus duplikat → simpan sebagai `matched_pages`.
+         - Sisipkan data tersebut ke dalam dokumen induk (kolom sementara: `best_child_score`, `matched_children`, `matched_pages`).
        - Urutkan (Sort) daftar dokumen induk dari nilai `best_child_score` paling besar (menurun/descending).
      
      - Kembalikan daftar dokumen induk yang sudah berurut tersebut.

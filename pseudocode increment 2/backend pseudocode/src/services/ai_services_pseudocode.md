@@ -53,9 +53,9 @@ ALGORITMA LAYANAN KECERDASAN BUATAN (ai_services.py)
      
    - TAHAP 6: Catat Log
      - Catat chat ke tabel `chat_logs` di database. Masukkan `user_id`, `username`, `query`, dan `answer`.
-   
+     
    - TAHAP 7: Kembalikan Jawaban
-     - Siapkan dictionary hasil yang berisi: Teks Jawaban, Metode Rewrite, Jumlah Dokumen, dan Maksimal 3 Dokumen Sumber Referensi terbaik.
+     - Siapkan dictionary hasil yang berisi: Teks Jawaban, Metode Rewrite, Jumlah Dokumen, dan Maksimal 3 Dokumen Sumber Referensi terbaik (masing-masing berisi `section`, `title`, `parent_id`, `score`, dan `pages` — array nomor halaman dari child yang cocok, untuk navigasi PDF `#page=N` di frontend).
      - JIKA ada error: Tangkap dan kembalikan pesan error *fallback*.
 
 4. FUNGSI preload_models()
