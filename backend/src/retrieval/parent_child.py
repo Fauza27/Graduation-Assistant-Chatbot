@@ -66,11 +66,40 @@ class ParentChildFetcher:
             missing = set(unique_parent_ids) - found_ids
             logger.warning(f"Parent IDs not found in DB: {missing}")
 
+        # Kumpulkan semua child_id yang cocok untuk query halaman
+        all_matched_child_ids = []
+        for info in parent_scores.values():
+            all_matched_child_ids.extend(info.get("matched_children", []))
+
+        # Ambil data halaman dari child_documents yang cocok
+        child_pages_map: dict[str, list[int]] = {}
+        if all_matched_child_ids:
+            try:
+                settings = get_settings()
+                child_resp = (
+                    self._supabase.table(settings.table_child_chunks)
+                    .select("id, parent_id, pages")
+                    .in_("id", all_matched_child_ids)
+                    .execute()
+                )
+                for child_row in (child_resp.data or []):
+                    pid = child_row.get("parent_id", "")
+                    pages = child_row.get("pages") or []
+                    if pid and pages:
+                        if pid not in child_pages_map:
+                            child_pages_map[pid] = []
+                        child_pages_map[pid].extend(pages)
+            except Exception as e:
+                logger.warning(f"Gagal mengambil data halaman child: {e}")
+
         for parent in parents:
             pid = parent["parent_id"]
             info = parent_scores.get(pid, {})
             parent["best_child_score"] = info.get("best_score", 0.0)
             parent["matched_children"] = info.get("matched_children", [])
+            # Ambil halaman pertama (terkecil) dari child yang cocok
+            pages = sorted(set(child_pages_map.get(pid, [])))
+            parent["matched_pages"] = pages
 
         parents.sort(key=lambda x: x["best_child_score"], reverse=True)
 
@@ -78,7 +107,8 @@ class ParentChildFetcher:
             logger.info(
                 f"Fetched {len(parents)} parent chunks. "
                 f"Top parent: '{parents[0]['title']}' "
-                f"(score={parents[0]['best_child_score']:.4f})"
+                f"(score={parents[0]['best_child_score']:.4f}, "
+                f"pages={parents[0].get('matched_pages', [])})"
             )
         else:
             logger.warning("No parents found")

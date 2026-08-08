@@ -6,6 +6,7 @@ export interface CitationSource {
   section?: string;
   parent_id?: string;
   score?: number;
+  pages?: number[];
 }
 
 export interface ChatMessage {

@@ -218,6 +218,7 @@ def chat(query: str, session_id: str, username: str, channel: str = "telegram", 
                 "title": p.get("title", ""),
                 "parent_id": p.get("parent_id", ""),
                 "score": p.get("cross_encoder_score", 0.0),
+                "pages": p.get("matched_pages", []),
             }
             for p in retrieval_docs[:3]
         ] if retrieval_docs else []
