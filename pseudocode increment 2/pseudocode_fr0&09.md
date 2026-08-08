@@ -40,7 +40,7 @@
 ### Modul: `app/(site)/chat/page.tsx` (Klik Sitasi → Buka Dokumen)
 - Setiap `CitationCard` yang diklik memanggil `handleCitationClick(src)`.
 - Fungsi tersebut membaca `src.parent_id`, mendeteksi domain (pi/kkp/skripsi/non-skripsi), lalu memanggil `openDocument(url)` untuk membuka panel dengan PDF yang relevan.
-- **Catatan implementasi:** Navigasi ke halaman spesifik dalam PDF (via `#page=N` atau `#search=`) tidak dapat diandalkan karena keterbatasan *browser sandboxing* pada PDF lintas-domain (`iframe` dari Supabase Storage). Implementasi terbatas pada pembukaan dokumen yang tepat berdasarkan domain.
+- **Catatan implementasi:** Navigasi ke halaman atau teks spesifik dalam PDF (via `#page=N` atau `#search=`) tidak dapat selalu diandalkan karena dukungan fitur ini tidak konsisten lintas-browser/viewer PDF ketika dimuat di dalam `iframe`. Implementasi ditekankan pada *fallback* yang aman, yakni pembukaan dokumen secara penuh berdasarkan domain.
 
 ### Interface `CitationSource` (di `lib/store.ts`)
 ```typescript

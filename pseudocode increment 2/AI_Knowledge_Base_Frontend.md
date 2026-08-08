@@ -89,7 +89,7 @@ frontend/
 ---
 
 ## 5. Pertimbangan & Batasan (Caveats)
-1. **Keamanan URL Hash di iframe**: Parameter *Search* PDF via URL (e.g. `#search="kata"`) adalah dukungan standar penampil peramban (contoh: Chrome PDFium). Meski demikian, tingkat presisi loncat ke teks akan berbeda-beda tergantung ekstensi peramban bawaan yang dipakai klien, dan sering terhalang oleh mekanisme keamanan domain lintas (*cross-origin sandboxing*).
+1. **Keamanan URL Hash di iframe**: Parameter *Search* PDF via URL (e.g. `#search="kata"`) adalah dukungan standar penampil peramban (contoh: Chrome PDFium). Namun, dukungan fitur ini tidak konsisten lintas-browser dan viewer PDF, terutama ketika PDF dimuat di dalam sebuah `iframe` (contohnya Chrome PDF Viewer seringkali memiliki perilaku berbeda dan mengabaikan parameter URL pada *iframe*). Selain itu, pencarian teks yang presisi (*exact match*) sangat rentan gagal jika referensi teks diambil dari variabel yang tidak sama persis (verbatim) dengan isi PDF.
 2. **Keterbatasan CSS Overlay**: *Overlay* kegelapan (`doc-overlay`) hanya boleh menyala di mode *mobile/tablet* (`<=1023px`). Pada *desktop*, interaksi chat tetap harus aktif meski panel kanan sedang membaca dokumen. Ini diatur paksa di `@media (min-width:1024px)` pada `globals.css`.
 3. **Penghentian Otomatis SSR Layout**: Fitur DOM bawaan seperti `window.localStorage` dalam file yang tidak dikhususkan `'use client'` akan menyebabkan *error* hidrasi Next.js. Semua komponen berstatus stateful harus memiliki *directive* `'use client'` di atas filenya.
 
@@ -370,7 +370,7 @@ ALGORITMA PANEL DOKUMEN PANDUAN
 ### Modul: `app/(site)/chat/page.tsx` (Klik Sitasi → Buka Dokumen)
 - Setiap `CitationCard` yang diklik memanggil `handleCitationClick(src)`.
 - Fungsi tersebut membaca `src.parent_id`, mendeteksi domain (pi/kkp/skripsi/non-skripsi), lalu memanggil `openDocument(url)` untuk membuka panel dengan PDF yang relevan.
-- **Catatan implementasi:** Navigasi ke halaman spesifik dalam PDF (via `#page=N` atau `#search=`) tidak dapat diandalkan karena keterbatasan *browser sandboxing* pada PDF lintas-domain (`iframe` dari Supabase Storage). Implementasi terbatas pada pembukaan dokumen yang tepat berdasarkan domain.
+- **Catatan implementasi:** Navigasi ke halaman atau teks spesifik dalam PDF (via `#page=N` atau `#search=`) tidak dapat selalu diandalkan karena dukungan fitur ini tidak konsisten lintas-browser/viewer PDF ketika dimuat di dalam `iframe`. Implementasi ditekankan pada *fallback* yang aman, yakni pembukaan dokumen secara penuh berdasarkan domain.
 
 ### Interface `CitationSource` (di `lib/store.ts`)
 ```typescript
