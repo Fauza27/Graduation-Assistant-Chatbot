@@ -76,13 +76,15 @@ export default function ChatPage() {
     let docUrl = DOCUMENTS.find(d => d.id === domain)?.fileUrl || DOCUMENTS[2].fileUrl;
     
     // Tambahkan parameter pencarian ke URL PDF agar langsung menuju teks yang relevan
-    const searchTerm = srcObj.title || srcObj.section;
+    const searchTerm = srcObj.title || srcObj.section || srcObj.parent_id;
     if (searchTerm) {
       // Ambil kata-kata penting (misal 5-8 kata) dan hindari penggunaan tanda kutip literal 
       // agar tidak menghalangi matching apabila teks tidak 100% identik.
       const query = searchTerm.split(' ').slice(0, 8).join(' ');
       docUrl += `#search=${encodeURIComponent(query)}`;
     }
+    
+    console.log("Membuka dokumen:", docUrl);
     
     openDocument(docUrl);
   };

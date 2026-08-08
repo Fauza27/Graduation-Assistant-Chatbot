@@ -48,6 +48,14 @@ LONG_FORM_TO_ACRONYM: dict[str, list[str]] = {
     "kartu rencana studi": ["KRS"],
 }
 
+# Sinonim atau kata alternatif yang sering dipakai mahasiswa tapi punya istilah resmi.
+SYNONYMS: dict[str, list[str]] = {
+    "pendadaran": ["ujian skripsi", "sidang skripsi", "ujian tugas akhir", "seminar pendadaran"],
+    "sidang": ["ujian skripsi", "pendadaran"],
+    "pembimbing": ["dosen pembimbing"],
+    "penguji": ["dosen penguji"],
+}
+
 
 def _has_uppercase_token(text: str, token: str) -> bool:
     """Cek apakah token (case-sensitive, uppercase) muncul sebagai kata utuh."""
@@ -85,6 +93,14 @@ def expand_query(question: str) -> str:
         for exp in expansions:
             if not _has_uppercase_token(question, exp) and exp not in additions:
                 additions.append(exp)
+
+    # 3. Sinonim / Istilah Alternatif
+    for word, equivalents in SYNONYMS.items():
+        # Match boundaries to avoid substring matching
+        if re.search(rf"\b{word}\b", text_lower):
+            for eq in equivalents:
+                if eq.lower() not in text_lower and eq not in additions:
+                    additions.append(eq)
 
     if not additions:
         return question
