@@ -120,9 +120,9 @@ ALGORITMA PEMBARUAN ROUTER CHAT (ai.py)
        - Ambil nilai `mahasiswa_id` (dari `sub`) dan `username` (dari `name`) pada payload token.
 
    - TAHAP 2: Cek Kuota
-     - Panggil fungsi database `check_and_update_quota(user_id=str(mahasiswa_id))` (berdasarkan `mahasiswa_id` yang di-cast ke string).
+     - Jika `mahasiswa_id` ada, panggil fungsi database RPC `increment_quota_if_under_limit` (berdasarkan `mahasiswa_id` yang di-cast ke string dan tanggal hari ini).
      - *Catatan: Pastikan bahwa argumen user_id di fungsi RPC berupa TEXT.*
-     - JIKA batas harian habis -> Lempar Error 429 (Too Many Requests).
+     - JIKA rpc mengembalikan false (batas harian habis) -> Lempar Error 429 (Too Many Requests).
 
    - TAHAP 3: Teruskan ke Chat Service
      - Panggil `chat(query=request.query, session_id=request.session_id, username=username, channel=request.channel, mahasiswa_id=mahasiswa_id)`.
@@ -177,8 +177,8 @@ ALGORITMA RIWAYAT SESI (sessions.py)
 1. FUNGSI get_current_mahasiswa(request)
    - Verifikasi Bearer token JWT.
    - Ambil identitas pengguna DARI klaim `sub` (BUKAN `mahasiswa_id`, karena payload JWT standar menggunakan `sub` sebagai ID subjek utama).
-2. ENDPOINT GET `/sessions/` dan `/sessions/{session_id}`
-   - Gunakan filter `.eq("mahasiswa_id", str(mahasiswa_id))` dalam query Supabase untuk memastikan pengguna hanya bisa melihat data miliknya sendiri.
+2. ENDPOINT GET `/sessions/`, GET `/sessions/{session_id}`, dan DELETE `/sessions/{session_id}`
+   - Gunakan filter `.eq("mahasiswa_id", str(mahasiswa_id))` dalam query Supabase untuk memastikan pengguna hanya bisa melihat atau menghapus data miliknya sendiri.
 ```
 ```
 
@@ -189,8 +189,10 @@ Bot Telegram harus memastikan bahwa dia diidentifikasi sebagai *channel* "telegr
 ALGORITMA PEMBARUAN HANDLER TELEGRAM (chat_handler.py)
 
 1. FUNGSI handle_text_chat (Modifikasi Pemanggilan Service)
+   - Ambil `user_id` dari properti `update.effective_user.id` yang di-cast ke string.
+   - Panggil fungsi `check_and_update_quota(user_id)` secara asinkron. Jika kuota habis, tolak permintaan dan beritahu user.
    - Ambil `username` dari properti `update.effective_user.username` atau `update.effective_user.full_name`.
    - Panggil fungsi chat dengan menyertakan nama dan channel eksplisit:
-   - `chat(query=text, session_id=chat_id, username=username, channel="telegram", mahasiswa_id=None)`
+   - `chat(query=text, session_id=user_id, username=username, channel="telegram", mahasiswa_id=None)`
    - HAPUS pemanggilan `log_chat_to_db` dari file ini (karena sudah dipindah ke dalam fungsi `chat` di `ai_services.py`).
 ```

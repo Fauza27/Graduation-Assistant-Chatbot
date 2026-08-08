@@ -960,7 +960,7 @@ ALGORITMA PENANGANAN CHAT BOT (chat_handler.py)
      
    - TAHAP 3: AI Proses & Database
      - Ambil username (atau nama depan jika tidak ada).
-     - Panggil AI Service (`chat(query, session_id, username, channel="telegram", mahasiswa_id=None)`) secara asinkron di thread terpisah.
+     - Panggil AI Service (`chat(query=text, session_id=user_id, username=username, channel="telegram", mahasiswa_id=None)`) secara asinkron di thread terpisah.
      - Ambil teks jawaban. Jika jawaban LLM kosong, isi dengan `messages.EMPTY_ANSWER_FALLBACK`.
      - Gunakan `html.escape` pada teks jawaban agar tidak bikin error saat dikirim via Telegram (karena parse_mode=HTML).
      - JIKA bot memberikan list dokumen sumber (sources):
