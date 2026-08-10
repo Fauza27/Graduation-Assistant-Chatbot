@@ -4,9 +4,9 @@
 
 | | |
 |---|---|
-| **Versi** | 1.4 — Revisi §3.1 & §5.3 & §8.3: endpoint admin disesuaikan dengan alur simpan/reembed dua langkah & struktur tree 4 level, endpoint hapus dokumen dihapus (lihat SKPL v1.2 FR-ADM-03) |
-| **Acuan** | `01_SKPL_Spesifikasi_Kebutuhan.md` v1.2 (disetujui) |
-| **Tanggal disusun** | 31 Juli 2026 (direvisi 10 Agustus 2026) |
+| **Versi** | 1.3 — Draft Pengembangan Skripsi (revisi: backend pindah ke Cloud Run + Cloudflare opsional) |
+| **Acuan** | `01_SKPL_Spesifikasi_Kebutuhan.md` v1.1 (disetujui) |
+| **Tanggal disusun** | 31 Juli 2026 |
 
 ---
 
@@ -156,18 +156,6 @@ ALTER TABLE child_documents ADD COLUMN domain TEXT NOT NULL DEFAULT 'PI'
 CREATE INDEX idx_child_documents_domain ON child_documents(domain);
 ```
 
-**`child_documents` & `parent_documents`** — tambah status sinkronisasi & timestamp (direvisi 10 Agustus 2026 berdasarkan mockup Admin Dashboard; rasional lengkap ada di `04_Pseudocode_Backend_Increment3.md` §2-§3.1):
-```sql
-ALTER TABLE child_documents
-    ADD COLUMN embedding_status TEXT NOT NULL DEFAULT 'success'
-        CHECK (embedding_status IN ('pending', 'stale', 'success', 'failed')),
-    ADD COLUMN updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
-
-ALTER TABLE parent_documents
-    ADD COLUMN updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
-```
-> `embedding_status` melacak status sinkronisasi **persisten** per child chunk (`stale` = isi baru disimpan lewat "Simpan" tapi belum di-*reembed*), terpisah dari `chunk_edit_logs.status` yang melacak progres satu proses *reembed* yang sedang berjalan (dipakai untuk polling saat modal status terbuka).
-
 **`conversation_sessions`** — tambah `channel` dan `mahasiswa_id` (nullable):
 ```sql
 ALTER TABLE conversation_sessions ADD COLUMN channel TEXT NOT NULL DEFAULT 'telegram'
@@ -205,9 +193,9 @@ CREATE TABLE admin_users (
 ```sql
 CREATE TABLE chunk_edit_logs (
     log_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    child_id TEXT NOT NULL REFERENCES child_documents(id) ON DELETE CASCADE,
-    parent_id TEXT NOT NULL REFERENCES parent_documents(parent_id) ON DELETE CASCADE,
-    admin_id UUID REFERENCES admin_users(admin_id) ON DELETE SET NULL,
+    child_id TEXT NOT NULL REFERENCES child_documents(id),
+    parent_id TEXT NOT NULL REFERENCES parent_documents(parent_id),
+    admin_id UUID REFERENCES admin_users(admin_id),
     old_content TEXT,
     new_content TEXT,
     status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'success', 'failed')),
@@ -231,7 +219,7 @@ erDiagram
     mahasiswa_accounts ||--o{ conversation_sessions : "punya sesi (Website)"
 
     parent_documents { text parent_id PK text domain "BARU" }
-    child_documents { text id PK text parent_id FK text domain vector embedding text embedding_status "BARU" }
+    child_documents { text id PK text parent_id FK text domain "BARU" vector embedding }
     mahasiswa_accounts { uuid mahasiswa_id PK text google_sub UK text email }
     admin_users { uuid admin_id PK text username text password_hash }
     chunk_edit_logs { uuid log_id PK text child_id FK uuid admin_id FK text status }
@@ -280,22 +268,16 @@ Semua metrik ini dihitung dengan query SQL langsung (agregasi `COUNT`/`GROUP BY`
 | DELETE | `/api/sessions/{id}` | Menghapus sesi percakapan dari riwayat | Mahasiswa |
 
 ### 5.3 Endpoint Baru — Admin
-> Direvisi 10 Agustus 2026 berdasarkan mockup frontend `(admin)`: struktur dokumen ternyata 4 level
-> (dokumen sumber → bab → parent chunk → child chunk, dikelompokkan dari kolom `source`+`section` yang
-> sudah ada — bukan tabel baru); "Simpan" dan "Re-Embed" dipisah jadi dua aksi admin yang berbeda,
-> bukan satu langkah atomik; penghapusan dibatasi ke level child chunk (SKPL v1.2 FR-ADM-03) — tidak
-> ada endpoint hapus dokumen terpisah, parent yang kehilangan seluruh child-nya dibersihkan otomatis.
-
 | Method | Path | Deskripsi | Auth |
 |---|---|---|---|
 | POST | `/api/admin/login` | Login admin | Publik (kredensial) |
 | POST | `/api/admin/logout` | Invalidasi sesi admin | Admin |
-| GET | `/api/admin/documents` | Struktur lengkap dokumen→bab→parent→child (ringan, tanpa isi content) + ringkasan statistik | Admin |
-| GET | `/api/admin/chunks/{child_id}` | Detail satu child chunk, termasuk isi content penuh | Admin |
-| PUT | `/api/admin/chunks/{child_id}` | Simpan perubahan title/pages/content child chunk — **tidak** memicu re-embed | Admin |
-| POST | `/api/admin/chunks/{child_id}/reembed` | Memicu proses re-embed atas isi child chunk yang tersimpan saat ini | Admin |
-| DELETE | `/api/admin/chunks/{child_id}` | Hapus satu child chunk; parent yang jadi kosong ikut terhapus otomatis | Admin |
-| GET | `/api/admin/chunks/{child_id}/edit-status` | Status proses re-embed (pending/processing/success/failed) | Admin |
+| GET | `/api/admin/documents` | List dokumen, filter domain | Admin |
+| GET | `/api/admin/documents/{parent_id}/chunks` | List chunk di bawah satu dokumen | Admin |
+| PUT | `/api/admin/chunks/{child_id}` | Edit chunk → re-embed → log | Admin |
+| DELETE | `/api/admin/chunks/{child_id}` | Hapus satu chunk | Admin |
+| DELETE | `/api/admin/documents/{parent_id}` | Hapus dokumen + seluruh chunk | Admin |
+| GET | `/api/admin/chunks/{child_id}/edit-status` | Status proses edit/re-embed | Admin |
 | GET | `/api/admin/analytics/summary` | Metrik §4 (agregasi langsung dari DB, **bukan** skor Ragas) | Admin |
 | GET | `/api/admin/analytics/conversations` | List percakapan (filter tanggal/domain/channel) | Admin |
 | GET | `/api/admin/quotas` | Status kuota semua user | Admin |
@@ -473,35 +455,21 @@ sequenceDiagram
     FE->>FE: Update UI chat dengan riwayat lama
 ```
 
-### 8.3 Admin Mengedit Chunk (Simpan lalu Re-Embed — dua langkah terpisah)
-> Direvisi 10 Agustus 2026. Detail pseudocode lengkap: `04_Pseudocode_Backend_Increment3.md` §5.2, §6.
+### 8.3 Admin Mengedit Chunk
 ```mermaid
 sequenceDiagram
     participant A as Admin Dashboard
-    participant API as api/admin.py
+    participant API as /api/admin/chunks/{id}
     participant CE as chunk_editor.py
     participant EMB as embedder.py
     participant DB as Supabase
-    participant BG as Background Task
 
-    Note over A,DB: Langkah 1 — Simpan (sinkron, tanpa embedding)
-    A->>API: PUT /chunks/{id} {content baru}
-    API->>CE: save_chunk(...)
-    CE->>DB: update child_documents (content, embedding_status=stale)
+    A->>API: PUT {new_content}
+    API->>CE: edit_chunk(child_id, new_content, admin_id)
     CE->>DB: insert chunk_edit_logs (status=pending)
-    API-->>A: embedding_status=stale
-
-    Note over A,BG: Langkah 2 — Re-Embed (dipicu manual, async + polling)
-    A->>API: POST /chunks/{id}/reembed
-    API->>CE: trigger_reembed(...)
-    CE->>DB: update chunk_edit_logs (status=processing)
-    API->>BG: jadwalkan process_chunk_reembed(...)
-    API-->>A: {log_id, status:processing}
-    BG->>EMB: embed_single_text(new_content)
-    BG->>DB: update child_documents (embedding, embedding_status=success)
-    BG->>DB: update chunk_edit_logs (status=success)
-    A->>API: GET /chunks/{id}/edit-status (polling)
-    API-->>A: status=success
+    CE->>EMB: generate_embedding(new_content)
+    CE->>DB: update child_documents + chunk_edit_logs (status)
+    API-->>A: tampilkan status
 ```
 
 ---

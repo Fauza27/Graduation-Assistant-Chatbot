@@ -4,8 +4,8 @@
 
 | | |
 |---|---|
-| **Versi** | 1.4 — Revisi lingkup Increment 3: hapus dibatasi ke child chunk saja (lihat SKPL v1.2, DPPL v1.4) |
-| **Acuan** | `01_SKPL_Spesifikasi_Kebutuhan.md` v1.2 (disetujui), `02_DPPL_Perancangan_Sistem.md` v1.4 |
+| **Versi** | 1.3 — Draft Pengembangan Skripsi (revisi: backend pindah ke Cloud Run + Cloudflare opsional) |
+| **Acuan** | `01_SKPL_Spesifikasi_Kebutuhan.md` v1.1 (disetujui), `02_DPPL_Perancangan_Sistem.md` v1.3 |
 | **Tanggal disusun** | 31 Juli 2026 |
 
 ---
@@ -74,7 +74,7 @@ graph LR
 
 | | |
 |---|---|
-| **Lingkup masuk** | Login admin manual (JWT); `frontend/app/(admin)`; struktur dokumen→bab→parent→child per domain; simpan perubahan chunk (terpisah dari re-embed); trigger re-embed manual; hapus **child chunk** (parent yang jadi kosong dibersihkan otomatis — **tidak** ada hapus dokumen/parent langsung, lihat SKPL v1.2 FR-ADM-03); status proses edit; script `reset_admin_password.py` |
+| **Lingkup masuk** | Login admin manual (JWT); `frontend/app/(admin)`; list dokumen & chunk per domain; edit chunk → re-embed; hapus chunk/dokumen; status proses edit; script `reset_admin_password.py` |
 | **Requirement terkait** | FR-ADM-01 s/d FR-ADM-04 |
 | **Definition of Done** | Admin login, edit chunk sampai ter-reembed dan langsung terpakai di jawaban berikutnya; admin bisa reset password sendiri lewat CLI |
 | **Testing** | Black Box Testing: edit chunk valid/invalid, akses endpoint admin tanpa token (harus ditolak), reset password via CLI lalu login pakai password baru |

@@ -4,10 +4,10 @@
 
 | | |
 |---|---|
-| **Versi** | 1.2 — Revisi: FR-ADM-03 dipersempit ke level child chunk (bukan dokumen/parent), UC-02 disesuaikan dengan alur simpan-lalu-reembed dua langkah |
+| **Versi** | 1.1 — Draft Pengembangan Skripsi (revisi) |
 | **Status** | Working Document |
 | **Dasar** | Knowledge Base sistem eksisting (PI: *"Implementasi Chatbot Asisten Virtual Berbasis RAG untuk Membantu Mahasiswa dalam Mendapatkan Informasi Terkait PI/KKP di STMIK WCD"*) |
-| **Tanggal disusun** | 29 Juli 2026 (direvisi 10 Agustus 2026) |
+| **Tanggal disusun** | 29 Juli 2026 |
 
 ---
 
@@ -149,7 +149,7 @@ Sistem tetap satu backend FastAPI yang sama (reuse total investasi dari PI), tet
 |---|---|
 | FR-ADM-01 | Admin dapat login dengan kredensial (username/password) sebelum mengakses dashboard. |
 | FR-ADM-02 | Admin dapat melihat daftar dokumen sumber yang sudah ter-ingest, dikelompokkan per domain. |
-| FR-ADM-03 | Admin dapat menghapus atau memperbarui (re-index) **child chunk** yang sudah ada. Penghapusan dilakukan di level child chunk saja — admin tidak menghapus parent chunk atau dokumen secara langsung; parent yang kehilangan seluruh child-nya dibersihkan otomatis oleh sistem. |
+| FR-ADM-03 | Admin dapat menghapus atau memperbarui (re-index (chunk)) dokumen sumber yang sudah ada. |
 | FR-ADM-04 | Admin dapat melihat status proses pembaruan (berhasil/gagal/sedang proses) untuk setiap chunk yang diubah. |
 | FR-ADM-05 | Admin dapat melihat dashboard analitik: jumlah percakapan, pertanyaan terpopuler, distribusi pertanyaan per domain, dan skor evaluasi kualitas, dan sebagainya. |
 | FR-ADM-06 | Admin dapat melihat/menyesuaikan konfigurasi kuota rate-limit per pengguna (memanfaatkan RPC kuota yang sudah ada). |
@@ -190,8 +190,8 @@ graph LR
 **UC-02: Admin Mengedit Chunk**
 - **Aktor**: Admin
 - **Precondition**: Admin sudah login
-- **Alur Utama**: Admin pilih dokumen → bab → parent chunk → child chunk yang dituju → admin edit isi child chunk → simpan perubahan (tersimpan ke database, status berubah jadi "perlu re-embed", belum otomatis diproses ulang) → admin memicu re-embed secara terpisah → proses embedding ulang berjalan di latar belakang → status ditampilkan ke admin
-- **Postcondition**: Setelah re-embed selesai dengan sukses, chunk yang diedit langsung terpakai di pencarian berikutnya
+- **Alur Utama**: Admin pilih domain → admin pilih & edit chunk → proses embedding ulang → simpan ke database → status ditampilkan ke admin
+- **Postcondition**: Chunk yang diedit langsung terpakai di pencarian berikutnya
 
 **UC-03: Admin Meninjau Analitik**
 - **Aktor**: Admin
