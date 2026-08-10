@@ -19,6 +19,7 @@ from src.api import ai
 from src.api import health as health_router
 from src.api import auth
 from src.api import sessions
+from src.api import admin
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -91,6 +92,7 @@ def _register_routers(app: FastAPI):
     app.include_router(ai.router, prefix=API_PREFIX)
     app.include_router(auth.router, prefix=API_PREFIX)
     app.include_router(sessions.router, prefix=API_PREFIX)
+    app.include_router(admin.router, prefix=API_PREFIX)
     app.include_router(health_router.router)
 
 
