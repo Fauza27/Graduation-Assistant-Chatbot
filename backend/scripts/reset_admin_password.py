@@ -8,7 +8,7 @@ import bcrypt
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from config.settings import get_settings
-from main import _get_supabase_client
+from supabase import create_client
 
 def hash_password(plain_password: str) -> str:
     """Hashes a password using bcrypt."""
@@ -37,7 +37,7 @@ def main():
         sys.exit(1)
         
     settings = get_settings()
-    supabase = _get_supabase_client(settings)
+    supabase = create_client(settings.supabase_url, settings.supabase_service_key)
     
     password_hash = hash_password(password)
     
