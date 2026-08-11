@@ -19,15 +19,9 @@ ALGORITMA PENYIMPANAN MEMORI PERCAKAPAN (memory.py)
 
    - `add_user_turn(content, intent)`:
      - Tambahkan pesan dari user ke daftar `_turns`.
-     - Panggil `_enforce_window()` agar memori tidak kepenuhan secara internal.
 
-   - `add_assistant_turn(content, retrieved_doc_contents)`:
+   - `add_assistant_turn(content, retrieved_doc_contents, sources)`:
      - Tambahkan pesan balasan bot beserta dokumen sumber ke daftar `_turns`.
-     - Panggil `_enforce_window()`.
-
-   - `_enforce_window()`:
-     - Pastikan jumlah `_turns` tidak melebihi 2 * `max_turns` (1 turn = user + bot = 2 pesan).
-     - Jika lebih, hapus pesan yang paling lama (FIFO).
 
    - `get_history_for_llm()`:
      - Ambil histori pesan untuk disuapkan ke LLM (format dict).

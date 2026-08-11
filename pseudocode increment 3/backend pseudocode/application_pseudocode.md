@@ -6,7 +6,7 @@ ALGORITMA INISIALISASI SERVER APLIKASI (application.py)
 1. IMPOR PUSTAKA
    - Impor FastAPI, middleware CORS, Limiter (rate limit), JSONResponse, HTTPException
    - Impor framework Telegram bot, konfigurasi (settings)
-   - Impor routers (`ai`, `health`, `auth`, `sessions`)
+   - Impor routers (`ai`, `health`, `auth`, `sessions`, `admin`)
 
 2. CONTEXT MANAGER lifespan(app)
    - Lifespan menangani kode yang dijalankan saat server mulai (startup) dan server mati (shutdown).
@@ -36,10 +36,11 @@ ALGORITMA INISIALISASI SERVER APLIKASI (application.py)
    - Tambahkan middleware CORS (Cross-Origin Resource Sharing) untuk mengizinkan aplikasi diakses HANYA dari origin frontend secara eksplisit (seperti Vercel atau localhost).
 
 5. FUNGSI _register_routers(app)
-   - Daftarkan router `/api` (untuk endpoint sistem AI dan chat).
-   - Daftarkan router `/auth` (untuk endpoint otentikasi login).
-   - Daftarkan router `/sessions` (untuk endpoint riwayat chat).
-   - Daftarkan router `/health` (untuk mengecek kesehatan server).
+   - Daftarkan router `ai` dengan prefix `/api` (untuk endpoint sistem AI dan chat).
+   - Daftarkan router `auth` dengan prefix `/api` (untuk endpoint otentikasi login pengguna).
+   - Daftarkan router `sessions` dengan prefix `/api` (untuk endpoint riwayat chat).
+   - Daftarkan router `admin` dengan prefix `/api` (untuk endpoint fitur dashboard admin).
+   - Daftarkan router `health` (tanpa prefix, untuk mengecek kesehatan server).
    
    - DEFINISI ENDPOINT POST `/api/telegram/webhook`:
      - Fungsi ini dipanggil otomatis oleh Telegram setiap ada chat masuk.

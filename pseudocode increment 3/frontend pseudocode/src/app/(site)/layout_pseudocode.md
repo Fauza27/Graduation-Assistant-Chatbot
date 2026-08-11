@@ -1,20 +1,50 @@
+# Pseudocode: Site Layout
+## File: `app/(site)/layout.tsx`
+
+```markdown
 ALGORITMA LAYOUT UTAMA (APP SHELL)
 
-1. INISIALISASI
-   - Gunakan `useEffect` untuk memeriksa token di `localStorage`.
-   - JIKA sedang mengecek token, tampilkan indikator Loading (menghindari FOUC).
-   - JIKA token tidak ada (setelah pengecekan), arahkan (redirect) ke `/login`.
+1. COMPONENT SETUP
+   - 'use client' directive
+   - React hooks: useEffect, useState
+   - Navigation: useRouter, usePathname
+   - Authentication: getAuthToken, logout, jwtDecode
+   - Global State: useAppStore (isDocPanelOpen, activeDoc, setDocPanelOpen, setActiveDoc, resetSession)
+
+2. AUTHENTICATION & HYDRATION CHECK
+   - Set `isClient` true untuk menghindari hydration mismatch.
+   - Ambil token autentikasi.
+   - JIKA token tidak ada: redirect ke `/login`.
+   - JIKA token ada: decode JWT.
+     - Jika token sudah expired (`exp * 1000 < Date.now()`), panggil `logout()`.
+
+3. RENDER STRUKTUR LAYOUT (app)
+   - BUNGKUS DENGAN DIV CLASS "app"
    
-2. RENDER STRUKTUR LAYOUT (Berdasarkan Mockup)
-   - BUNGKUS DENGAN DIV CLASS "app" (flex, height 100vh)
+   - BAGIAN KIRI: SIDEBAR (`aside.sidebar`)
+     - Header: Logo STMIK WCD dan tombol close (untuk mobile).
+     - Tombol "Chat Baru": Memanggil `resetSession()`, arahkan ke `/chat`, tutup sidebar (mobile).
+     - Navigasi (Link):
+       - "Riwayat Chat": Menuju `/riwayat`.
+       - "DOKUMEN PANDUAN": Toggle untuk membuka/tutup panel dokumen.
+     - Footer:
+       - "Profil": Menuju `/profil`.
+       - "Logout": Panggil `logout()`.
+     - Sidebar Overlay: Untuk menutup sidebar di mobile ketika diklik.
    
-   - TAMPILKAN Komponen `<Sidebar />` (Di sebelah kiri)
-     - Sidebar memuat tombol "Chat Baru", navigasi "Riwayat Chat", "Dokumen Panduan", "Profil".
-     - Jika tombol "Chat Baru" diklik: panggil `resetSession()` dari `lib/store.ts` dan arahkan ke halaman `/chat`.
-   
-   - DIV MAIN PANEL (Di tengah)
-     - TAMPILKAN Mobile Topbar (Hanya tampil di layar kecil)
-     - TAMPILKAN Konten dinamis `{children}` (bisa berupa /chat, /riwayat, /profil)
-     - TAMPILKAN Komponen `<BottomNav />` (Hanya tampil di layar kecil)
+   - BAGIAN TENGAH: MAIN PANEL (`main.main-panel`)
+     - Mobile Topbar: Tombol hamburger (membuka sidebar), Judul "Asisten WCD", tombol "Chat Baru".
+     - Konten Dinamis: `{children}` (akan dirender sesuai route: /chat, /riwayat, /profil).
+     - Mobile Bottom Nav: Navigasi bawah untuk mobile (Chat, Riwayat, Profil).
      
-   - TAMPILKAN Komponen `<DocPanel />` (Panel dokumen di sebelah kanan/overlay)
+   - BAGIAN KANAN: DOCUMENT PANEL (`aside.doc-panel`)
+     - Header Panel:
+       - JIKA dokumen aktif: Tampilkan tombol kembali ke daftar dan tombol buka PDF di tab baru.
+       - JIKA tidak ada: Tampilkan tombol tutup (mobile).
+       - Judul "Dokumen Panduan" dan tombol silang untuk menutup.
+     - Konten Panel:
+       - JIKA dokumen aktif: Render `<iframe src={activeDoc} />` untuk menampilkan PDF.
+       - JIKA tidak ada: Tampilkan daftar tombol dokumen (mapping dari `DOCUMENTS`).
+         - Jika salah satu diklik, panggil `setActiveDoc(doc.fileUrl)`.
+     - Doc Overlay: Untuk menutup panel di layar yang lebih kecil saat area luar diklik.
+```
