@@ -3,17 +3,28 @@ from loguru import logger
 from supabase import Client
 
 from src.admin.auth import ResourceNotFoundError
-from src.ingestion.embedder import embed_single_text
+from src.ingestion.embedder import get_openai_embeddings
 
 def list_knowledge_tree(supabase: Client) -> dict:
-    """Returns the full knowledge tree and summary statistics."""
-    # Fetch all parents
-    parents_res = supabase.table("parent_documents").select("parent_id, title, domain, source, section, updated_at").order("domain").order("source").order("section").order("parent_id").execute()
+    """Returns the full knowledge tree and summary statistics.
+    
+    Note: 'source' is stored in child_documents, not parent_documents.
+    We derive the source for each parent from its first child's 'source' field.
+    """
+    # Fetch all parents — domain is in parent_documents, source is NOT
+    parents_res = supabase.table("parent_documents").select("parent_id, title, domain, section, updated_at").order("domain").order("section").order("parent_id").execute()
     parents = parents_res.data
     
-    # Fetch all children (lightweight)
-    children_res = supabase.table("child_documents").select("id, parent_id, title, pages, embedding_status, updated_at").order("parent_id").order("pages").execute()
+    # Fetch all children (lightweight) — includes source field
+    children_res = supabase.table("child_documents").select("id, parent_id, title, pages, source, embedding_status, updated_at").order("parent_id").order("pages").execute()
     children = children_res.data
+    
+    # Build parent_id -> source map (use first child's source as representative for the parent)
+    parent_source_map = {}
+    for child in children:
+        pid = child["parent_id"]
+        if pid not in parent_source_map and child.get("source"):
+            parent_source_map[pid] = child["source"]
     
     # Group children by parent_id
     children_by_parent = {}
@@ -41,10 +52,11 @@ def list_knowledge_tree(supabase: Client) -> dict:
         last_updated_at = max(all_updated_ats)
         
     for p in parents:
-        domain = p["domain"]
-        source = p["source"]
-        section = p["section"]
+        domain = p.get("domain", "")
         pid = p["parent_id"]
+        # Get source from the first child of this parent
+        source = parent_source_map.get(pid, "")
+        section = p["section"]
         
         doc_key = (domain, source)
         if doc_key not in tree_dict:
@@ -87,47 +99,51 @@ def list_knowledge_tree(supabase: Client) -> dict:
 
 
 def get_chunk_detail(child_id: str, supabase: Client) -> dict:
-    """Returns the full detail of a single child chunk."""
+    """Returns the full detail of a single child chunk.
+    
+    Note: 'source' and 'domain' come from child_documents itself.
+    Only section and parent title/id come from parent_documents.
+    """
     res = supabase.table("child_documents").select("*").eq("id", child_id).limit(1).execute()
     if not res.data:
         raise ResourceNotFoundError(f"Child chunk {child_id} not found")
         
     child = res.data[0]
     
-    # Get parent info
-    parent_res = supabase.table("parent_documents").select("parent_id, title, section, domain, source").eq("parent_id", child["parent_id"]).limit(1).execute()
+    # Get parent info (only title and section — no source/domain in parent_documents)
+    parent_res = supabase.table("parent_documents").select("parent_id, title, section").eq("parent_id", child["parent_id"]).limit(1).execute()
     
     parent_info = None
-    section = None
-    domain = None
-    source = None
+    section = child.get("section")  # fallback to child's own section
     
     if parent_res.data:
         p = parent_res.data[0]
         parent_info = {"parent_id": p["parent_id"], "title": p["title"]}
         section = p["section"]
-        domain = p["domain"]
-        source = p["source"]
         
     # Get last reembedded_at from logs
     log_res = supabase.table("chunk_edit_logs").select("reembedded_at").eq("child_id", child_id).eq("status", "success").order("reembedded_at", desc=True).limit(1).execute()
     reembedded_at = log_res.data[0]["reembedded_at"] if log_res.data else None
     
+    # pages is stored as TEXT[] in DB — serialize to comma-separated string for frontend
+    pages_raw = child.get("pages") or []
+    pages_str = ", ".join(pages_raw) if isinstance(pages_raw, list) else str(pages_raw)
+    
     return {
         "id": child["id"],
         "title": child["title"],
-        "pages": child.get("pages"),
+        "pages": pages_str,
         "content": child["content"],
         "embedding_status": child["embedding_status"],
         "reembedded_at": reembedded_at,
         "parent": parent_info,
         "section": section,
-        "domain": domain,
-        "source": source
+        "domain": child.get("domain", ""),
+        "source": child.get("source", "")
     }
 
 
-def save_chunk(child_id: str, admin_id: str, supabase: Client, title: str = None, pages: list[int] = None, content: str = None) -> dict:
+def save_chunk(child_id: str, admin_id: str, supabase: Client, title: str = None, pages: str = None, content: str = None) -> dict:
     """Saves partial updates to a child chunk. If content changes, it marks embedding_status as stale."""
     res = supabase.table("child_documents").select("*").eq("id", child_id).limit(1).execute()
     if not res.data:
@@ -147,7 +163,9 @@ def save_chunk(child_id: str, admin_id: str, supabase: Client, title: str = None
         updates["title"] = title
         
     if pages is not None:
-        updates["pages"] = pages
+        # pages comes as a string from frontend (e.g. "12-13") — store as TEXT[] in DB
+        pages_arr = [p.strip() for p in pages.split(",") if p.strip()] if pages else []
+        updates["pages"] = pages_arr
         
     if not updates:
         return {
@@ -231,8 +249,8 @@ async def process_chunk_reembed(log_id: str, child_id: str, parent_id: str, old_
     """Background task to perform the embedding and parent content sync."""
     try:
         # Embed using openai
-        from src.ingestion.embedder import embed_single_text
-        vector = await embed_single_text(new_content, settings) if type(embed_single_text).__name__ == 'coroutine' else embed_single_text(new_content, settings)
+        from src.ingestion.embedder import get_openai_embeddings
+        vector = get_openai_embeddings([new_content])[0]
         
         # Update child
         supabase.table("child_documents").update({

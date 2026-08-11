@@ -21,11 +21,8 @@ class AdminLoginResponse(BaseModel):
 
 class ChunkSaveRequest(BaseModel):
     title: Optional[str] = None
-    pages: Optional[List[int]] = None
+    pages: Optional[str] = None  # Frontend sends as string e.g. "12-13"; backend converts to ["12-13"]
     content: Optional[str] = None
-    
-    # Custom validation: ensure at least one field is provided
-    # A simple validator or just check in the handler
 
 class ChunkSaveResponse(BaseModel):
     child_id: str
@@ -46,7 +43,7 @@ class ParentInfo(BaseModel):
 class ChunkDetailResponse(BaseModel):
     id: str
     title: str
-    pages: Optional[List[int]] = None
+    pages: Optional[str] = None  # Serialized from TEXT[] to "page1, page2"
     content: str
     embedding_status: str
     reembedded_at: Optional[datetime] = None
@@ -69,8 +66,9 @@ class ChunkEditStatusResponse(BaseModel):
 
 # Dependencies
 def get_supabase() -> Client:
-    from main import _get_supabase_client
-    return _get_supabase_client(get_settings())
+    from supabase import create_client
+    settings = get_settings()
+    return create_client(settings.supabase_url, settings.supabase_service_key)
 
 # Endpoints
 @router.post("/login", response_model=AdminLoginResponse)
