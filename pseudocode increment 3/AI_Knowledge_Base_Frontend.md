@@ -1,16 +1,18 @@
 # Dokumentasi Proyek Frontend: AI Chatbot Asisten Akademik
 
-Dokumen ini adalah *knowledge base* khusus bagian **Frontend (Antarmuka Web)** dari sistem AI Chatbot Asisten Akademik. Panduan ini dirancang agar agen AI dapat dengan mudah memahami arsitektur UI, pengelolaan state, struktur folder, dan alur integrasi dengan backend.
+Dokumen ini adalah _knowledge base_ khusus bagian **Frontend (Antarmuka Web)** dari sistem AI Chatbot Asisten Akademik. Panduan ini dirancang agar agen AI dapat dengan mudah memahami arsitektur UI, pengelolaan state, struktur folder, dan alur integrasi dengan backend.
 
 ---
 
 ## 1. Ringkasan Frontend
-Frontend aplikasi dibangun dengan arsitektur modern berbasis komponen untuk menghadirkan antarmuka obrolan (*chatbot*) yang responsif, dilengkapi panel untuk melihat dokumen PDF rujukan (DocPanel), dan riwayat obrolan yang persisten.
+
+Frontend aplikasi dibangun dengan arsitektur modern berbasis komponen untuk menghadirkan antarmuka obrolan (_chatbot_) yang responsif, dilengkapi panel untuk melihat dokumen PDF rujukan (DocPanel), dan riwayat obrolan yang persisten.
 
 **Tech Stack Frontend**:
+
 - **Framework Utama**: Next.js (App Router) & React.
 - **Bahasa**: TypeScript.
-- **State Management**: Zustand (dengan *middleware* persistensi `localStorage`).
+- **State Management**: Zustand (dengan _middleware_ persistensi `localStorage`).
 - **Styling**: Vanilla CSS murni (`globals.css`) dengan desain sistem variabel kustom (mengacu pada pedoman warna ungu/STMIK WICIDA).
 - **Autentikasi**: Google Identity Services (Standar GIS / Oauth) yang diverifikasi oleh Backend JWT.
 - **Parsing**: `react-markdown` (untuk format respons AI), `jwt-decode` (untuk membaca payload token).
@@ -29,34 +31,62 @@ frontend/
     │   ├── layout.tsx          : Root Layout Next.js (metadata & font bawaan Inter/Outfit).
     │   ├── login/
     │   │   └── page.tsx        : Halaman Single Sign-On menggunakan GIS.
-    │   └── (site)/             : Rute yang dilindungi autentikasi (wajib login).
+    │   ├── admin/              : Rute admin panel (protected dengan admin authentication).
+    │   │   ├── admin.css       : Styling khusus admin dashboard dengan purple theme.
+    │   │   ├── layout.tsx      : Admin layout dengan sidebar navigation dan auth protection.
+    │   │   ├── login/
+    │   │   │   └── page.tsx    : Admin login form dengan bcrypt authentication.
+    │   │   └── dashboard/
+    │   │       ├── page.tsx    : Knowledge base management dashboard.
+    │   │       └── chunks/
+    │   │           └── [childId]/
+    │   │               └── page.tsx : Real-time chunk editor dengan three-column layout.
+    │   └── (site)/             : Rute yang dilindungi autentikasi mahasiswa (wajib login).
     │       ├── layout.tsx      : Layout tata letak Desktop/Mobile. Memuat komponen **Sidebar Kiri** (navigasi) dan **DocPanel Kanan** (Penampil Dokumen PDF via `iframe`).
     │       ├── chat/page.tsx   : Antarmuka utama obrolan (*text area*, *chat bubbles*, *typing dots*, dan penampil *Citation Card*).
     │       └── riwayat/page.tsx: Halaman untuk melihat histori obrolan sebelumnya, dikelompokkan berdasarkan tanggal ("Hari Ini", "Kemarin", "Lebih Lama").
     ├── lib/
     │   ├── api.ts              : Klien *fetcher* untuk menghubungi API Backend (`http://localhost:8000`), mengirim *Bearer token*.
-    │   ├── auth.ts             : Utilitas penyimpan & pembaca token (JWT).
+    │   ├── auth.ts             : Utilitas penyimpan & pembaca token (JWT) untuk mahasiswa.
+    │   ├── adminAuth.ts        : Utilitas autentikasi khusus admin (dual storage, secure cleanup).
+    │   ├── adminApi.ts         : API client khusus admin (knowledge tree, chunk CRUD, re-embedding).
+    │   ├── adminStore.ts       : State management admin dengan Zustand (tree, selection, optimistic updates).
+    │   ├── adminTypes.ts       : TypeScript interfaces untuk admin (KnowledgeTreeResponse, ChunkDetail, dll).
     │   ├── documentSources.ts  : Pemetaan URL konstan ke lokasi dokumen Supabase Storage (`panduan-pi.pdf`, dsb).
     │   └── store.ts            : Penyimpan state global menggunakan Zustand. Mencatat `session_id`, daftar `messages`, dan kontrol `isDocPanelOpen`.
-    └── components/             
-        └── [Komponen UI Ekstra]
+    └── components/
+        ├── admin/              : Komponen khusus admin dashboard.
+        │   ├── AdminSidebar.tsx        : Navigation sidebar untuk admin.
+        │   ├── StatGrid.tsx            : Dashboard statistics (total docs, parents, children).
+        │   ├── KnowledgeTreeColumn.tsx : Hierarchical tree navigation.
+        │   ├── ChildChunkColumn.tsx    : Child chunks list dengan embedding status.
+        │   ├── ChunkDetailPanel.tsx    : Slide-in panel untuk chunk details.
+        │   ├── ChunkEditForm.tsx       : Real-time chunk editor dengan save/delete/re-embed.
+        │   ├── ReembedStatusModal.tsx  : Progress monitoring dengan status chip, progress bar, dan polling edit status.
+        │   ├── DeleteConfirmModal.tsx  : Confirmation modal untuk chunk deletion.
+        │   ├── RelationDiagram.tsx     : Visual parent-child relationships.
+        │   └── MobileKnowledgeShell.tsx: Mobile-optimized layout wrapper dengan ringkasan langkah dan statistik konteks.
+        └── [Komponen UI Ekstra mahasiswa]
 ```
 
 ---
 
 ## 3. Struktur State Management (Zustand Store)
-`lib/store.ts` bertanggung jawab mengelola alur data yang perlu dibagikan antar-halaman (*cross-page*) atau antar-komponen.
+
+`lib/store.ts` bertanggung jawab mengelola alur data yang perlu dibagikan antar-halaman (_cross-page_) atau antar-komponen.
 
 ### Properti Utama:
+
 - `session_id` (string): ID Sesi unik (UUID/ID Telegram). Jika diganti, percakapan dianggap baru.
 - `messages` (Array): Deretan pesan `user` dan `bot`. Pesan bot menyimpan `sources` (berupa array of `CitationSource`).
-- `hasHydrated` (boolean): Flag untuk mencegah *hydration mismatch error* karena pembacaan `localStorage` saat SSR.
+- `hasHydrated` (boolean): Flag untuk mencegah _hydration mismatch error_ karena pembacaan `localStorage` saat SSR.
 - **State DocPanel (Tidak persisten/sementara)**:
   - `isDocPanelOpen`: Boolean penentu terbuka-tidaknya sidebar kanan.
   - `activeDoc`: Teks URL Supabase Storage yang saat ini dipajang pada iframe penampil dokumen.
 
 ### Aksi (Actions):
-- `addMessage`: Mendorong (*push*) pesan baru ke layar.
+
+- `addMessage`: Mendorong (_push_) pesan baru ke layar.
 - `resetSession`: Membuat `session_id` baru dan mengosongkan layar obrolan.
 - `openDocument(url)`: Mengubah URL `activeDoc` dan memunculkan panel dokumen serentak (Bisa dipanggil dari area manapun).
 
@@ -65,40 +95,43 @@ frontend/
 ## 4. Alur Interaksi Kunci
 
 ### A. Alur Login & Autentikasi
+
 1. Pengguna membuka `/login`.
 2. Menekan tombol "Lanjutkan dengan Google" yang memicu library Google Identity Services (`google.accounts.id`).
 3. Google mengirim kredensial OAuth (`credential`) ke frontend.
 4. Fungsi `handleGoogleSuccess` meneruskan token ini ke Backend (`POST /api/auth/google/verify`).
 5. Backend mengembalikan Custom JWT. Token ini disimpan via utilitas `lib/auth.ts`.
-6. Frontend meneruskan navigasi (*redirect*) ke `/chat`. Layar-layar yang dilindungi rute `(site)/layout.tsx` akan memverifikasi token sebelum merender.
+6. Frontend meneruskan navigasi (_redirect_) ke `/chat`. Layar-layar yang dilindungi rute `(site)/layout.tsx` akan memverifikasi token sebelum merender.
 
 ### B. Alur Kirim Pesan & Terima Balasan
+
 1. Pengguna mengetik pertanyaan di `chat/page.tsx`. Input dibaca via `useState`.
-2. Pengguna menekan *Send*. Fungsi lokal memanggil `addMessage('user', ...)` pada Zustand.
+2. Pengguna menekan _Send_. Fungsi lokal memanggil `addMessage('user', ...)` pada Zustand.
 3. Menjalankan fungsi di `lib/api.ts` -> `sendChatMessage(...)` yang mengirim `POST /api/chat`.
 4. Jika sukses, respons dan daftar `sources` disuntikkan kembali ke dalam `addMessage('bot', ...)` pada Zustand.
-5. `chat/page.tsx` me-render iterasi state pesan melalui *Markdown* (menggunakan `react-markdown`).
+5. `chat/page.tsx` me-render iterasi state pesan melalui _Markdown_ (menggunakan `react-markdown`).
 
 ### C. Alur Klik Sitasi (Fitur Lompat ke Dokumen)
+
 1. Jika balasan bot (`msg`) menyertakan data `sources` (referensi yang diambil RAG), komponen akan merender `CitationCard` di bawah gelembung obrolan bot.
 2. Ketika `CitationCard` diklik, ia membaca kode spesifik `parent_id` (contoh: `kkp-bab1`, `pi-bab3`).
 3. Algoritma pendeteksi di `handleCitationClick` akan mencari file PDF yang tepat (`panduan-kkp.pdf` atau `panduan-pi.pdf`) di data statis `documentSources.ts`.
 4. URL PDF tersebut diimbuhi `#search="[teks potongan referensi]"` lalu dikirim ke aksi `openDocument(url)`.
-5. Komponen `layout.tsx` (yang menampung *DocPanel*) mendeteksi `activeDoc` terisi, lalu membuka *Sidebar Kanan* dan memuat konten via `<iframe key={activeDoc} src={activeDoc} />`.
+5. Komponen `layout.tsx` (yang menampung _DocPanel_) mendeteksi `activeDoc` terisi, lalu membuka _Sidebar Kanan_ dan memuat konten via `<iframe key={activeDoc} src={activeDoc} />`.
 
 ---
 
 ## 5. Pertimbangan & Batasan (Caveats)
-1. **Keterbatasan `#search=` pada Chrome PDF Viewer**: Pengujian langsung membuktikan bahwa parameter URL `#search=teks` **tidak berfungsi** pada Chrome PDF Viewer — bahkan ketika URL dibuka langsung di tab baru (tanpa iframe). Teks yang dicari terbukti ada di dalam dokumen (diverifikasi dengan Ctrl+F), namun viewer PDF bawaan Chrome tidak merespons fragmen `#search=`. Ini adalah keterbatasan viewer PDF bawaan browser, bukan masalah kode aplikasi, iframe, maupun kebijakan cross-origin. Kode tetap menyertakan `#search=` sebagai *best-effort* untuk browser/viewer yang mungkin mendukungnya di masa depan. Fitur utama (*fallback*) yang diandalkan adalah membuka dokumen PDF yang tepat berdasarkan domain sitasi.
-2. **Keterbatasan CSS Overlay**: *Overlay* kegelapan (`doc-overlay`) hanya boleh menyala di mode *mobile/tablet* (`<=1023px`). Pada *desktop*, interaksi chat tetap harus aktif meski panel kanan sedang membaca dokumen. Ini diatur paksa di `@media (min-width:1024px)` pada `globals.css`.
-3. **Penghentian Otomatis SSR Layout**: Fitur DOM bawaan seperti `window.localStorage` dalam file yang tidak dikhususkan `'use client'` akan menyebabkan *error* hidrasi Next.js. Semua komponen berstatus stateful harus memiliki *directive* `'use client'` di atas filenya.
 
+1. **Keterbatasan `#search=` pada Chrome PDF Viewer**: Pengujian langsung membuktikan bahwa parameter URL `#search=teks` **tidak berfungsi** pada Chrome PDF Viewer — bahkan ketika URL dibuka langsung di tab baru (tanpa iframe). Teks yang dicari terbukti ada di dalam dokumen (diverifikasi dengan Ctrl+F), namun viewer PDF bawaan Chrome tidak merespons fragmen `#search=`. Ini adalah keterbatasan viewer PDF bawaan browser, bukan masalah kode aplikasi, iframe, maupun kebijakan cross-origin. Kode tetap menyertakan `#search=` sebagai _best-effort_ untuk browser/viewer yang mungkin mendukungnya di masa depan. Fitur utama (_fallback_) yang diandalkan adalah membuka dokumen PDF yang tepat berdasarkan domain sitasi.
+2. **Keterbatasan CSS Overlay**: _Overlay_ kegelapan (`doc-overlay`) hanya boleh menyala di mode _mobile/tablet_ (`<=1023px`). Pada _desktop_, interaksi chat tetap harus aktif meski panel kanan sedang membaca dokumen. Ini diatur paksa di `@media (min-width:1024px)` pada `globals.css`.
+3. **Penghentian Otomatis SSR Layout**: Fitur DOM bawaan seperti `window.localStorage` dalam file yang tidak dikhususkan `'use client'` akan menyebabkan _error_ hidrasi Next.js. Semua komponen berstatus stateful harus memiliki _directive_ `'use client'` di atas filenya.
 
 ---
 
 # Pseudocode Frontend - Increment 2 (Web UI & Integrasi API)
 
-Dokumen ini berisi rancangan *pseudocode* untuk struktur kode *frontend* (menggunakan Next.js App Router, TailwindCSS/Vanilla CSS) pada Increment 2.
+Dokumen ini berisi rancangan _pseudocode_ untuk struktur kode _frontend_ (menggunakan Next.js App Router, TailwindCSS/Vanilla CSS) pada Increment 2.
 Fokus utamanya adalah membangun Antarmuka Pengguna (UI) sesuai `mockup.html` dan mengintegrasikannya dengan backend (Google OAuth, dan Chat API).
 
 ---
@@ -110,7 +143,7 @@ frontend/src/
 ├── app/
 │   ├── layout.tsx             # Root layout (provider auth, font, dll)
 │   ├── page.tsx               # Redirector: jika belum login ke /login, jika sudah ke /chat
-│   ├── login/                 
+│   ├── login/
 │   │   └── page.tsx           # Halaman Login (Tombol Google OAuth)
 │   └── (site)/                # Route group untuk halaman yang butuh Auth & Layout Utama
 │       ├── layout.tsx         # Layout Utama (Sidebar, Mobile Topbar, Bottom Nav, DocPanel)
@@ -134,6 +167,7 @@ frontend/src/
 ## 2. PSEUDOCODE - LIB (API & AUTH)
 
 ### `lib/auth.ts`
+
 ```markdown
 ALGORITMA OTENTIKASI & TOKEN
 
@@ -154,6 +188,7 @@ ALGORITMA OTENTIKASI & TOKEN
 ```
 
 ### `lib/api.ts`
+
 ```markdown
 ALGORITMA PEMANGGILAN API
 
@@ -178,6 +213,7 @@ ALGORITMA PEMANGGILAN API
 ## 3. PSEUDOCODE - HALAMAN UTAMA
 
 ### `app/login/page.tsx`
+
 ```markdown
 ALGORITMA HALAMAN LOGIN
 
@@ -192,6 +228,7 @@ ALGORITMA HALAMAN LOGIN
 ```
 
 ### `app/(site)/layout.tsx`
+
 ```markdown
 ALGORITMA LAYOUT UTAMA (APP SHELL)
 
@@ -199,23 +236,20 @@ ALGORITMA LAYOUT UTAMA (APP SHELL)
    - Gunakan `useEffect` untuk memeriksa token di `localStorage`.
    - JIKA sedang mengecek token, tampilkan indikator Loading (menghindari FOUC).
    - JIKA token tidak ada (setelah pengecekan), arahkan (redirect) ke `/login`.
-   
 2. RENDER STRUKTUR LAYOUT (Berdasarkan Mockup)
    - BUNGKUS DENGAN DIV CLASS "app" (flex, height 100vh)
-   
    - TAMPILKAN Komponen `<Sidebar />` (Di sebelah kiri)
      - Sidebar memuat tombol "Chat Baru", navigasi "Riwayat Chat", "Dokumen Panduan", "Profil".
      - Jika tombol "Chat Baru" diklik: panggil `resetSession()` dari `lib/store.ts` dan arahkan ke halaman `/chat`.
-   
    - DIV MAIN PANEL (Di tengah)
      - TAMPILKAN Mobile Topbar (Hanya tampil di layar kecil)
      - TAMPILKAN Konten dinamis `{children}` (bisa berupa /chat, /riwayat, /profil)
      - TAMPILKAN Komponen `<BottomNav />` (Hanya tampil di layar kecil)
-     
    - TAMPILKAN Komponen `<DocPanel />` (Panel dokumen di sebelah kanan/overlay)
 ```
 
 ### `app/(site)/chat/page.tsx`
+
 ```markdown
 ALGORITMA HALAMAN CHAT
 
@@ -225,7 +259,7 @@ ALGORITMA HALAMAN CHAT
    - `hasHydrated`: Status rehidrasi `localStorage` (boolean), inisialisasi `false`.
    - **Konfigurasi Middleware Persist**:
      - Gunakan middleware `persist` dari Zustand agar data `session_id` dan `messages` otomatis disimpan ke `localStorage`.
-     - Manfaatkan callback `onRehydrateStorage` untuk mengubah `hasHydrated` menjadi `true` setelah proses muat data selesai (mencegah *race condition* di Next.js).
+     - Manfaatkan callback `onRehydrateStorage` untuk mengubah `hasHydrated` menjadi `true` setelah proses muat data selesai (mencegah _race condition_ di Next.js).
    - **Aksi (Actions)**:
      - `addMessage(role, text, sources)`: Menambahkan pesan baru ke array `messages`.
      - `setMessages(messages)`: Mengganti seluruh pesan sekaligus (saat memuat riwayat).
@@ -235,7 +269,7 @@ ALGORITMA HALAMAN CHAT
 2. EFEK SAMPING (useEffect)
    - Scroll ke bagian bawah (bottom) setiap kali `messages` bertambah.
    - Jika halaman chat pertama kali dimuat:
-     - TUNGGU hingga `hasHydrated` bernilai `true` (menghindari penimpaan sesi yang sedang direstorasi dari *local storage*).
+     - TUNGGU hingga `hasHydrated` bernilai `true` (menghindari penimpaan sesi yang sedang direstorasi dari _local storage_).
      - Jika `hasHydrated` bernilai `true` DAN `session_id` masih null, panggil `resetSession()`.
 
 3. FUNGSI handleSendMessage()
@@ -253,21 +287,21 @@ ALGORITMA HALAMAN CHAT
 
 4. FUNGSI handleDeleteSession()
    - Munculkan tombol "Hapus Percakapan" pada menu dropdown (kebab icon di pojok kanan atas layar chat).
-   - (*Catatan: Sesuai desain v4, penghapusan HANYA dapat dilakukan dari dalam sesi aktif ini, bukan dari daftar riwayat di sidebar*).
+   - (_Catatan: Sesuai desain v4, penghapusan HANYA dapat dilakukan dari dalam sesi aktif ini, bukan dari daftar riwayat di sidebar_).
    - Saat tombol ditekan, munculkan konfirmasi `window.confirm`.
-   - Jika `Yes`: 
+   - Jika `Yes`:
      - Panggil API `DELETE NEXT_PUBLIC_API_BASE_URL/api/sessions/{session_id}` dengan Bearer token.
      - Tunggu respon API, lalu panggil `resetSession()` agar UI kembali bersih dan membuat ID baru.
      - Jika gagal, tampilkan notifikasi error.
 
 5. RENDER TAMPILAN
    - Header Desktop ("Chat").
-     - Terdapat menu *dropdown* (kebab menu) berisi opsi **"Hapus Percakapan"**. Jika di-klik, panggil `handleDeleteSession()`.
+     - Terdapat menu _dropdown_ (kebab menu) berisi opsi **"Hapus Percakapan"**. Jika di-klik, panggil `handleDeleteSession()`.
    - Container Chat (Bisa di-scroll).
-     - JIKA `messages` kosong: Tampilkan UI "Mulai percakapan baru" beserta saran (*chips*).
+     - JIKA `messages` kosong: Tampilkan UI "Mulai percakapan baru" beserta saran (_chips_).
      - JIKA ada: Looping array `messages`:
-       - JIKA role "user": Tampilkan teks di dalam *bubble* (bubble ungu).
-       - JIKA role "bot": 
+       - JIKA role "user": Tampilkan teks di dalam _bubble_ (bubble ungu).
+       - JIKA role "bot":
          - **Sesuai desain Increment 2**: JANGAN TAMPILKAN BUBBLE.
          - Gunakan `react-markdown` untuk me-render teks jawaban agar format (bold, list) dari LLM tampil rapi.
          - Tampilkan avatar bot kecil di sebelah kiri.
@@ -278,6 +312,7 @@ ALGORITMA HALAMAN CHAT
 ```
 
 ### `app/(site)/riwayat/page.tsx`
+
 ```markdown
 ALGORITMA HALAMAN RIWAYAT
 
@@ -291,6 +326,7 @@ ALGORITMA HALAMAN RIWAYAT
 ```
 
 ### `app/(site)/profil/page.tsx`
+
 ```markdown
 ALGORITMA HALAMAN PROFIL
 
@@ -309,6 +345,7 @@ ALGORITMA HALAMAN PROFIL
 ## 4. PSEUDOCODE - KOMPONEN UMUM
 
 ### `components/DocPanel.tsx`
+
 ```markdown
 ALGORITMA PANEL DOKUMEN PANDUAN
 
@@ -322,16 +359,17 @@ ALGORITMA PANEL DOKUMEN PANDUAN
    - JIKA `isOpen` true:
      - Tampilkan toolbar dokumen (Tab, tombol close).
      - Tampilkan penampil iframe PDF (menunjuk ke `activeDocUrl`).
-     - *Catatan: Pengambilan file PDF dilakukan langsung (direct link) ke Supabase Storage, bukan ke backend API.*
+     - _Catatan: Pengambilan file PDF dilakukan langsung (direct link) ke Supabase Storage, bukan ke backend API._
 ```
-
 
 ---
 
 # Pseudocode Increment 2 - FR-WEB-08 & FR-WEB-09
 
 ## FR-WEB-09 (Riwayat & Hapus Percakapan)
+
 **Status:** ✅ Selesai diimplementasikan.
+
 - **Backend:** `backend/src/api/sessions.py` memiliki endpoint:
   - `GET /api/sessions/` — mengambil daftar sesi milik mahasiswa yang login (dilindungi IDOR).
   - `GET /api/sessions/{session_id}` — mengambil detail pesan satu sesi.
@@ -343,9 +381,11 @@ ALGORITMA PANEL DOKUMEN PANDUAN
 ---
 
 ## FR-WEB-08 (Dokumen Panduan Sidebar)
+
 **Status:** ✅ Selesai diimplementasikan.
 
 ### Modul: `lib/documentSources.ts` [NEW]
+
 - Menyimpan daftar referensi dokumen PDF statis dari Supabase Storage sebagai modul terpisah agar dapat digunakan ulang oleh komponen lain (termasuk sitasi).
 - Base URL: `https://pobgqxhneruhswxedqpf.supabase.co/storage/v1/object/public/panduan-dokumen/`
 - Nama file yang digunakan (sesuai yang ter-upload di Supabase Storage):
@@ -355,11 +395,13 @@ ALGORITMA PANEL DOKUMEN PANDUAN
   - `panduan-non-skripsi.pdf`
 
 ### Modul: `lib/store.ts` (Tambahan State DocPanel)
+
 - State `isDocPanelOpen` dan `activeDoc` dipindahkan ke Zustand global store.
 - Action `openDocument(url)` membuka panel sekaligus mengarahkan ke dokumen tertentu dari komponen manapun (termasuk `CitationCard`).
 - State DocPanel **tidak di-persist** ke localStorage (menggunakan `partialize`).
 
 ### Modul: `app/(site)/layout.tsx` (DocPanel)
+
 - DocPanel menampilkan dua state:
   1. **Daftar dokumen** (saat `activeDoc == null`): Menampilkan tombol untuk PI, KKP, Skripsi, Non-Skripsi.
   2. **PDF Viewer** (saat `activeDoc != null`): Menampilkan `<iframe key={activeDoc} src={activeDoc}>` untuk memuat PDF.
@@ -369,21 +411,348 @@ ALGORITMA PANEL DOKUMEN PANDUAN
 - CSS `doc-overlay` hanya aktif di layar ≤1023px (tablet/mobile) agar tidak memblokir scroll chat di desktop.
 
 ### Modul: `app/(site)/chat/page.tsx` (Klik Sitasi → Buka Dokumen)
+
 - Setiap `CitationCard` yang diklik memanggil `handleCitationClick(src)`.
 - Fungsi tersebut membaca `src.parent_id`, mendeteksi domain (pi/kkp/skripsi/non-skripsi), lalu membangun URL dokumen.
 - **Strategi navigasi halaman (terverifikasi):**
   - **Prioritas 1:** Jika `src.pages` tersedia (array nomor halaman dari backend), gunakan `#page=N` (halaman pertama/terkecil). Fitur ini **terverifikasi berfungsi** pada Chrome PDFium.
-  - **Prioritas 2 (Fallback):** Jika `pages` tidak tersedia, gunakan `#search=teks` sebagai *best-effort*. Fitur ini **terverifikasi TIDAK berfungsi** pada Chrome PDFium (meskipun teks ada di PDF via Ctrl+F), namun tetap disertakan untuk kompatibilitas browser lain.
+  - **Prioritas 2 (Fallback):** Jika `pages` tidak tersedia, gunakan `#search=teks` sebagai _best-effort_. Fitur ini **terverifikasi TIDAK berfungsi** pada Chrome PDFium (meskipun teks ada di PDF via Ctrl+F), namun tetap disertakan untuk kompatibilitas browser lain.
 - Memanggil `openDocument(url)` untuk membuka panel dengan PDF yang relevan.
 
 ### Interface `CitationSource` (di `lib/store.ts`)
+
 ```typescript
 export interface CitationSource {
   title?: string;
   section?: string;
   parent_id?: string;
   score?: number;
-  pages?: number[];  // Nomor halaman dari child_documents yang cocok
+  pages?: number[]; // Nomor halaman dari child_documents yang cocok
 }
 ```
+
 - `ChatMessage.sources` diubah dari `string[]` menjadi `(CitationSource | string)[]` agar kompatibel dengan data riwayat dari database maupun data live dari API.
+
+---
+
+# 6. Admin Panel Frontend Features
+
+Frontend aplikasi juga dilengkapi dengan **Admin Panel** yang sekarang benar-benar ada di workspace. Struktur dan perilakunya mengikuti file `frontend/src/app/admin/*`, `frontend/src/components/admin/*`, dan `frontend/src/lib/admin*`.
+
+## 6.1 Admin Authentication System
+
+**Lokasi**: `src/lib/adminAuth.ts`
+
+### Core Functions:
+
+- `adminLogin(username, password, rememberMe)`: POST ke `/api/admin/login`.
+  - Jika sukses, simpan `admin_access_token` dan `admin_info`.
+  - Jika `rememberMe = true`, gunakan `localStorage`; selain itu `sessionStorage`.
+  - Jika 401, tampilkan pesan login salah.
+  - Jika error lain, tampilkan pesan tidak bisa terhubung ke server.
+
+- `getAdminToken()`: ambil token dari `localStorage`, fallback ke `sessionStorage`.
+- `getAdminInfo()`: parse JSON dari `admin_info`.
+- `adminLogout()`: hapus token/info dari kedua storage dan kirim POST best-effort ke `/api/admin/logout`.
+
+### Security Features:
+
+- JWT token dengan `role: 'admin'` dari backend.
+- SSR-safe karena semua akses storage dicek `typeof window`.
+- Logout client-side bersifat stateless, backend hanya mengembalikan pesan sukses.
+
+## 6.2 Admin State Management (Zustand)
+
+**Lokasi**: `src/lib/adminStore.ts`
+
+### State Structure:
+
+```typescript
+interface AdminState {
+  tree: KnowledgeTreeResponse | null;
+  isTreeLoading: boolean;
+  selectedChildId: string | null;
+  selectedParentKey: string | null;
+
+  fetchTree: () => Promise<void>;
+  selectChild: (childId: string | null, parentKey: string | null) => void;
+  patchChunkInTree: (childId: string, updates: { embedding_status?: EmbeddingStatus }) => void;
+  removeChunkFromTree: (childId: string, parentDeleted: boolean) => void;
+}
+```
+
+### Key Actions:
+
+- `fetchTree()`: load tree penuh dari `/api/admin/documents`.
+- `selectChild(childId, parentKey)`: set child dan parent aktif untuk panel detail.
+- `patchChunkInTree(childId, updates)`: update status embedding secara lokal.
+- `removeChunkFromTree(childId, parentDeleted)`: hapus child dari tree dan cleanup parent jika backend juga menghapus parent.
+
+### Performance Notes:
+
+- Store tidak memakai `persist`.
+- Tree diambil ulang saat dashboard dibuka.
+- Update dilakukan immutably dengan deep clone sederhana.
+
+## 6.3 Admin API Client
+
+**Lokasi**: `src/lib/adminApi.ts`
+
+### Core Functions:
+
+- `adminFetch(path, options)`: wrapper fetch dengan Authorization Bearer token.
+- `getKnowledgeTree()`: GET `/api/admin/documents`.
+- `getChunkDetail(childId)`: GET `/api/admin/chunks/{childId}`.
+- `saveChunk(childId, updates)`: PUT partial update ke chunk.
+- `triggerReembed(childId)`: POST `/api/admin/chunks/{childId}/reembed`.
+- `getEditStatus(childId)`: GET `/api/admin/chunks/{childId}/edit-status`.
+- `deleteChunk(childId)`: DELETE `/api/admin/chunks/{childId}`.
+
+### Error Handling:
+
+- 401 memicu `adminLogout()`.
+- 403 ditampilkan sebagai akun bukan admin.
+- Error body dari server dibaca dari `detail` jika tersedia.
+
+## 6.4 Admin TypeScript Types
+
+**Lokasi**: `src/lib/adminTypes.ts`
+
+### Hierarchical Tree Types:
+
+```typescript
+type EmbeddingStatus = "pending" | "stale" | "success" | "failed";
+type EditLogStatus = "pending" | "processing" | "success" | "failed";
+
+interface ChildLite {
+  id: string;
+  title: string;
+  pages: string;
+  embedding_status: EmbeddingStatus;
+}
+
+interface ParentNode {
+  parent_id: string;
+  title: string;
+  child_count: number;
+  children: ChildLite[];
+}
+
+interface ChapterNode {
+  section: string;
+  parents: ParentNode[];
+}
+
+interface DocumentNode {
+  domain: string;
+  source: string;
+  chapters: ChapterNode[];
+}
+```
+
+### Detail & Status Types:
+
+```typescript
+interface SummaryStats {
+  total_documents: number;
+  total_parents: number;
+  total_children: number;
+  last_updated_at: string;
+}
+
+interface ChunkDetail {
+  id: string;
+  title: string;
+  pages: string;
+  content: string;
+  embedding_status: EmbeddingStatus;
+  reembedded_at: string | null;
+  parent: { parent_id: string; title: string };
+  section: string;
+  domain: string;
+  source: string;
+}
+
+interface ChunkEditStatus {
+  log_id: string;
+  child_id: string;
+  status: EditLogStatus;
+  error_message: string | null;
+  edited_at: string;
+  reembedded_at: string | null;
+}
+```
+
+## 6.5 Admin Routes & Pages
+
+### A. Admin Layout (`app/admin/layout.tsx`)
+
+**Features**:
+
+- Memeriksa token admin pada mount.
+- Jika token tidak ada, redirect ke `/admin/login`.
+- Jika tree belum dimuat, panggil `fetchTree()`.
+- Menampilkan `<AdminSidebar />` di desktop dan `<MobileKnowledgeShell />` di viewport kecil.
+- Mengimpor `admin.css` untuk styling khusus dashboard admin.
+
+### B. Admin Dashboard (`app/admin/dashboard/page.tsx`)
+
+**Layout**: browse view tiga kolom.
+
+1. Kolom 1: Struktur Dokumen.
+2. Kolom 2: Child Chunk.
+3. Panel kanan: Detail chunk terpilih.
+
+**Komponen yang Dipakai**:
+
+- `StatGrid`: menampilkan ringkasan summary.
+- `KnowledgeTreeColumn`: tree domain/source/section/parent.
+- `ChildChunkColumn`: daftar child chunk dari parent aktif.
+- `RelationDiagram`: visual relasi parent-child.
+- `ChunkDetailPanel`: detail cepat child terpilih.
+
+**Perilaku**:
+
+- Search dokumen dan child dilakukan client-side.
+- Parent aktif ditentukan dari `selectedParentKey` di store.
+- Tombol pada child list membuka editor penuh ke route `/admin/dashboard/chunks/[childId]`.
+
+### C. Chunk Editor (`app/admin/dashboard/chunks/[childId]/page.tsx`)
+
+**Layout**: editor penuh dengan tree kiri, form tengah, info panel kanan.
+
+**Perilaku**:
+
+- Ambil detail chunk dari backend saat route berubah.
+- Jika chunk tidak ditemukan, tampilkan empty state dan tombol kembali.
+- Breadcrumb menampilkan domain/source, section, parent, dan child id.
+- Tombol maximize pada mobile info panel membuka editor penuh jika dari shell mobile.
+
+## 6.6 Admin Components Architecture
+
+### Core Components:
+
+#### A. Navigation Components
+
+- **`AdminSidebar`**: sidebar dengan menu knowledge base, logout, dan profil admin.
+- **`KnowledgeTreeColumn`**: tree expandable berdasarkan query dan selected parent.
+- **`ChildChunkColumn`**: daftar child dengan status badge dan tombol buka editor penuh.
+
+#### B. Content Management Components
+
+- **`ChunkEditForm`**: editor metadata/content dengan simpan, re-embed, dan delete; menerima prop `layout?: 'sidebar' | 'full'` untuk adaptasi tata letak dinamis dan textarea yang bisa melar (flex: 1).
+- **`ChunkDetailPanel`**: panel detail cepat di dashboard browse. Menerima prop `isMobileShell?: boolean` untuk menonaktifkan properti CSS fixed saat dijalankan di mode mobile.
+- **`StatGrid`**: ringkasan statistik tree.
+
+#### C. Modal Components
+
+- **`ReembedStatusModal`**: modal progress dengan polling edit status, status label, progress bar, dan tombol close yang dikunci saat proses masih berjalan.
+- **`DeleteConfirmModal`**: modal konfirmasi penghapusan child chunk.
+- **`RelationDiagram`**: visual hubungan parent-child menggunakan grafik SVG dinamis bersudut melengkung, dirancang 1:1 mengikuti desain mockup.
+
+#### D. Layout Components
+
+- **`MobileKnowledgeShell`**: shell mobile bertahap 1/2/3 dengan header kontekstual, ringkasan jumlah dokumen/parent/child, dan memanggil `ChunkDetailPanel` secara aman (tanpa konflik z-index) dengan mengirimkan prop `isMobileShell={true}`.
+- **`app/admin/layout.tsx`**: layout utama yang memutuskan desktop vs mobile shell secara reaktif.
+
+## 6.7 Admin Authentication Flow
+
+### Login Flow:
+
+1. User membuka `/admin/login`.
+2. Mengisi username dan password.
+3. `adminLogin()` memanggil backend `/api/admin/login`.
+4. Jika sukses, token dan info admin disimpan ke storage yang dipilih.
+5. Redirect ke `/admin/dashboard`.
+
+### Protection Flow:
+
+1. `app/admin/layout.tsx` memeriksa `getAdminToken()`.
+2. Jika token kosong, redirect ke `/admin/login`.
+3. `adminFetch()` menyertakan Bearer token di setiap request.
+4. Jika backend mengembalikan 401, client logout dan kembali ke login.
+
+### Logout Flow:
+
+1. User klik logout di sidebar atau fungsi logout dipanggil.
+2. `adminLogout()` menghapus token dan info admin dari storage.
+3. Client diarahkan ke `/admin/login`.
+
+## 6.8 Admin UI/UX Features
+
+### Design System:
+
+- Dashboard memakai styling lokal di `admin.css` bersama token warna global.
+- Brand panel login memakai visual STMIK dengan blob dekoratif.
+- Status badge menggunakan warna success, warning, danger, dan info.
+
+### Interactive Features:
+
+- Search tree dan child dilakukan langsung di client.
+- Panel detail di dashboard browse bisa dipilih tanpa pindah route.
+- Editor penuh memakai route terpisah agar back button browser bekerja.
+- Re-embed memakai modal progress dan polling backend.
+
+### Responsive Behavior:
+
+- Desktop/tablet: sidebar + main panel.
+- Mobile: shell bertahap untuk daftar dokumen, struktur, lalu detail.
+- Pada mobile, layout admin tidak bergantung pada tiga kolom penuh.
+
+### Performance Notes:
+
+- Store tree tidak dipersist.
+- Data tree diambil ulang saat dashboard dibuka.
+- Update status dilakukan optimistically di store sebelum atau sesudah response sukses.
+
+## 6.9 Integration dengan Backend Admin API
+
+### API Integration Pattern:
+
+```typescript
+const result = await saveChunk(childId, {
+  title: titleDraft,
+  pages: pagesDraft,
+  content: contentDraft,
+});
+
+patchChunkInTree(childId, { embedding_status: result.embedding_status });
+```
+
+### Real-time Features:
+
+- Save chunk bersifat manual, bukan auto-save.
+- Re-embed dipantau dengan polling ke `/edit-status`.
+- Delete chunk memperbarui tree lokal berdasarkan `parent_deleted`.
+
+### Security Considerations:
+
+- Semua request admin memakai bearer token.
+- Client melakukan redirect jika token hilang atau tidak valid.
+- Admin dan mahasiswa memakai storage token terpisah.
+
+---
+
+## 7. Admin vs Mahasiswa Feature Comparison
+
+| Feature                | Mahasiswa Interface             | Admin Interface             |
+| ---------------------- | ------------------------------- | --------------------------- |
+| **Authentication**     | Google OAuth (GIS)              | Username/Password (bcrypt)  |
+| **Primary Function**   | Chat dengan AI Assistant        | Content Management          |
+| **State Management**   | Chat messages & session         | Knowledge tree & chunks     |
+| **API Endpoints**      | `/api/chat`, `/api/auth/google` | `/api/admin/*` endpoints    |
+| **Storage**            | Session-based chat history      | Persistent content editing  |
+| **UI Theme**           | Purple chat bubbles             | Purple admin dashboard      |
+| **Mobile Support**     | Chat-optimized                  | Admin panel mobile-friendly |
+| **Real-time Features** | Typing indicators               | Polling status updates      |
+
+### Shared Infrastructure:
+
+- `globals.css` masih menjadi sumber token desain utama.
+- Next.js App Router dipakai untuk route mahasiswa dan admin.
+- TypeScript dipakai penuh pada kedua sisi.
+- Error handling mengikuti pola response backend yang seragam.
+
+---
+
+Dokumentasi frontend sekarang selaras dengan implementasi admin panel nyata di workspace, termasuk route, store, API client, modal re-embed, dan struktur tree yang dipakai oleh dashboard.

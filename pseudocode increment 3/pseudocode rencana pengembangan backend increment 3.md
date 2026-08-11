@@ -25,7 +25,7 @@
 
 ```text
 Dokumen (source file, mis. "Panduan PI 2026.pdf")
-  └─ dikelompokkan dari kolom `source` + `domain` di parent_documents
+  └─ dikelompokkan dari kolom `domain` di parent_documents + `source` di child_documents
   └─ Bab (mis. "BAB I Pendahuluan")
        └─ dikelompokkan dari kolom `section` di parent_documents
        └─ Parent Chunk (baris parent_documents, mis. "Parent-001")
@@ -162,11 +162,12 @@ ALGORITMA PENGELOLAAN CHUNK OLEH ADMIN (admin/chunk_editor.py)
    - ResourceNotFoundError
 
 2. FUNGSI list_knowledge_tree() -> dict
-   - Query ringan SEMUA parent: SELECT parent_id, title, domain, source, section
-     FROM parent_documents ORDER BY domain, source, section, parent_id.
-   - Query ringan SEMUA child: SELECT id, parent_id, title, pages, embedding_status
+   - Query ringan SEMUA parent: SELECT parent_id, title, domain, section, updated_at
+     FROM parent_documents ORDER BY domain, section, parent_id.
+   - Query ringan SEMUA child: SELECT id, parent_id, title, pages, source, embedding_status, updated_at
      FROM child_documents ORDER BY parent_id, pages.
-   - DI PYTHON, kelompokkan: (domain, source) -> "dokumen" -> section -> "bab" -> list parent,
+   - DI PYTHON, petakan `source` untuk tiap parent berdasarkan child pertamanya (karena kolom `source` hanya ada di `child_documents`).
+   - Kelompokkan: (domain, source) -> "dokumen" -> section -> "bab" -> list parent,
      tiap parent tempelkan children miliknya (index dulu child by parent_id di dict biar O(n)),
      tiap parent node sertakan child_count.
    - Hitung summary: total_documents (pasangan domain+source unik), total_parents, total_children,
@@ -176,8 +177,9 @@ ALGORITMA PENGELOLAAN CHUNK OLEH ADMIN (admin/chunk_editor.py)
 3. FUNGSI get_chunk_detail(child_id) -> dict
    - SELECT * FROM child_documents WHERE id = child_id (termasuk content penuh).
    - JIKA tidak ditemukan: LEMPARKAN ResourceNotFoundError.
-   - Ambil info parent-nya: SELECT parent_id, title, section, domain, source
+   - Ambil info parent-nya: SELECT parent_id, title, section
      FROM parent_documents WHERE parent_id = child.parent_id.
+   - (domain dan source diambil langsung dari record child_documents).
    - KEMBALIKAN {id, title, pages, content, embedding_status, reembedded_at,
      parent: {parent_id, title}, section, domain, source}.
 
@@ -190,7 +192,7 @@ ALGORITMA PENGELOLAAN CHUNK OLEH ADMIN (admin/chunk_editor.py)
      - updates['content'] = content
      - updates['embedding_status'] = 'stale'
    - JIKA title diberikan: updates['title'] = title
-   - JIKA pages diberikan: updates['pages'] = pages
+   - JIKA pages diberikan: split berdasarkan koma dan simpan sebagai array (TEXT[]) ke updates['pages']
    - JIKA updates kosong: KEMBALIKAN {child_id, embedding_status: child.embedding_status,
      content_changed: False, message: "Tidak ada perubahan."}
    - updates['updated_at'] = now()

@@ -1,27 +1,32 @@
-# Dokumentasi Proyek: AI Chatbot Asisten Akademik KKP dan PI
+# Dokumentasi Proyek: AI Chatbot Asisten Akademik KKP PI Skripsi Non Skripsi
 
-Dokumen ini adalah *knowledge base* komprehensif dari sistem AI Chatbot Asisten Akademik STMIK Widya Cipta Dharma. Dokumen ini disusun berdasarkan **Alur Data (Data Flow)** untuk memudahkan pemahaman agen AI tentang bagaimana data masuk, diproses, hingga menghasilkan *output*.
+Dokumen ini adalah _knowledge base_ komprehensif dari sistem AI Chatbot Asisten Akademik STMIK Widya Cipta Dharma. Dokumen ini disusun berdasarkan **Alur Data (Data Flow)** untuk memudahkan pemahaman agen AI tentang bagaimana data masuk, diproses, hingga menghasilkan _output_.
 
 ---
 
 ## 1. Ringkasan Project
+
 Proyek ini adalah **AI Chatbot Asisten Akademik** yang dirancang untuk menjawab pertanyaan mahasiswa seputar pedoman Kuliah Kerja Praktik (KKP), Penulisan Ilmiah (PI), Skripsi, dan Non-Skripsi di STMIK Widya Cipta Dharma. Chatbot menggunakan sistem **Retrieval-Augmented Generation (RAG)** cerdas dengan hybrid search (Vector + Keyword) untuk memastikan jawaban akurat berdasarkan dokumen resmi kampus, tanpa halusinasi, dan menyimpan histori sesi obrolan.
 
 **Tech Stack**:
+
 - **Bahasa**: Python 3
 - **Framework & Library Utama**: FastAPI (REST API), `python-telegram-bot` (Telegram Interface), Langchain (RAG Orchestration), Ragas (Evaluasi metrik).
 - **Database & Storage**: Supabase (PostgreSQL dengan pgvector), RPC Functions.
-- **LLM & Embedding**: OpenAI API (`gpt-4o-mini` untuk teks, `text-embedding-3-large`/2000d untuk vektor), `ms-marco-MiniLM-L-6-v2` untuk *Reranking*.
+- **LLM & Embedding**: OpenAI API (`gpt-4o-mini` untuk teks, `text-embedding-3-large`/2000d untuk vektor), `ms-marco-MiniLM-L-6-v2` untuk _Reranking_.
 
 ---
 
 ## 2. Database
+
 Sistem menggunakan **PostgreSQL (via Supabase)** dengan ekstensi `pgvector` untuk pencarian kemiripan vektor.
 
 ### Skema Tabel Utama
 
 **1. `parent_documents`** (Menyimpan teks konteks besar untuk LLM)
+
 > **Catatan**: Dalam kode Python, tabel ini direferensikan menggunakan variabel konfigurasi `settings.table_parent_chunks`.
+
 - `parent_id` (text, PK): ID unik induk.
 - `title` (text): Judul dokumen/bab.
 - `content` (text): Teks isi utuh.
@@ -29,13 +34,16 @@ Sistem menggunakan **PostgreSQL (via Supabase)** dengan ekstensi `pgvector` untu
 - `domain` (text): Domain data ('PI', 'KKP', 'SKRIPSI', 'NON_SKRIPSI').
 - `child_ids` (text[]): Daftar ID potongan anak yang merujuk ke sini.
 
-*Contoh Data*:
+_Contoh Data_:
+
 ```json
-{"parent_id": "pi-bab2-001", "title": "Ketentuan Pembimbing", "content": "Dosen pembimbing PI wajib memiliki...", "section": "BAB II", "domain": "PI", "child_ids": ["pi-bab2-001-c1", "pi-bab2-001-c2"]}
+{ "parent_id": "pi-bab2-001", "title": "Ketentuan Pembimbing", "content": "Dosen pembimbing PI wajib memiliki...", "section": "BAB II", "domain": "PI", "child_ids": ["pi-bab2-001-c1", "pi-bab2-001-c2"] }
 ```
 
 **2. `child_documents`** (Menyimpan potongan kecil teks + Vektor untuk pencarian Hybrid)
+
 > **Catatan**: Dalam kode Python, tabel ini direferensikan menggunakan variabel konfigurasi `settings.table_child_chunks`.
+
 - `id` (text, PK): ID unik potongan anak.
 - `parent_id` (text, FK ke `parent_documents`): Induk dari potongan ini.
 - `title`, `content`, `section` (text): Data tekstual.
@@ -45,315 +53,305 @@ Sistem menggunakan **PostgreSQL (via Supabase)** dengan ekstensi `pgvector` untu
 - `metadata` (jsonb): Data pelengkap.
 - `embedding` (vector(2000)): Representasi vektor numerik teks.
 
-*Contoh Data*:
+_Contoh Data_:
+
 ```json
 {"id": "pi-bab2-001-c1", "parent_id": "pi-bab2-001", "title": "Ketentuan Pembimbing", "content": "Dosen pembimbing PI wajib minimal S2...", "section": "BAB II", "domain": "PI", "pages": [14], "source": "Panduan PI", "metadata": {"parent_id": "pi-bab2-001"}, "embedding": [0.012, -0.045, ...]}
 ```
 
 **3. `mahasiswa_accounts`** (Akun Mahasiswa untuk login Website)
+
 - `mahasiswa_id` (uuid, PK): ID unik mahasiswa.
 - `google_sub` (text, UNIQUE): ID autentikasi Google.
 - `email`, `nama`, `avatar_url` (text): Profil mahasiswa.
 - `created_at`, `last_login` (timestamptz): Waktu pembuatan dan login.
 
 **4. `admin_users`** (Akun Admin untuk Dashboard CMS)
+
 - `admin_id` (uuid, PK): ID unik admin.
 - `username` (text, UNIQUE): Username login.
 - `password_hash`, `full_name` (text): Profil kredensial.
 - `created_at`, `last_login` (timestamptz): Waktu pembuatan dan login.
 
 **5. `conversation_sessions`** (Menyimpan riwayat obrolan user)
+
 - `session_id` (text, PK): ID sesi / ID User Telegram.
 - `mahasiswa_id` (uuid, FK ke `mahasiswa_accounts`): Nullable jika akses via Telegram anonim.
 - `channel` (text): Asal platform percakapan ('telegram' atau 'website').
 - `turns` (jsonb): Riwayat percakapan.
 - `last_access` (timestamptz): Penanda waktu untuk pembersihan sesi yang mati (idle cleanup).
 
-*Contoh Data*:
+_Contoh Data_:
+
 ```json
-{"session_id": "tg-123456789", "mahasiswa_id": null, "channel": "telegram", "turns": [{"role": "user", "content": "Halo"}, {"role": "assistant", "content": "Halo!"}], "last_access": "2026-07-27T10:00:00Z"}
-```
-
-**6. `chunk_edit_logs`** (Log Audit Perubahan Data dan Antrean Re-Embedding)
-- `log_id` (uuid, PK): ID log unik.
-- `child_id`, `parent_id` (text): ID dokumen yang diubah.
-- `admin_id` (uuid, FK ke `admin_users`): Admin yang melakukan perubahan.
-- `old_content`, `new_content` (text): Konten sebelum dan sesudah diedit.
-- `status` (text): Status proses ('pending', 'processing', 'success', 'failed').
-- `error_message` (text): Pesan error jika re-embedding gagal.
-- `edited_at`, `reembedded_at` (timestamptz): Penanda waktu.
-
----
-
-## 3. Struktur Folder
-
-```text
-backend/
-├── docker-compose.yml          : File orkestrasi container Docker.
-├── Dockerfile                  : Instruksi build image container.
-├── main.py                     : Entry point REST API & Webhook Telegram.
-├── application.py              : Entry point Polling Bot Telegram lokal.
-├── config/
-│   ├── settings.py             : Pengaturan konfigurasi & Environment Variables (Pydantic).
-│   └── section_keywords.yaml   : Data pemetaan kata kunci ke filter bab/section dokumen.
-├── scripts/
-│   ├── supabase.sql            : Skema awal tabel dan fungsi RPC `hybrid_search`.
-│   ├── supabase_migration_quota_rpc.sql : Fungsi RPC untuk mengecek kuota rate-limit chatbot.
-│   ├── supabase_session_migration.sql : Skema tabel memori sesi dan fungsi RPC pembersih (cleanup).
-│   ├── supabase_migration_multidomain.sql : Skema tabel untuk multi-domain, user, dan log edit.
-│   └── supabase_update_search.sql : Pembaruan fungsi RPC pencarian untuk mendukung filter source.
-└── src/
-    ├── api/
-    │   ├── ai.py               : Endpoint `/chat` untuk melayani REST API HTTP.
-    │   ├── auth.py             : Endpoint otentikasi Google (`/auth/google/verify`, dll).
-    │   ├── sessions.py         : Endpoint manajemen histori percakapan (CRUD sesi obrolan).
-    │   └── health.py           : Endpoint `/health` status server.
-    ├── auth/
-    │   ├── google_oauth.py     : Logika validasi token Google (id_token).
-    │   └── jwt_utils.py        : Utility pembuatan dan verifikasi internal JWT aplikasi (dengan pyjwt).
-    ├── bot/
-    │   ├── application.py      : Inisialisasi Bot Telegram (Command handlers).
-    │   ├── messages.py         : Teks statis/template balasan bot.
-    │   └── handlers/
-    │       └── chat_handler.py : Pemroses logika utama ketika ada pesan teks dari Telegram.
-    ├── evaluation/
-    │   ├── ragas_eval.py       : Evaluasi chatbot menggunakan metrik Ragas dengan Ground Truth.
-    │   └── ragas_eval_no_gt.py : Evaluasi chatbot tingkat lanjut (diagnostik kesalahan).
-    ├── generation/
-    │   ├── chain.py            : Menjalankan Prompt LLM (Langchain RAG) untuk menjawab soal.
-    │   ├── memory.py           : Struktur data untuk menampung percakapan.
-    │   └── intent_classifier/
-    │       ├── classifier.py   : Mengklasifikasi niat pengguna (Retrieval/Conversational/Clarification).
-    │       ├── constants.py    : Kata-kata pemicu perpindahan topik.
-    │       ├── detectors.py    : Logika *rule-based* untuk mendeteksi konteks pesan.
-    │       ├── models.py       : Struktur data hasil klasifikasi.
-    │       └── reformulator.py : Memperjelas pesan user yang mengandung referensi ("itu", "tadi").
-    ├── ingestion/
-    │   ├── embedder.py         : Mengeksekusi API Embedding dan menyimpannya ke Supabase.
-    │   └── loader.py           : Membaca file JSON dokumen dan memvalidasi integritas strukturnya.
-    ├── middleware/
-    │   ├── monitoring.py       : Menghitung waktu respons API.
-    │   └── security.py         : Membersihkan teks input, Rate Limiting, & validasi Webhook Telegram.
-    ├── retrieval/
-    │   ├── hybrid_search.py    : Menjalankan kueri BM25 + Vector ke Database.
-    │   ├── parent_child.py     : Menarik data utuh (parent) berdasarkan hasil pencarian (child).
-    │   ├── pipeline.py         : Orkestrator seluruh proses pencarian (dari query hingga rerank).
-    │   ├── query_expansion.py  : Memperpanjang singkatan di query (misal PI -> Penulisan Ilmiah).
-    │   ├── reranker.py         : Mengurutkan hasil pencarian silang menggunakan Cross-Encoder AI.
-    │   ├── self_query.py       : Mengekstrak perintah filter (Bab/Sumber) dari pertanyaan.
-    │   └── source_utils.py     : Menentukan tipe dokumen (KKP / PI) secara paksa jika ambigu.
-    └── services/
-        ├── ai_services.py      : Penghubung utama antara Controller (Bot/API) dengan Niat, Pencarian, & LLM.
-        └── session_store.py    : Melakukan operasi *Read/Write* memori obrolan ke Supabase.
-
-frontend/
-├── package.json                : Dependensi project Next.js.
-└── src/
-    ├── app/
-    │   ├── globals.css         : Styling global dan variabel desain (termasuk styling `doc-panel`).
-    │   ├── layout.tsx          : Layout utama aplikasi web.
-    │   └── (site)/
-    │       ├── layout.tsx      : Layout untuk halaman yang butuh otentikasi. Memuat Sidebar dan **DocPanel (Penampil Dokumen)**.
-    │       ├── chat/page.tsx   : Halaman chat utama dengan fitur klik-sitasi ke dokumen sumber.
-    │       └── riwayat/page.tsx: Halaman histori percakapan berdasar tanggal.
-    ├── lib/
-    │   ├── api.ts              : Utilitas koneksi ke backend FastAPI.
-    │   ├── auth.ts             : Utilitas JWT dan session otentikasi.
-    │   ├── documentSources.ts  : Pemetaan dokumen PDF dari Supabase Storage (`panduan-pi.pdf`, dll).
-    │   └── store.ts            : Global state management menggunakan Zustand (Zustand store untuk chat, histori, dan state `activeDoc`).
-    └── components/
-        └── [Berbagai komponen UI modular]
-```
-
-> **Catatan Tambahan**: Sebelumnya terdapat file `demo_review.py` di direktori proyek yang berfungsi mengevaluasi struktur format Microsoft Word (menggunakan `python-docx`). File tersebut merupakan skrip CLI *utility* lokal dan tidak menjadi bagian dari alur RAG chatbot, sehingga *pseudocode*-nya tidak dimasukkan ke dalam dokumen ini.
-
----
-
-## 4. Hubungan Antar File
-Berikut adalah diagram dependensi komponen inti:
-
-```mermaid
-graph TD
-    User([User Telegram / API]) --> |Kirim Pesan| ChatHandler[src/bot/handlers/chat_handler.py]
-    User --> |HTTP POST| API[src/api/ai.py]
-    
-    ChatHandler --> |chat(query, session_id)| AIServices[src/services/ai_services.py]
-    API --> |chat(query, session_id)| AIServices
-    
-    AIServices --> |Muat Riwayat| SessionStore[src/services/session_store.py]
-    AIServices --> |Cek Niat| IntentClass[src/generation/intent_classifier/classifier.py]
-    
-    IntentClass --> |Needs Retrieval| Pipeline[src/retrieval/pipeline.py]
-    IntentClass --> |Conversational| Chain[src/generation/chain.py]
-    
-    Pipeline --> |1. Ekstrak Filter| SelfQuery[src/retrieval/self_query.py]
-    Pipeline --> |2. Cari Anak| HybridSearch[src/retrieval/hybrid_search.py]
-    Pipeline --> |3. Tarik Induk| ParentChild[src/retrieval/parent_child.py]
-    Pipeline --> |4. Rerank| Reranker[src/retrieval/reranker.py]
-    
-    Pipeline --> |Konteks Dokumen| Chain
-    
-    Chain --> |Prompt + Konteks| LLM([OpenAI GPT-4o-mini])
-    Chain --> |Jawaban AI| AIServices
-    
-    AIServices --> |Simpan Riwayat| SessionStore
-    AIServices --> |Kembalikan Teks| User
-```
-
----
-
-## 5. Alur Data & Pseudocode (ALUR DATA UTAMA)
-
-### Alur 1: Data Ingestion (Penyiapan Database)
-
-**Bentuk Data Awal:**
-```json
-// File JSON lokal (Parent Chunks dan Child Chunks)
 {
-  "parent_id": "pi-bab2-001",
-  "content": "Dosen pembimbing PI wajib..."
+  "session_id": "tg-123456789",
+  "mahasiswa_id": null,
+  "channel": "telegram",
+  "turns": [
+    { "role": "user", "content": "Halo" },
+    { "role": "assistant", "content": "Halo!" }
+  ],
+  "last_access": "2026-07-27T10:00:00Z"
 }
 ```
 
-**File Pemroses (Pseudocode):**
+**6. `chunk_edit_logs`** (Log Audit Perubahan Data dan Antrean Re-Embedding)
 
-#### File: `src/ingestion/loader.py`
+## SECTION ADMIN: Content Management System
+
+Bagian admin pada increment ini merealisasikan dashboard pengelolaan knowledge base dengan alur yang sudah benar-benar ada di kode: login admin berbasis username/password, pemuatan knowledge tree penuh, edit child chunk, re-embed manual dengan polling status, dan delete child chunk dengan housekeeping parent kosong.
+
+---
+
+## Admin Database Schema dan Asumsi Data
+
+**7. `admin_users`**
+
+- `admin_id` (uuid, PK): ID unik admin.
+- `username` (text, UNIQUE): Username login.
+- `password_hash` (text): Hash bcrypt.
+- `full_name` (text): Nama admin untuk UI.
+- `created_at`, `last_login` (timestamptz): Tracking aktivitas login.
+
+**8. `chunk_edit_logs`**
+
+- `log_id` (uuid, PK): ID log.
+- `child_id` (text, FK): Chunk yang diedit.
+- `parent_id` (text, FK): Parent chunk terkait.
+- `admin_id` (uuid, FK): Admin yang melakukan edit.
+- `old_content`, `new_content` (text): Nilai sebelum/sesudah edit.
+- `status` (text): `pending`, `processing`, `success`, `failed`.
+- `error_message` (text): Pesan error jika re-embed gagal.
+- `edited_at`, `reembedded_at` (timestamptz): Timestamp proses.
+
+**Tambahan status pada child_documents**
+
+- `embedding_status` (text): status sinkronisasi permanen per child chunk.
+- `updated_at` (timestamptz): dipakai untuk statistik last updated.
+
+**Catatan penting tree**
+
+- `source` dibaca dari `child_documents`, bukan dari `parent_documents`.
+- Tree dashboard dibangun dari pasangan `domain + source`, lalu dikelompokkan lagi berdasarkan `section`.
+
+---
+
+## Admin Authentication System
+
+### File: `src/admin/auth.py`
 
 ```markdown
-ALGORITMA PEMUATAN DATA (loader.py)
+ALGORITMA ADMIN AUTHENTICATION (auth.py)
 
-1. IMPOR PUSTAKA
-   - JSON, Path (untuk urusan file system), loguru.
+1. FUNGSI hash_password(plain_password) -> str
+   - Generate salt bcrypt.
+   - Hash password dengan bcrypt.
+   - Kembalikan string hash.
 
-2. FUNGSI load_child_documents(path)
-   - Cek apakah file JSON di `path` ada. Jika tidak, Error (File Not Found).
-   - Buka file dan Parse (Bongkar) format JSON-nya.
-   - Pastikan hasilnya berupa Daftar (List/Array).
-   - LOOP setiap chunk anak:
-     - Cek apakah chunk ini punya struktur kolom yang wajib: `id`, `title`, `content`, `section`.
-     - Jika kurang satu saja, lemparkan Error gagal struktur.
-   - Cek apakah ada nilai ID anak yang sama (Duplikat). Jika ada, lemparkan Error duplikat.
-   - KEMBALIKAN seluruh data chunk anak.
+2. FUNGSI verify_password(plain_password, password_hash) -> bool
+   - Gunakan bcrypt.checkpw.
+   - Jika hash rusak atau format tidak valid, kembalikan False.
 
-3. FUNGSI load_parent_documents(path)
-   - Cek keberadaan file induk di `path`.
-   - Parse JSON. Pastikan bentuknya Daftar.
-   - LOOP setiap chunk induk:
-     - Cek struktur kolom wajib: `parent_id`, `title`, `content`, `section`, `child_ids`.
-     - Jika kurang, lemparkan Error.
-   - Cek adakah ID induk ganda (Duplikat). Jika ada, Error.
-   - KEMBALIKAN seluruh data chunk induk.
+3. FUNGSI authenticate_admin(username, plain_password, supabase) -> dict | None
+   - Query admin_users berdasarkan username, limit 1.
+   - Jika tidak ada baris: return None.
+   - Verifikasi password dengan verify_password.
+   - Jika gagal: return None.
+   - Update last_login menggunakan nilai "now()" pada baris admin tersebut.
+   - Kembalikan profil tanpa password_hash: {admin_id, username, full_name}.
 
-4. FUNGSI validate_parent_child_links(parents, children)
-   - Menguji apakah relasi anak-induk sudah benar sebelum dimuat ke database.
-   - Kumpulkan semua `id` anak ke dalam Himpunan Set (cepat dicari).
-   - LOOP semua `parents`:
-     - LOOP semua `child_ids` yang diklaim dimiliki parent:
-       - JIKA ID tersebut TIDAK ADA di himpunan anak tadi: Lemparkan Error ("Parent mencari anak yang tidak ada").
-   - Kumpulkan juga dari sisi sebaliknya: adakah Anak yang statusnya Yatim (Orphan/Tidak punya Parent ID).
-     - Jika ada, beri Log Peringatan (Warning), karena anak ini tidak akan bisa merujuk balik ke dokumen penuh.
-   - KEMBALIKAN True (artinya struktur valid).
+4. FUNGSI issue_admin_token(admin) -> str
+   - Payload JWT: {sub: admin_id, username, role: "admin"}.
+   - Panggil create_access_token(payload).
+
+5. FUNGSI get_current_admin(authorization: str = Header(None)) -> dict
+   - Tolak jika header kosong atau bukan format "Bearer <token>".
+   - Verifikasi token dengan verify_access_token.
+   - Tolak jika payload tidak valid atau role != "admin".
+   - Kembalikan payload JWT.
 ```
 
-#### File: `src/ingestion/embedder.py`
+---
+
+## Chunk Editor Service
+
+### File: `src/admin/chunk_editor.py`
 
 ```markdown
-ALGORITMA PROSES INGESTION & EMBEDDING (embedder.py)
+ALGORITMA CHUNK EDITOR SYSTEM (chunk_editor.py)
 
-1. IMPOR PUSTAKA
-   - OpenAI, Supabase, tqdm (untuk progress bar), dan loguru.
-   - Konfigurasi aplikasi (`get_settings`).
+1. FUNGSI list_knowledge_tree(supabase) -> dict
+   - Query parent_documents: parent_id, title, domain, section, updated_at.
+   - Query child_documents: id, parent_id, title, pages, source, embedding_status, updated_at.
+   - Bangun map parent_id -> source memakai child pertama yang punya source.
+   - Kelompokkan child berdasarkan parent_id.
+   - Bentuk struktur akhir:
+     - documents -> [{domain, source, chapters:[{section, parents:[{parent_id, title, child_count, children:[{id, title, pages, embedding_status}]}]}]}]
+   - Hitung summary:
+     - total_documents = jumlah pasangan domain+source unik
+     - total_parents = jumlah parent_documents
+     - total_children = jumlah child_documents
+     - last_updated_at = max(updated_at) gabungan parent dan child.
 
-2. KONEKSI KE LAYANAN
-   - `_get_supabase_client()`: Buat koneksi ke database Supabase (menggunakan URL dan kunci dari settings).
-   - `_get_openai_client()`: Buat koneksi ke OpenAI API.
+2. FUNGSI get_chunk_detail(child_id, supabase) -> dict
+   - Query child_documents berdasarkan id.
+   - Jika tidak ada, lempar ResourceNotFoundError.
+   - Query parent_documents untuk parent_id, title, section.
+   - Ambil reembedded_at terbaru dari chunk_edit_logs dengan status success.
+   - Serialize pages dari TEXT[] ke string yang dipisah koma.
+   - Kembalikan detail:
+     {id, title, pages, content, embedding_status, reembedded_at, parent, section, domain, source}.
 
-3. FUNGSI get_openai_embeddings(texts, model, batch_size)
-   - Tujuannya adalah merubah daftar teks menjadi daftar array angka (vektor 2000 dimensi).
-   - Lakukan secara bertahap (batch) agar API tidak menolak karena kelebihan beban.
-   - LOOP melalui `texts` dengan langkah `batch_size`:
-     - Panggil API `client.embeddings.create` untuk sekumpulan teks (batch) tersebut (menetapkan parameter `dimensions=2000` secara eksplisit).
-     - Ekstrak vektor embedding-nya dan kumpulkan.
-     - Tunggu (sleep) 0.5 detik antar *batch* untuk menghindari Rate Limit.
-   - KEMBALIKAN daftar vektor keseluruhan.
+3. FUNGSI save_chunk(child_id, admin_id, supabase, title=None, pages=None, content=None) -> dict
+   - Ambil child_documents berdasarkan id.
+   - Jika tidak ada, lempar ResourceNotFoundError.
+   - Siapkan updates = {} dan content_changed = False.
+   - Jika content berubah:
+     - simpan old_content sebelum overwrite,
+     - set updates["content"] = content,
+     - set updates["embedding_status"] = "stale".
+   - Jika title diberikan: set updates["title"] = title.
+   - Jika pages diberikan: pecah string pages dengan koma, strip spasi, simpan sebagai array teks.
+   - Jika tidak ada perubahan: kembalikan pesan "Tidak ada perubahan.".
+   - Set updates["updated_at"] = "now()".
+   - Update child_documents dengan updates.
+   - Jika content_changed:
+     - insert chunk_edit_logs dengan status pending, old_content, new_content, admin_id, child_id, parent_id.
+   - Kembalikan {child_id, embedding_status, content_changed, message}.
 
-4. FUNGSI _build_metadata_json(child)
-   - Ambil data spesifik dari *chunk* (seperti parent_id, judul, bab, halaman).
-   - KEMBALIKAN sebagai format dictionary/JSON untuk kolom *metadata* di database.
+4. FUNGSI trigger_reembed(child_id, admin_id, supabase) -> dict
+   - Ambil child_documents berdasarkan id (cukup parent_id dan content).
+   - Jika tidak ada, lempar ResourceNotFoundError.
+   - Cari log pending terbaru pada chunk_edit_logs untuk child_id itu.
+   - Jika ada log pending:
+     - ambil log_id, old_content, new_content dari log tersebut.
+   - Jika tidak ada log pending:
+     - insert log baru dengan old_content = None, new_content = child.content, status = pending.
+   - Update log terpilih menjadi status processing.
+   - Kembalikan {log_id, parent_id, old_content, new_content}.
 
-5. FUNGSI upsert_parent_documents(parents)
-   - Buka koneksi ke tabel `parent_documents`.
-   - Ambil daftar semua `parent_id` yang sudah ada di database.
-   - Saring (Filter) `parents`: Hanya simpan dokumen yang belum ada di database.
-   - JIKA semua dokumen sudah ada: Hentikan dan kembalikan 0.
-   - JIKA ada yang baru: 
-     - Susun datanya (ID, judul, isi, bagian, ID anak-anaknya).
-     - Ekstrak nilai domain ("PI", "KKP", "SKRIPSI", "NON_SKRIPSI") berdasarkan pola teks `parent_id`.
-     - Sisipkan (Insert) ke database sekaligus (Bulk insert).
-   - KEMBALIKAN jumlah dokumen induk yang berhasil masuk.
+5. FUNGSI process_chunk_reembed(log_id, child_id, parent_id, old_content, new_content, supabase, settings)
+   - Jalankan embedding OpenAI untuk new_content.
+   - Update child_documents:
+     - embedding = vector baru,
+     - embedding_status = "success",
+     - updated_at = "now()".
+   - Jika old_content tidak None:
+     - ambil parent_documents.content.
+     - jika old_content muncul persis di parent content:
+       - replace satu kali dengan new_content,
+       - update parent_documents.content dan updated_at.
+     - jika tidak muncul: tulis warning, jangan paksa ubah parent.
+   - Update chunk_edit_logs menjadi status success dan set reembedded_at = "now()".
+   - Jika gagal:
+     - update child_documents.embedding_status = "failed".
+     - update chunk_edit_logs.status = "failed" dan simpan error_message.
 
-6. FUNGSI upsert_child_documents_with_embeddings(children, embeddings, mapping_anak_ke_induk)
-   - Buka koneksi ke tabel `child_documents`.
-   - Pastikan jumlah anak teks sama dengan jumlah vektor (embeddings).
-   - Cari tahu (Fetch) ID mana saja yang sudah ada di database, lewati jika sudah ada.
-   - LOOP sisa anak-anak baru secara berkelompok (batch 20):
-     - Untuk setiap *chunk* anak:
-       - Cari siapa ID induknya (dari map).
-       - Ekstrak nilai domain dari ID induk.
-       - Buat metadata JSON.
-       - Gabungkan teks, vektor, domain, dan metadatanya menjadi 1 baris (row).
-     - Sisipkan baris-baris tersebut ke database Supabase.
-   - KEMBALIKAN jumlah dokumen anak yang berhasil masuk.
+6. FUNGSI get_edit_status(child_id, supabase) -> dict | None
+   - Ambil log terbaru berdasarkan edited_at DESC untuk child_id tersebut.
+   - Jika tidak ada, return None.
+   - Kembalikan {log_id, child_id, status, error_message, edited_at, reembedded_at}.
 
-7. FUNGSI build_child_to_parent_map(parents)
-   - Berfungsi membuat kamus rujukan cepat: "Anak X itu miliknya Induk Y".
-   - LOOP untuk tiap Induk: 
-     - LOOP untuk tiap Anak-ID di dalam Induk:
-       - Simpan di dictionary: `map[Anak_ID] = Induk_ID`
-   - KEMBALIKAN map.
-
-8. FUNGSI UTAMA run_ingestion(file_anak, file_induk)
-   - (STEP 1) Panggil `loader.py` untuk memuat data JSON anak dan induk dari Harddisk.
-   - Panggil validasi (apakah semua anak punya induk yang valid?).
-   - Buat rujukan (mapping) dari fungsi ke-7.
-   - (STEP 2) Ambil semua teks dari file Anak, proses menjadi Vektor lewat OpenAI (`get_openai_embeddings`).
-   - (STEP 3) Masukkan data Induk ke database Supabase (`upsert_parent_documents`).
-   - (STEP 4) Masukkan data Anak beserta vektornya ke database (`upsert_child_documents_with_embeddings`).
-   - KEMBALIKAN laporan statistik berupa jumlah data yang diproses.
+7. FUNGSI delete_chunk(child_id, supabase) -> dict
+   - Ambil parent_id dari child_documents.
+   - Jika tidak ada, lempar ResourceNotFoundError.
+   - Hapus child_documents baris tersebut.
+   - Ambil parent_documents.child_ids, hapus child_id dari array jika ada, lalu update parent_documents.child_ids dan updated_at.
+   - Hitung sisa child_documents dengan parent_id itu.
+   - Jika sisa_child == 0:
+     - hapus parent_documents baris tersebut.
+     - parent_deleted = True.
+   - Jika tidak: parent_deleted = False.
+   - Kembalikan {child_id, parent_id, parent_deleted}.
 ```
 
-#### File: `scripts/supabase.sql`
+---
+
+## Admin API Endpoints
+
+### File: `src/api/admin.py`
 
 ```markdown
-ALGORITMA SKEMA DATABASE SUPABASE UNTUK RAG (supabase.sql)
+ALGORITMA ADMIN API ENDPOINTS (admin.py)
 
-1. AKTIVASI EKTENSI DATABASE
-   - Aktifkan ekstensi `vector` (pgvector) untuk menyimpan dan mencari embedding dokumen.
-   - Aktifkan ekstensi `pg_trgm` (trigram) untuk mendukung pencarian teks berbasis fuzzy (FTS).
+1. ROUTER DAN DEPENDENCY
+   - APIRouter prefix "/admin".
+   - Semua endpoint protected dengan get_current_admin, kecuali login.
+   - get_supabase() membuat client Supabase dari settings.supabase_url dan settings.supabase_service_key.
 
-2. PEMBUATAN TABEL PARENT DOCUMENTS
-   - Hapus tabel jika sudah ada.
-   - Buat tabel `parent_documents` dengan kolom:
-     - parent_id (TEXT, Primary Key)
-     - title (TEXT)
-     - content (TEXT) - Konten utuh dokumen
-     - section (TEXT)
-     - child_ids (Array of TEXT) - Daftar ID potongan dokumen anak
-     - created_at (Timestamp)
+2. POST "/login"
+   - Input: {username, password}.
+   - Panggil authenticate_admin(...).
+   - Jika gagal: HTTP 401.
+   - Jika sukses: issue_admin_token(admin) dan kembalikan {access_token, admin}.
 
-3. PEMBUATAN TABEL CHILD DOCUMENTS
-   - Hapus tabel jika sudah ada.
-   - Buat tabel `child_documents` dengan kolom:
-     - id (TEXT, Primary Key)
-     - parent_id (TEXT, Foreign Key ke parent_documents)
-     - title (TEXT)
-     - content (TEXT) - Potongan teks dokumen
-     - section (TEXT)
-     - pages (Array of TEXT)
-     - source (TEXT)
-     - metadata (JSONB) - Data ekstra untuk filter dari Langchain
-     - embedding (VECTOR ukuran 2000) - Menyimpan representasi vektor teks
-     - created_at (Timestamp)
+3. POST "/logout"
+   - Stateless logout.
+   - Kembalikan pesan sukses, token dihapus di client.
+
+4. GET "/documents"
+   - Panggil chunk_editor.list_knowledge_tree(supabase).
+   - Kembalikan KnowledgeTreeResponse lengkap.
+
+5. GET "/chunks/{child_id}"
+   - Panggil chunk_editor.get_chunk_detail(...).
+   - Jika ResourceNotFoundError: HTTP 404.
+
+6. PUT "/chunks/{child_id}"
+   - Validasi minimal satu field terisi.
+   - Panggil chunk_editor.save_chunk(...).
+   - Jika ResourceNotFoundError: HTTP 404.
+
+7. POST "/chunks/{child_id}/reembed"
+   - Panggil chunk_editor.trigger_reembed(...).
+   - Jadwalkan background task chunk_editor.process_chunk_reembed(...).
+   - Kembalikan status processing dan message polling.
+
+8. DELETE "/chunks/{child_id}"
+   - Panggil chunk_editor.delete_chunk(...).
+   - Kembalikan pesan sukses.
+   - Jika parent_deleted true, tambahkan informasi bahwa parent ikut terhapus otomatis.
+
+9. GET "/chunks/{child_id}/edit-status"
+   - Panggil chunk_editor.get_edit_status(...).
+   - Jika tidak ada riwayat, HTTP 404.
+```
+
+---
+
+## Migration Script Untuk Increment 3
+
+### File: `scripts/supabase_migration_admin_status.sql`
+
+```markdown
+ALGORITMA MIGRASI ADMIN STATUS
+
+1. TAMBAH KOLOM KE child_documents
+   - embedding_status TEXT NOT NULL DEFAULT 'success'
+     CHECK (embedding_status IN ('pending', 'stale', 'success', 'failed')).
+   - updated_at TIMESTAMPTZ NOT NULL DEFAULT now().
+
+2. TAMBAH KOLOM KE parent_documents
+   - updated_at TIMESTAMPTZ NOT NULL DEFAULT now().
+
+3. ASUMSI MIGRASI
+   - Data eksisting sudah ter-embed sebelum migrasi dijalankan.
+   - Status default 'success' aman untuk data lama.
+```
+
+---
+
+## Ringkasan Perilaku Admin
+
+1. Login admin memakai username/password dan JWT role admin.
+2. Tree knowledge base dimuat penuh dari endpoint `/admin/documents`.
+3. Save chunk bersifat sinkron dan hanya menandai `embedding_status = stale` jika content berubah.
+4. Re-embed dipicu manual dan diproses async lewat background task + polling status.
+5. Delete chunk hanya untuk child chunk, lalu parent kosong dibersihkan otomatis.
+6. Error handling menggunakan 404 untuk resource tidak ditemukan dan 400 untuk update kosong.
+
+Sistem admin ini sekarang selaras dengan implementasi nyata di `backend/src/admin/auth.py`, `backend/src/admin/chunk_editor.py`, dan `backend/src/api/admin.py`. - created_at (Timestamp)
 
 4. PEMBUATAN INDEX UNTUK PERFORMA PENCARIAN
    - Buat index `ivfflat` menggunakan `vector_cosine_ops` untuk kolom embedding (pencarian kemiripan vektor).
@@ -364,7 +362,7 @@ ALGORITMA SKEMA DATABASE SUPABASE UNTUK RAG (supabase.sql)
 5. FUNGSI match_documents
    - INPUT: query_embedding (vektor), match_count (jumlah hasil, default 10).
    - OUTPUT: Tabel (id, content, metadata, similarity).
-   - PROSES: 
+   - PROSES:
      - Lakukan pencarian cosinus kesamaan vektor (1 - jarak cosinus).
      - Ambil baris dari tabel `child_documents`.
      - Urutkan dari kesamaan paling tinggi (jarak cosinus terdekat).
@@ -381,7 +379,7 @@ ALGORITMA SKEMA DATABASE SUPABASE UNTUK RAG (supabase.sql)
    - PROSES:
      - Sub-Query 1 (FTS): Cari dokumen berdasarkan teks `to_tsvector` berbahasa Indonesia, lalu berikan peringkat (ranking).
      - Sub-Query 2 (Vector): Cari dokumen berdasarkan kedekatan vektor, lalu berikan peringkat (ranking).
-     - RRF (Reciprocal Rank Fusion): Gabungkan ID dari kedua hasil di atas, dan hitung skor akhirnya dengan rumus bobot * (1 / (Konstanta RRF + Ranking)).
+     - RRF (Reciprocal Rank Fusion): Gabungkan ID dari kedua hasil di atas, dan hitung skor akhirnya dengan rumus bobot \* (1 / (Konstanta RRF + Ranking)).
      - Gabungkan kembali hasil akhir (Skor RRF) dengan data dokumen di `child_documents`.
      - Urutkan berdasarkan Skor RRF tertinggi dan kembalikan tabel datanya.
 
@@ -393,7 +391,8 @@ ALGORITMA SKEMA DATABASE SUPABASE UNTUK RAG (supabase.sql)
      - `chat_logs` (Penyimpanan log percakapan historis).
    - Aktifkan RLS untuk tabel-tabel tambahan ini.
    - Aturan kebijakannya juga sama: hanya bisa dibaca dan ditulis oleh `service_role`.
-```
+
+````
 
 #### File: `scripts/supabase_migration_quota_rpc.sql`
 
@@ -402,7 +401,7 @@ ALGORITMA FUNGSI PENAMBAHAN KUOTA USER (supabase_migration_quota_rpc.sql)
 
 1. DEFINISI FUNGSI
    - Nama: `increment_quota_if_under_limit`
-   - Input/Parameter: 
+   - Input/Parameter:
      - p_user_id (Teks): ID unik dari pengguna.
      - p_date (Teks): Tanggal dalam format YYYY-MM-DD.
      - p_daily_limit (Angka/Integer): Batas maksimal pesan yang diizinkan per hari.
@@ -424,7 +423,7 @@ ALGORITMA FUNGSI PENAMBAHAN KUOTA USER (supabase_migration_quota_rpc.sql)
      - KEMBALIKAN nilai FALSE.
    - SELAIN ITU (Jika berhasil):
      - KEMBALIKAN nilai TRUE.
-```
+````
 
 #### File: `scripts/supabase_session_migration.sql`
 
@@ -472,12 +471,13 @@ ALGORITMA MIGRASI PENYIMPANAN SESI KE DATABASE (supabase_session_migration.sql)
      - KEMBALIKAN semua nilai tersebut sebagai tabel (Record).
 
 6. PENANDA MIGRASI
-   - Coba masukkan data rekam jejak migrasi ke dalam tabel `user_quotas` dengan user_id '_system_migration'.
+   - Coba masukkan data rekam jejak migrasi ke dalam tabel `user_quotas` dengan user_id '\_system_migration'.
    - Jika sudah ada, abaikan (DO NOTHING).
    - Kembalikan teks status "Session storage migration completed successfully".
 ```
 
 **Bentuk Data Setelah Diproses:**
+
 ```sql
 -- Baris di database PostgreSQL (Supabase)
 -- Tabel: parent_documents, child_documents (beserta nilai vektor)
@@ -488,6 +488,7 @@ ALGORITMA MIGRASI PENYIMPANAN SESI KE DATABASE (supabase_session_migration.sql)
 ### Alur 2: Entry Point & Request Masuk
 
 **Bentuk Data Awal:**
+
 ```json
 // Request JSON API atau Webhook Telegram
 {
@@ -605,16 +606,15 @@ ALGORITMA INISIALISASI SERVER APLIKASI (application.py)
    - Panggil pendaftaran router endpoint (`_register_routers`).
    - KEMBALIKAN objek aplikasi FastAPI.
 
-4. FUNGSI _register_middleware(app)
+4. FUNGSI \_register_middleware(app)
    - Tambahkan middleware SlowAPI (penanganan limit request).
    - Tambahkan middleware CORS (Cross-Origin Resource Sharing) untuk mengizinkan aplikasi diakses HANYA dari origin frontend secara eksplisit (seperti Vercel atau localhost).
 
-5. FUNGSI _register_routers(app)
+5. FUNGSI \_register_routers(app)
    - Daftarkan router `/api` (untuk endpoint sistem AI dan chat).
    - Daftarkan router `/auth` (untuk endpoint otentikasi login).
    - Daftarkan router `/sessions` (untuk endpoint riwayat chat).
    - Daftarkan router `/health` (untuk mengecek kesehatan server).
-   
    - DEFINISI ENDPOINT POST `/api/telegram/webhook`:
      - Fungsi ini dipanggil otomatis oleh Telegram setiap ada chat masuk.
      - Ambil pengaturan rahasia webhook.
@@ -649,7 +649,7 @@ ALGORITMA ENDPOINT AUTENTIKASI GOOGLE (auth.py)
    - Terima payload JSON berisi `id_token`.
    - TAHAP 1: Verifikasi token -> Profil Google dengan menanyakan ke SDK Google (`verify_google_id_token`).
    - TAHAP 2: Simpan/Perbarui Database (`mahasiswa_accounts`):
-     - Gunakan mekanisme upsert atomik (`ON CONFLICT (google_sub) DO UPDATE`) untuk mencegah *race condition*.
+     - Gunakan mekanisme upsert atomik (`ON CONFLICT (google_sub) DO UPDATE`) untuk mencegah _race condition_.
      - Update field `avatar_url`, `nama`, dan `last_login`.
    - TAHAP 3: Terbitkan JWT internal:
      - Masukkan `mahasiswa_id`, `name`, `email`, dan `role`="mahasiswa" ke dalam payload.
@@ -696,7 +696,7 @@ ALGORITMA JWT UTILS (jwt_utils.py)
    - Jika `expires_delta` diberikan, gunakan itu. Jika tidak, gunakan `JWT_EXPIRATION_MINUTES` dari konfigurasi (misalnya 4320 menit / 3 hari).
    - Tambahkan key `exp` ke dalam dictionary data yang berisi target waktu kedaluwarsa.
    - Enkripsi (Encode) menggunakan PyJWT dengan Secret Key dan Algoritma (misalnya HS256).
-   - Kembalikan token *string*.
+   - Kembalikan token _string_.
 
 3. FUNGSI verify_access_token(token: str) -> dict
    - COBA:
@@ -724,7 +724,7 @@ ALGORITMA ENDPOINT HEALTH CHECK & MONITORING (health.py)
 
 4. ENDPOINT GET `/health/`
    - Tujuan: Memeriksa apakah server web secara mendasar berjalan.
-   - KEMBALIKAN `HealthStatus` (status="healthy", timestamp saat ini, versi app, env app, uptime = waktu saat ini - _startup_time).
+   - KEMBALIKAN `HealthStatus` (status="healthy", timestamp saat ini, versi app, env app, uptime = waktu saat ini - \_startup_time).
 
 5. ENDPOINT GET `/health/detailed`
    - Tujuan: Laporan kesehatan lengkap dengan konektivitas ke dependensi.
@@ -754,13 +754,13 @@ ALGORITMA ENDPOINT HEALTH CHECK & MONITORING (health.py)
    - JIKA GAGAL: Kembalikan status "error" dan isi pesannya.
 
 8. ENDPOINT GET `/health/readiness`
-   - Tujuan: Diperlukan oleh infrastruktur Cloud (seperti Kubernetes) untuk tahu kapan aplikasi SIAP menerima *traffic*.
+   - Tujuan: Diperlukan oleh infrastruktur Cloud (seperti Kubernetes) untuk tahu kapan aplikasi SIAP menerima _traffic_.
    - Cek `_check_openai_health` dan `_check_supabase_health`.
    - JIKA ada yang "error": Lemparkan error HTTP 503 (Service Unavailable) dengan pesan dependensi mana yang mati.
    - KEMBALIKAN status "ready" jika semua layanan berjalan normal.
 
 9. ENDPOINT GET `/health/liveness`
-   - Tujuan: Diperlukan Kubernetes untuk tahu apakah container aplikasi *freeze/mati*.
+   - Tujuan: Diperlukan Kubernetes untuk tahu apakah container aplikasi _freeze/mati_.
    - KEMBALIKAN status "alive", timestamp, dan nilai uptime. (Tidak mengecek API luar agar lebih ringan).
 ```
 
@@ -802,15 +802,13 @@ ALGORITMA ROUTER API CHATBOT (ai.py)
          - Ekstrak token, verifikasi via `verify_access_token`.
          - Cek role (jika bukan "mahasiswa", tolak akses).
          - Ambil `mahasiswa_id` (dari klaim `sub`) dan `username` dari token.
-       
        - TAHAP 2: Cek Kuota
          - Gunakan koneksi Supabase untuk memanggil RPC `increment_quota_if_under_limit` menggunakan `mahasiswa_id`.
          - Jika gagal/habis kuota (False), lemparkan error 429 (Terlalu Banyak Permintaan).
-       
        - TAHAP 3: Teruskan ke Chat Service
          - Panggil logika utama bot: `chat(query=request.query, session_id=request.session_id, username=username, channel=request.channel, mahasiswa_id=mahasiswa_id)`.
          - KEMBALIKAN respons `ChatResponse` yang memuat jawaban, jumlah dokumen, sumber, dsb.
-         
+
      - JIKA GAGAL (Catch/Except):
        - Jika error berasal dari HTTPException, teruskan (raise).
        - Jika error lainnya, hasilkan respon HTTP Error (status code 500: Internal Server Error).
@@ -884,7 +882,7 @@ ALGORITMA INISIALISASI TELEGRAM BOT (application.py)
 
 2. FUNGSI error_handler(update, context)
    - Dipanggil setiap kali terjadi kesalahan/exception tak terduga saat bot beroperasi.
-   - Catat pesan kesalahan lengkap dengan *stack trace* ke logger (`logger.error`).
+   - Catat pesan kesalahan lengkap dengan _stack trace_ ke logger (`logger.error`).
    - JIKA `update` memiliki objek pesan (bukan event lain):
      - COBA balas pesan ke pengguna menggunakan teks `messages.GENERIC_ERROR` ("Maaf, terjadi kesalahan...").
      - HINGGA BERHASIL atau JIKA ERROR lagi saat membalas, abaikan (pass).
@@ -902,7 +900,7 @@ ALGORITMA INISIALISASI TELEGRAM BOT (application.py)
 
 5. FUNGSI create_bot() -> Objek Telegram Application
    - Ambil konfigurasi (get_settings) seperti Token Bot Telegram.
-   - Gunakan pola *Builder* dari ApplicationBuilder:
+   - Gunakan pola _Builder_ dari ApplicationBuilder:
      - Masukkan token bot.
      - Matikan `concurrent_updates` (opsional, atur jika ingin menangani update secara sekuensial atau paralel).
      - Bangun (Build) aplikasinya.
@@ -923,7 +921,7 @@ ALGORITMA PENANGANAN CHAT BOT (chat_handler.py)
    - telegram.ext (Update, MessageHandler, ContextTypes, filters)
    - Konfigurasi, pesan-pesan teks, modul AI chat, alat pendeteksi sumber.
 
-2. FUNGSI _get_supabase_client()
+2. FUNGSI \_get_supabase_client()
    - Di-cache agar klien Supabase tidak dibuat ulang terus menerus.
    - KEMBALIKAN klien Supabase yang dikonfigurasi dengan URL dan Service Key dari `settings`.
 
@@ -940,24 +938,21 @@ ALGORITMA PENANGANAN CHAT BOT (chat_handler.py)
    - Eksekusi ketika user mengetik `/start`.
    - Balas pesan dengan `messages.WELCOME` dan format dengan nama depan pengguna.
 
-5. FUNGSI _format_source_line(source) -> Teks
+5. FUNGSI \_format_source_line(source) -> Teks
    - Konversi dan format rincian referensi dokumen menjadi teks yang aman (menghindari error HTML Parse di Telegram).
    - Jika dokumen punya Judul dan Bab berbeda, gabungkan.
    - Gunakan fungsi `html.escape` untuk mengamankan tanda-tanda baca unik (<, >, &).
-   - KEMBALIKAN teks string "* [Nama Bagian] (Buku Panduan [PI/KKP])\n".
+   - KEMBALIKAN teks string "\* [Nama Bagian] (Buku Panduan [PI/KKP])\n".
 
 6. FUNGSI handle_text_chat(update, context)
    - Dieksekusi otomatis ketika ada pesan teks biasa (bukan perintah garis miring /).
    - Pastikan teksnya tidak kosong.
-   
    - TAHAP 1: Cek Limit Kuota
      - Panggil `check_and_update_quota` dengan `asyncio.to_thread` agar tidak memblokir event loop.
      - JIKA habis (False), balas dengan pesan `DAILY_LIMIT_REACHED` dan HENTIKAN proses.
-     
    - TAHAP 2: Animasi Loading
      - Berikan aksi "TYPING..." di header Telegram.
      - Kirim pesan teks sementara (loading message) dari `messages.LOADING`.
-     
    - TAHAP 3: AI Proses & Database
      - Ambil username (atau nama depan jika tidak ada).
      - Panggil AI Service (`chat(query=text, session_id=user_id, username=username, channel="telegram", mahasiswa_id=None)`) secara asinkron di thread terpisah.
@@ -966,11 +961,9 @@ ALGORITMA PENANGANAN CHAT BOT (chat_handler.py)
      - JIKA bot memberikan list dokumen sumber (sources):
        - Tambahkan teks "📚 Sumber:\n"
        - Ulangi untuk setiap dokumen sumber dan panggil `_format_source_line`, gabungkan ke dalam balasan.
-       
    - TAHAP 4: Kirim Balasan Akhir
      - Ubah (edit_text) pesan loading tadi dengan teks jawaban final AI.
      - Catat jumlah dokumen referensi yang dipakai di log (jika lebih dari 0).
-     
    - PENANGANAN KESALAHAN UMUM (Except):
      - JIKA di proses atas terjadi exception apa pun:
        - Tulis log error.
@@ -1003,7 +996,7 @@ ALGORITMA TEKS PESAN BOT TELEGRAM (messages.py)
 
    - DAILY_LIMIT_REACHED
      - Pesan peringatan kuota harian habis.
-     - Memiliki *placeholder* "{limit}" yang akan diisi oleh angka dari pengaturan.
+     - Memiliki _placeholder_ "{limit}" yang akan diisi oleh angka dari pengaturan.
 
    - GENERIC_ERROR
      - Teks "Maaf, terjadi kesalahan. Silakan coba lagi." (untuk pesan jika sistem error).
@@ -1016,6 +1009,7 @@ ALGORITMA TEKS PESAN BOT TELEGRAM (messages.py)
 ```
 
 **Bentuk Data Setelah Diproses:**
+
 ```text
 (Meneruskan String 'query' dan 'session_id' ke dalam sistem)
 ```
@@ -1025,6 +1019,7 @@ ALGORITMA TEKS PESAN BOT TELEGRAM (messages.py)
 ### Alur 3: Manajemen Memori & Sesi
 
 **Bentuk Data Awal:**
+
 ```text
 // String query: "Apa saja syarat mendaftar KKP?"
 // session_id: "tg-9988776655"
@@ -1043,29 +1038,27 @@ ALGORITMA PENYIMPANAN SESI DATABASE (session_store.py)
 
 2. KELAS DatabaseSessionStore
    - Tujuan: Menyimpan data percakapan user (memori) secara permanen di database Supabase, namun tetap menggunakan RAM lokal (Cache LRU) untuk sesi yang sedang aktif agar aksesnya super cepat.
-   
    - `__init__(cache_size)`:
      - Buka koneksi Supabase.
      - Siapkan Cache lokal (`_cache`) dan waktu akses (`_cache_access`).
      - Jalankan `_test_connection()` (cek apakah tabel ada).
-   
    - `load_memory(session_id, mahasiswa_id=None)`:
      - TAHAP 1: Cek Cache Lokal.
        - Jika data sesi ini ada di RAM, perbarui waktu aksesnya, lalu langsung kembalikan datanya (sangat cepat).
      - TAHAP 2: Jika tidak ada di RAM, Cek Database.
        - Lakukan query ke Supabase (tabel `conversation_sessions`).
-       - JIKA ADA: 
+       - JIKA ADA:
          - **Keamanan (IDOR):** Jika `mahasiswa_id` diberikan dan tidak sama dengan pemilik di database, lemparkan error 403 (Akses Ditolak). Exception ini akan diteruskan langsung ke framework (FastAPI).
          - Bangun kembali objek `ConversationMemory` dari data JSON tersebut.
        - JIKA TIDAK ADA / ERROR (Selain 403): Buat `ConversationMemory` baru yang kosong.
      - TAHAP 3: Simpan ke Cache Lokal.
        - Masukkan data tadi ke Cache lokal lewat `_add_to_cache()`.
-       - Perbarui kolom waktu akses terakhir (last_access) di Database secara diam-diam (*fire and forget*) menggunakan representasi waktu UTC *timezone-aware* (`datetime.now(timezone.utc).isoformat()`).
+       - Perbarui kolom waktu akses terakhir (last*access) di Database secara diam-diam (\_fire and forget*) menggunakan representasi waktu UTC _timezone-aware_ (`datetime.now(timezone.utc).isoformat()`).
        - Kembalikan memori.
 
    - `save_memory(session_id, memory, channel=None, mahasiswa_id=None)`:
      - Ubah `memory` jadi bentuk JSON (dict).
-     - Lakukan *Upsert* (Insert atau Update) ke database Supabase (sertakan `mahasiswa_id` dan `channel`).
+     - Lakukan _Upsert_ (Insert atau Update) ke database Supabase (sertakan `mahasiswa_id` dan `channel`).
      - Perbarui Cache lokal.
      - Jika gagal (koneksi terputus dll), lempar error (tapi aplikasinya dirancang untuk mengabaikan error ini agar chat tetap jalan).
 
@@ -1084,7 +1077,7 @@ ALGORITMA PENYIMPANAN SESI DATABASE (session_store.py)
        - Usir (Evict) sesi tersebut dari RAM (hanya dari RAM, di database tetap aman).
 
 3. FUNGSI get_session_store()
-   - Pola *Singleton*: Pastikan hanya ada satu objek `DatabaseSessionStore` di seluruh aplikasi yang dibagi-pakai oleh semua request chat.
+   - Pola _Singleton_: Pastikan hanya ada satu objek `DatabaseSessionStore` di seluruh aplikasi yang dibagi-pakai oleh semua request chat.
    - Set kapasitas cache lokal ke 10% dari Maksimal Sesi Aktif.
 ```
 
@@ -1117,7 +1110,7 @@ ALGORITMA PENYIMPANAN MEMORI PERCAKAPAN (memory.py)
 
    - `get_history_for_llm()`:
      - Ambil histori pesan untuk disuapkan ke LLM (format dict).
-     - **Batas LLM Context**: Terapkan *sliding window* dengan batas `settings.MAX_HISTORY_TURNS` (default: 3 giliran) agar input ke LLM tidak membengkak berlebihan.
+     - **Batas LLM Context**: Terapkan _sliding window_ dengan batas `settings.MAX_HISTORY_TURNS` (default: 3 giliran) agar input ke LLM tidak membengkak berlebihan.
 
    - `get_last_retrieved_docs()`:
      - Cari dari pesan terakhir bot, apa saja isi teks dokumen yang dipakai untuk menjawab.
@@ -1133,11 +1126,12 @@ ALGORITMA PENYIMPANAN MEMORI PERCAKAPAN (memory.py)
      - Kembalikan True jika ada minimal satu percakapan tuntas (user -> asisten) sebelum pesan saat ini.
 
    - FUNGSI KONVERSI DB:
-     - `to_dict()`: Konversi array `_turns` menjadi bentuk *Dictionary/JSON* agar bisa disimpan di Database (Supabase JSONB).
+     - `to_dict()`: Konversi array `_turns` menjadi bentuk _Dictionary/JSON_ agar bisa disimpan di Database (Supabase JSONB).
      - `from_dict(turns_data, max_turns)`: Bangun kembali (Rekonstruksi) objek `ConversationMemory` dari data mentah yang ditarik dari Database.
 ```
 
 **Bentuk Data Setelah Diproses:**
+
 ```python
 # Objek ConversationMemory dari memori/database:
 [
@@ -1152,6 +1146,7 @@ ALGORITMA PENYIMPANAN MEMORI PERCAKAPAN (memory.py)
 ### Alur 4: Klasifikasi Niat (Intent)
 
 **Bentuk Data Awal:**
+
 ```text
 // Pesan terbaru user beserta riwayat obrolan
 ```
@@ -1175,11 +1170,9 @@ ALGORITMA LAYANAN KECERDASAN BUATAN (ai_services.py)
      - Cari memori sesi ini di Database (jika pakai DB) atau RAM.
      - Jika belum ada, buat objek `ConversationMemory` baru dengan maksimal 5 turn (10 pesan).
      - Kembalikan memori.
-   
    - `_save_memory_if_needed(session_id, memory)`:
      - (Hanya jika pakai DB): Simpan ulang memori yang ter-update ke Database.
      - Tangkap error secara diam-diam agar chat tidak gagal hanya karena gagal menyimpan riwayat.
-   
    - `clear_session(session_id)`:
      - Hapus data memori user tersebut dari penyimpanan.
 
@@ -1189,46 +1182,40 @@ ALGORITMA LAYANAN KECERDASAN BUATAN (ai_services.py)
 3. FUNGSI UTAMA chat(query, session_id)
    - Fungsi utama yang dipanggil oleh Bot Telegram atau API eksternal saat user bertanya.
    - JIKA `query` atau `session_id` kosong: Kembalikan pesan error seketika.
-   
    - TAHAP 1: Normalisasi
      - Panggil `normalize_query(question)`.
-   
    - TAHAP 2: Deteksi Reformulasi (Regex)
      - Cek apakah butuh ditulis ulang dengan `needs_rewrite(normalized_query)`.
-     - *Slow Path* (Jika butuh di-rewrite): Panggil `get_or_create_memory` (karena LLM butuh riwayat), lalu panggil `reformulate_query(normalized_query, memory)`.
-     - *Fast Path* (Jika mandiri): Pakai kueri hasil normalisasi langsung.
-   
+     - _Slow Path_ (Jika butuh di-rewrite): Panggil `get_or_create_memory` (karena LLM butuh riwayat), lalu panggil `reformulate_query(normalized_query, memory)`.
+     - _Fast Path_ (Jika mandiri): Pakai kueri hasil normalisasi langsung.
    - TAHAP 3: Cek Cache (LRU)
      - Buat kunci cache `v1_{resolved_query}`.
-     - JIKA hasil sudah ada di `retrieval_cache`: Gunakan data itu langsung (*Cache Hit*).
-     - JIKA BELUM (*Cache Miss*): Panggil `run_retrieval(query, rerank_query)`. Simpan hasilnya ke cache.
-   
+     - JIKA hasil sudah ada di `retrieval_cache`: Gunakan data itu langsung (_Cache Hit_).
+     - JIKA BELUM (_Cache Miss_): Panggil `run_retrieval(query, rerank_query)`. Simpan hasilnya ke cache.
    - TAHAP 4: Muat Memori (Jika belum dimuat)
-     - Jika masuk *Fast Path* tadi, muat memori di sini dan tambahkan giliran pertanyaan user.
-   
+     - Jika masuk _Fast Path_ tadi, muat memori di sini dan tambahkan giliran pertanyaan user.
    - TAHAP 5: LLM Generation
      - Panggil RAG Chain (`_rag_chain.invoke_with_history`) dengan memasukkan histori percakapan dan dokumen hasil cari (bisa kosong jika gagal Rerank/Threshold).
      - Simpan jawaban AI (berserta teks isi dokumen referensi) ke memori.
      - Simpan memori ke Database.
-   
    - TAHAP 6: Kembalikan Jawaban
      - Siapkan dictionary hasil yang berisi: Teks Jawaban, Metode Rewrite, Jumlah Dokumen, dan Maksimal 3 Dokumen Sumber Referensi terbaik.
-     - JIKA ada error: Tangkap dan kembalikan pesan error *fallback*.
+     - JIKA ada error: Tangkap dan kembalikan pesan error _fallback_.
 
 4. FUNGSI preload_models()
    - Dieksekusi secara asinkronus/synchronous saat server baru menyala.
-   - Fungsi: Memanaskan (*warm-up*) model AI agar tidak terjadi jeda dingin (*cold-start*) saat request pertama.
-   - TAHAP 1: *Preload Cross-Encoder* -> Memaksa model lokal termuat ke RAM.
-   - TAHAP 2: *Preload Embedding Model* -> Mengirim string dummy "warmup" ke API OpenAI untuk membangun koneksi HTTP *Keep-Alive* dan memuat *tiktoken* ke RAM.
+   - Fungsi: Memanaskan (_warm-up_) model AI agar tidak terjadi jeda dingin (_cold-start_) saat request pertama.
+   - TAHAP 1: _Preload Cross-Encoder_ -> Memaksa model lokal termuat ke RAM.
+   - TAHAP 2: _Preload Embedding Model_ -> Mengirim string dummy "warmup" ke API OpenAI untuk membangun koneksi HTTP _Keep-Alive_ dan memuat _tiktoken_ ke RAM.
 ```
 
 #### File: `src/generation/intent_classifier/classifier.py`
 
-```markdown
+````markdown
 ALGORITMA KLASIFIKASI INTENT (classifier.py)
 
 > **⚠️ PERINGATAN ARSITEKTUR ⚠️**
-> Modul `IntentClassifier` LLM ini **telah di-*bypass* secara praktis** pada pembaruan arsitektur terbaru aplikasi (menuju arsitektur murni *Retrieval-First / Evidence-Driven*). Berkas ini masih dipertahankan untuk referensi *fallback* dan kompatibilitas, namun *core flow* AI (`ai_services.py`) tidak lagi memanggil modul ini sebagai "satpam" (Gatekeeper) perantara utama.
+> Modul `IntentClassifier` LLM ini **telah di-_bypass_ secara praktis** pada pembaruan arsitektur terbaru aplikasi (menuju arsitektur murni _Retrieval-First / Evidence-Driven_). Berkas ini masih dipertahankan untuk referensi _fallback_ dan kompatibilitas, namun _core flow_ AI (`ai_services.py`) tidak lagi memanggil modul ini sebagai "satpam" (Gatekeeper) perantara utama.
 
 1. IMPOR PUSTAKA
    - JSON, Typing, Langchain (HumanMessage, SystemMessage, ChatOpenAI).
@@ -1236,7 +1223,7 @@ ALGORITMA KLASIFIKASI INTENT (classifier.py)
    - Konfigurasi, Memori percakapan.
    - Konstanta dan Detektor (SwitchDetector, ClarificationDetector, ConversationalDetector).
 
-2. FUNGSI _build_classifier_prompt(current_message, memory)
+2. FUNGSI \_build_classifier_prompt(current_message, memory)
    - Ambil riwayat pertanyaan dan jawaban terakhir dari memori (jika ada).
    - Gabungkan histori tersebut dengan pesan user saat ini.
    - Tambahkan instruksi untuk LLM: "Tentukan intent pesan user sekarang. Output hanya JSON."
@@ -1245,9 +1232,8 @@ ALGORITMA KLASIFIKASI INTENT (classifier.py)
 3. KELAS IntentClassifier
    - `__init__()`:
      - Buat LLM (ChatOpenAI) dengan suhu=0, max_tokens=200.
-     - Buat dictionary (kamus) kosong untuk *Cache* hasil klasifikasi agar hemat API.
+     - Buat dictionary (kamus) kosong untuk _Cache_ hasil klasifikasi agar hemat API.
      - Inisialisasi ketiga detektor (Switch, Clarification, Conversational).
-   
    - `classify(message, memory)`:
      - TAHAP 1: Jalan pintas Obrolan Biasa.
        - Cek dengan `ConversationalDetector`. Jika "conversational", kembalikan (IntentType.CONVERSATIONAL, 0.95, alasan).
@@ -1268,12 +1254,12 @@ ALGORITMA KLASIFIKASI INTENT (classifier.py)
      - Bangun prompt dari `_build_classifier_prompt`.
      - Panggil API LLM (dengan `CLASSIFIER_SYSTEM_PROMPT` dan prompt yang dibuat).
      - Bersihkan teks respon dari LLM (hilangkan tanda blok kode markdown ` ```json `).
-     - *Parse* string menjadi objek JSON.
+     - _Parse_ string menjadi objek JSON.
      - Ambil `intent`, `confidence`, dan `reason` dari JSON tersebut.
      - Simpan hasil ke cache.
      - KEMBALIKAN (intent, confidence, reason).
      - JIKA ERROR (JSON invalid, gagal API, dll): Jatuh ke pilihan aman (Fallback) yaitu "NEEDS_RETRIEVAL".
-```
+````
 
 #### File: `src/generation/intent_classifier/constants.py`
 
@@ -1283,22 +1269,17 @@ ALGORITMA KONSTANTA KLASIFIKASI INTENT (constants.py)
 1. DEKLARASI DAFTAR KATA KUNCI (SIGNALS)
    - `TOPIC_SWITCH_SIGNALS`:
      - Tanda Eksplisit: "sekarang", "bagaimana dengan", "kalau untuk", "ganti topik", dll.
-     - Tanda Domain: 
+     - Tanda Domain:
        - PI: ["pi", "penulisan ilmiah", "penelitian", "skripsi", "thesis"]
        - KKP: ["kkp", "kuliah kerja praktik", "magang", "internship", "praktik"]
-   
    - `CLARIFICATION_SIGNALS`:
      - Tanda Minta Kejelasan: "lebih detail", "jelaskan lagi", "elaborasi", "contoh", "maksudnya", "mengapa", dll.
-   
    - `CONVERSATIONAL_PATTERNS`:
      - Tanda Obrolan Biasa: "halo", "hai", "selamat pagi", "terima kasih", "oke", "sampai jumpa", dll.
-   
    - `QUESTION_KEYWORDS`:
      - Tanda Pertanyaan: "apa", "bagaimana", "berapa", "kapan", "siapa", "kenapa", "mengapa", "dimana".
-   
    - `ASPECT_KEYWORDS`:
      - Tanda Aspek (Sub-topik): syarat, format, durasi, prosedur, dosen, tempat, ujian, laporan.
-   
    - `IMPLICIT_REFERENCE_SIGNALS`:
      - Tanda Referensi Implisit (menunjuk objek sebelumnya): "itu", "tersebut", "tadi", "hal itu", "dan untuk", dll.
 
@@ -1308,7 +1289,6 @@ ALGORITMA KONSTANTA KLASIFIKASI INTENT (constants.py)
      - Menjelaskan aturan 3 Intent (needs_retrieval, conversational, clarification).
      - Memberikan contoh kapan harus memakai intent yang mana (terutama bedanya topic switch vs clarification).
      - Memaksa keluaran dalam bentuk JSON wajib (`{"intent": "...", "reason": "...", "confidence": 1.0}`).
-   
    - `REFORMULATION_PROMPT`:
      - Prompt instruksi untuk LLM saat menjadi Reformulator (Penulis ulang pertanyaan).
      - Mengubah pertanyaan yang tidak jelas (seperti "Bagaimana dengan syaratnya?") menjadi pertanyaan lengkap ("Bagaimana dengan syarat KKP?") dengan melihat riwayat percakapan.
@@ -1323,15 +1303,12 @@ ALGORITMA DETEKTOR PERCAKAPAN (detectors.py)
    - `detect_explicit_switch(message)`:
      - Cari kata dari pesan user yang cocok dengan `TOPIC_SWITCH_SIGNALS["explicit"]` (misal: "sekarang", "bagaimana dengan").
      - Kembalikan kata sinyal tersebut jika ada, jika tidak ada kembalikan None.
-   
    - `detect_domain_switch(message, memory)`:
      - Deteksi apakah domain pesan saat ini (misal PI) berbeda dengan domain di pesan sebelumnya (misal KKP).
      - Kembalikan True/False dan alasan.
-   
    - `detect_aspect_switch(message, memory)`:
      - Deteksi apakah aspek pesan saat ini (misal "syarat") berbeda dengan aspek sebelumnya (misal "dosen").
      - Kembalikan True/False dan alasan.
-   
    - `detect_switch(message, memory)`:
      - Jalankan `detect_explicit_switch`. Jika True -> Pindah Topik (TOPIC).
      - Jalankan `detect_domain_switch`. Jika True -> Pindah Domain (DOMAIN).
@@ -1341,7 +1318,6 @@ ALGORITMA DETEKTOR PERCAKAPAN (detectors.py)
 2. KELAS ClarificationDetector
    - `detect_clarification_signals(message)`:
      - Cari kata dari pesan user yang cocok dengan `CLARIFICATION_SIGNALS` (misal "jelaskan lagi", "contohnya").
-   
    - `is_true_clarification(message, memory)`:
      - JIKA pesan punya sinyal klarifikasi, DAN TIDAK TERDETEKSI adanya perpindahan topik (dari `SwitchDetector`).
      - Maka itu adalah klarifikasi asli (True). Kembalikan True.
@@ -1349,13 +1325,10 @@ ALGORITMA DETEKTOR PERCAKAPAN (detectors.py)
 3. KELAS ConversationalDetector
    - `is_short_message(message)`:
      - Cek apakah panjang pesan kurang dari sama dengan 9 karakter.
-   
    - `has_question_keywords(message)`:
      - Cek apakah ada kata tanya (apa, bagaimana, dll) di pesan.
-   
    - `matches_conversational_pattern(message)`:
      - Cek apakah cocok dengan daftar pola obrolan (halo, terima kasih, dll).
-   
    - `is_conversational(message)`:
      - JIKA (pesan sangat pendek DAN tidak ada kata tanya) ATAU (cocok dengan pola obrolan DAN tidak ada kata tanya).
      - Kembalikan True.
@@ -1406,21 +1379,18 @@ ALGORITMA REFORMULASI PERTANYAAN (reformulator.py)
    - Jika query berupa "apa itu X", ubah paksa menjadi "Apa yang dimaksud dengan X".
 
 3. FUNGSI needs_rewrite(query)
-   - Gunakan **Regex Word Boundary** (`\b`) saat mengecek kata tunjuk implisit ("itu", "tersebut", "tadi"). Ini mencegah bug *substring match* naif yang memicu reformulasi pada kata seperti "waktu".
+   - Gunakan **Regex Word Boundary** (`\b`) saat mengecek kata tunjuk implisit ("itu", "tersebut", "tadi"). Ini mencegah bug _substring match_ naif yang memicu reformulasi pada kata seperti "waktu".
    - Kecualikan pemrosesan ulang jika kalimat sudah jelas mandiri (contoh: "apa itu kkp").
    - KEMBALIKAN True/False.
 
 4. KELAS QueryReformulator
    - `__init__(llm)`:
      - Jika objek LLM tidak diberikan, buat objek LLM ChatOpenAI (suhu=0, max_token=100).
-   
    - `_extract_last_topic(memory)`:
      - Baca memori percakapan secara mundur (reversed) untuk menemukan topik terakhir yang dibahas (KKP atau Penulisan Ilmiah).
-   
    - `_apply_rule_rewrite(message, last_topic)`:
-     - Coba lakukan penulisan ulang instan menggunakan *Rule/Regex* tanpa perlu menembak API LLM.
+     - Coba lakukan penulisan ulang instan menggunakan _Rule/Regex_ tanpa perlu menembak API LLM.
      - Contoh: "terus formatnya" -> "terus formatnya Penulisan Ilmiah".
-   
    - `reformulate_query(message, memory)`:
      - JIKA histori percakapan (memori) kosong, langsung KEMBALIKAN tuple (pesan asli, "None").
      - JIKA `_apply_rule_rewrite` berhasil menangani kalimat, KEMBALIKAN tuple (pesan diperbaiki, "Rule").
@@ -1434,6 +1404,7 @@ ALGORITMA REFORMULASI PERTANYAAN (reformulator.py)
 ```
 
 **Bentuk Data Setelah Diproses:**
+
 ```python
 # Tipe Intent yang terdeteksi
 IntentType.NEEDS_RETRIEVAL
@@ -1444,6 +1415,7 @@ IntentType.NEEDS_RETRIEVAL
 ### Alur 5: Pencarian (Retrieval)
 
 **Bentuk Data Awal:**
+
 ```text
 // Pertanyaan (yang berpotensi sudah direformulasi)
 "Apa saja syarat mendaftar KKP?"
@@ -1458,7 +1430,7 @@ ALGORITMA JALUR PENCARIAN UTAMA (pipeline.py)
 
 1. IMPOR PUSTAKA
    - `dataclass`, loguru (logger), pengaturan (settings).
-   - *Lazy Import* (Impor di dalam fungsi) untuk: `extract_query_components` (Self-Query), `HybridSearcher`, `ParentChildFetcher`, dan `CrossEncoderReranker` agar tidak terjadi *circular import* (impor saling muter).
+   - _Lazy Import_ (Impor di dalam fungsi) untuk: `extract_query_components` (Self-Query), `HybridSearcher`, `ParentChildFetcher`, dan `CrossEncoderReranker` agar tidak terjadi _circular import_ (impor saling muter).
 
 2. STRUKTUR DATA RetrievalResult
    - `parent_documents`: Daftar (list) dokumen induk hasil akhir pencarian yang siap disuapkan ke LLM.
@@ -1469,20 +1441,16 @@ ALGORITMA JALUR PENCARIAN UTAMA (pipeline.py)
    - Fungsi ini adalah konduktor (pengatur lalu lintas) semua langkah pencarian.
    - `query`: Pertanyaan untuk pencarian awal.
    - `rerank_query`: Pertanyaan asli user untuk perhitungan ulang skor di akhir (jika tidak ada, samakan dengan `query`).
-   
    - TAHAP 1: Ekstrak Filter (Self-Query)
      - Panggil `extract_query_components(query)`.
      - Hasilnya: pertanyaan yang bersih dari kata filter, dan `filters` (contoh: cari di sumber "KKP", Bab II).
-   
    - TAHAP 2: Pencarian Awal (Hybrid Search)
      - Buat objek `HybridSearcher()`.
      - Cari dokumen anak yang relevan dengan pertanyaan bersih dan filternya.
      - JIKA hasil kosong: Kembalikan `RetrievalResult` kosong.
-   
    - TAHAP 3: Tarik Dokumen Utuh (Parent Fetching)
      - Buat objek `ParentChildFetcher()`.
      - Tarik dokumen induk berdasarkan ID dari dokumen anak yang ketemu.
-   
    - TAHAP 4: Pengurutan Ulang (Reranking)
      - **Candidate Limiting**: Batasi jumlah dokumen induk yang akan di-Rerank (hanya Top N berdasar konfigurasi `max_parent_for_rerank`).
      - **Adaptive Reranking**: JIKA jumlah kandidat `<= settings.min_parent_for_rerank`, LEWATI proses Reranking (langsung pakai skor Hybrid) untuk menghemat waktu komputasi.
@@ -1490,13 +1458,11 @@ ALGORITMA JALUR PENCARIAN UTAMA (pipeline.py)
      - JIKA proses rerank gagal/error:
        - Tangkap error, log warning.
        - Urutan jangan diubah, cukup ambil N dokumen teratas (berdasarkan skor Hybrid).
-   
    - TAHAP 5: Evaluasi Skor Rerank (Zero-Doc Shortcircuit)
-     - JIKA skor *Top 1* < `settings.rerank_min_top_score`:
-       - Kosongkan hasil dokumen (icu *Minimum Evidence Triggered*). LLM akan menjawab menggunakan mode obrolan biasa.
-     - JIKA lulus skor minimum, terapkan aturan filter jarak: hapus dokumen yang skornya turun terlalu jauh dari *Top 1* (berdasar `settings.rerank_relative_gap`).
+     - JIKA skor _Top 1_ < `settings.rerank_min_top_score`:
+       - Kosongkan hasil dokumen (icu _Minimum Evidence Triggered_). LLM akan menjawab menggunakan mode obrolan biasa.
+     - JIKA lulus skor minimum, terapkan aturan filter jarak: hapus dokumen yang skornya turun terlalu jauh dari _Top 1_ (berdasar `settings.rerank_relative_gap`).
      - Potong hasil akhir hanya sejumlah `settings.rerank_top_n`.
-   
    - Kembalikan objek `RetrievalResult` dengan daftar dokumen akhir yang sudah diurutkan dan disaring.
 ```
 
@@ -1529,7 +1495,7 @@ ALGORITMA EKSTRAKSI FILTER OTOMATIS (self_query.py)
      - JIKA ADA KEDUANYA atau TIDAK ADA SAMA SEKALI: Kembalikan None (jangan difilter, cari di dua-duanya).
 
 4. DETEKSI BAB / SECTION
-   - `_matches_keyword(text, keyword)`: 
+   - `_matches_keyword(text, keyword)`:
      - Jika keyword berupa frase (>1 kata): cek substring biasa.
      - Jika 1 kata: cek pakai batas kata regex (`\b`) agar "syarat" tidak cocok dengan "bersyarat".
    - `_detect_section(query_lower, min_matches=2)`:
@@ -1565,30 +1531,27 @@ ALGORITMA PERLUASAN KATA KUNCI (query_expansion.py)
    - `UPPERCASE_ACRONYMS`: Kamus singkatan huruf besar ke kepanjangannya. (PI -> Penulisan Ilmiah, KKP -> Kuliah Kerja Praktik, SKS -> Satuan Kredit Semester, dll).
    - `LONG_FORM_TO_ACRONYM`: Kamus kepanjangan ke singkatan (penulisan ilmiah -> PI, dll).
 
-3. FUNGSI _has_uppercase_token(text, token)
+3. FUNGSI \_has_uppercase_token(text, token)
    - Mengecek apakah sebuah singkatan huruf kapital (misal "PI") benar-benar muncul sebagai kata utuh di dalam teks, bukan sebagai bagian dari kata lain (seperti "PINTAR").
    - Kembalikan True/False menggunakan Regex Boundary (`\b`).
 
-4. FUNGSI _has_phrase(text_lower, phrase)
+4. FUNGSI \_has_phrase(text_lower, phrase)
    - Mengecek substring biasa dalam teks huruf kecil.
 
 5. FUNGSI expand_query(question)
    - JIKA pertanyaan kosong, kembalikan kosong.
    - Buat daftar `additions` kosong (untuk menampung kata tambahan).
    - Ubah teks pertanyaan jadi huruf kecil semua untuk pengecekan tipe ke-2.
-   
    - Aturan 1: Singkatan Besar -> Kepanjangan
      - LOOP semua singkatan di `UPPERCASE_ACRONYMS`:
        - JIKA teks punya singkatan utuh (contoh ada kata "KKP"):
          - LOOP semua kemungkinan kepanjangannya (contoh "Kuliah Kerja Praktik").
          - JIKA kepanjangan itu belum ada di teks asli dan belum ditambahkan: Tambahkan ke `additions`.
-   
    - Aturan 2: Kepanjangan -> Singkatan
      - LOOP semua frase di `LONG_FORM_TO_ACRONYM`:
        - JIKA teks punya frase utuh (contoh ada kata "kuliah kerja praktik"):
          - LOOP semua kemungkinan singkatannya (contoh "KKP").
          - JIKA singkatan itu tidak ada secara kapital di teks dan belum ditambahkan: Tambahkan ke `additions`.
-   
    - JIKA tidak ada tambahan: Kembalikan teks asli.
    - JIKA ada: Gabungkan teks asli dengan tambahan (diberi spasi). Log aksi ini.
    - Kembalikan teks perluasan (contoh: "Apa itu kkp? Kuliah Kerja Praktik").
@@ -1618,7 +1581,7 @@ ALGORITMA PENCARIAN HYBRID (hybrid_search.py)
      - `parent_id`: ID dokumen induk.
 
 3. KELAS HybridSearcher
-   - Bertugas mencari dokumen paling relevan menggunakan pencarian gabungan (BM25 Full Text Search + Vector Similarity). Penggabungan skor dilakukan oleh *Database PostgreSQL* memakai metode RRF (Reciprocal Rank Fusion).
+   - Bertugas mencari dokumen paling relevan menggunakan pencarian gabungan (BM25 Full Text Search + Vector Similarity). Penggabungan skor dilakukan oleh _Database PostgreSQL_ memakai metode RRF (Reciprocal Rank Fusion).
    - `__init__`:
      - Buka koneksi Supabase.
      - Siapkan model pengubah kata ke vektor (Embedder) dari OpenAI.
@@ -1683,7 +1646,6 @@ ALGORITMA PENGAMBILAN DOKUMEN INDUK (parent_child.py)
          - Ambil daftar ID anak yang memicu dokumen ini.
          - Sisipkan data tersebut ke dalam dokumen induk (kolom sementara: `best_child_score` dan `matched_children`).
        - Urutkan (Sort) daftar dokumen induk dari nilai `best_child_score` paling besar (menurun/descending).
-     
      - Kembalikan daftar dokumen induk yang sudah berurut tersebut.
 ```
 
@@ -1694,16 +1656,14 @@ ALGORITMA PENGURUTAN ULANG CERDAS (reranker.py)
 
 1. IMPOR PUSTAKA & SETUP
    - Konfigurasi aplikasi.
-   - Jika ada token HuggingFace di pengaturan, pasang sebagai *Environment Variable* (HF_TOKEN) agar library bisa unduh model privat jika perlu.
-   - Impor `CrossEncoder` dari *sentence_transformers*, loguru.
+   - Jika ada token HuggingFace di pengaturan, pasang sebagai _Environment Variable_ (HF_TOKEN) agar library bisa unduh model privat jika perlu.
+   - Impor `CrossEncoder` dari _sentence_transformers_, loguru.
 
 2. KELAS CrossEncoderReranker
-   - Variabel Kelas Statis (Shared): `_shared_model` dan `_shared_model_name`. Bertujuan agar model AI (yang ukurannya besar/ratusan MB) hanya di-*load* (dimuat ke RAM) SATU KALI saja selama server hidup, lalu dipakai bersama-sama.
-   
+   - Variabel Kelas Statis (Shared): `_shared_model` dan `_shared_model_name`. Bertujuan agar model AI (yang ukurannya besar/ratusan MB) hanya di-_load_ (dimuat ke RAM) SATU KALI saja selama server hidup, lalu dipakai bersama-sama.
    - `__init__(model_name)`:
      - Ambil nama model cross encoder dari settings (misal: "ms-marco-MiniLM-L-6-v2").
      - Ambil limit top-N (berapa dokumen teratas yang dipertahankan).
-   
    - `_get_model()`:
      - Cek variabel statis kelas.
      - JIKA model belum diload ATAU nama model yang mau dipakai berbeda dengan yang ada di memori:
@@ -1719,12 +1679,9 @@ ALGORITMA PENGURUTAN ULANG CERDAS (reranker.py)
      - LOOP melalui tiap dokumen:
        - Ambil teks isi dokumen. Potong batas karakternya (Truncate) maksimal 2000 karakter depan saja, agar AI pembaca skor tidak kepenuhan memori.
        - Tambahkan `[query, teks_terpotong]` ke `pairs`.
-     
      - Minta AI memprediksi skor kedekatan: `scores = model.predict(pairs)`.
-     
      - LOOP untuk menggabungkan skor kembali ke masing-masing dokumen:
        - Simpan skor asli float ke properti `doc["cross_encoder_score"]`.
-     
      - Urutkan dokumen (Sort) dari skor tertinggi ke terendah.
      - Potong daftar (Slice) hanya mengambil juara 1 sampai `top_n`.
      - Tulis log hasil pengurutan (skor top dan bottom).
@@ -1743,22 +1700,21 @@ ALGORITMA DETEKSI SUMBER PANDUAN (source_utils.py)
 2. FUNGSI detect_panduan_type(meta)
    - Tujuan: Menentukan apakah sebuah potongan dokumen itu milik Panduan PI atau KKP secara cepat berdasarkan datanya, berguna saat memformat balasan referensi.
    - Masukan: `meta` (Dictionary / kamus dari metadata dokumen).
-   - JIKA `meta` kosong/None: Secara *default* (jatuh aman), asumsikan "PI".
+   - JIKA `meta` kosong/None: Secara _default_ (jatuh aman), asumsikan "PI".
 
    - ATURAN 1 (Paling Kuat): Cek string kolom `source`.
      - Ambil isi `source` (ubah ke huruf kecil).
      - Jika ada kata "kkp" atau "kuliah kerja": KEMBALIKAN "KKP".
      - Jika ada kata "pi" atau "penulisan ilmiah" atau (typo yang diantisipasi) "penulisan imliah": KEMBALIKAN "PI".
-   
    - ATURAN 2 (Pengecekan ID):
      - Ambil isi ID induk (`parent_id`) atau ID biasa (`id`), ubah huruf kecil.
      - Jika awalan-nya "parent-kkp-" atau "kkp-": KEMBALIKAN "KKP".
      - Jika awalan-nya "parent-" atau "pi-": KEMBALIKAN "PI".
-   
    - JIKA semua aturan gagal, fallback (nilai akhir kembali aman) ke "KKP".
 ```
 
 **Bentuk Data Setelah Diproses:**
+
 ```json
 // Daftar Dokumen Induk hasil penelusuran (Context)
 [
@@ -1775,6 +1731,7 @@ ALGORITMA DETEKSI SUMBER PANDUAN (source_utils.py)
 ### Alur 6: Pembangkitan Jawaban (Generation)
 
 **Bentuk Data Awal:**
+
 ```text
 // Konteks dokumen + Pertanyaan User + Histori Percakapan
 ```
@@ -1797,18 +1754,18 @@ ALGORITMA GENERASI JAWABAN CHATBOT (chain.py)
    - `CONVERSATIONAL_PROMPT`: Format obrolan biasa (sapaan/terima kasih) tanpa pencarian dokumen.
    - `CLARIFICATION_PROMPT`: Format untuk meminta penjelasan lebih lanjut dari jawaban sebelumnya.
 
-3. FUNGSI _format_context(documents)
+3. FUNGSI \_format_context(documents)
    - Ambil list objek Dokumen dari proses Retrieval (Pencarian).
    - GABUNGKAN teks dari tiap dokumen dengan pembatas "---".
    - TAMBAHKAN header pada tiap dokumen (contoh: "[Sumber: Buku Panduan PI] - BAB II - Relevansi: 0.85").
    - KEMBALIKAN teks gabungan yang siap dibaca LLM.
 
-4. FUNGSI _postprocess_answer(answer)
+4. FUNGSI \_postprocess_answer(answer)
    - Rapikan hasil jawaban teks LLM.
    - HAPUS spasi berlebih dan ganti baris kosong yang terlalu banyak.
    - KEMBALIKAN teks rapi.
 
-5. FUNGSI _build_sources(context_documents, limit=3)
+5. FUNGSI \_build_sources(context_documents, limit=3)
    - Buat list meta-data sumber referensi (maksimal 3 teratas).
    - Ambil ID dokumen, judul, bab, dan skor kemiripan.
    - KEMBALIKAN array daftar sumber.
@@ -1823,7 +1780,7 @@ ALGORITMA GENERASI JAWABAN CHATBOT (chain.py)
    - Inisialisasi: Buat dan simpan instance LLM.
    - METHOD `invoke_with_history(question, context, history)`:
      - Log informasi pemrosesan.
-     - **Adaptive History**: Jika dokumen konteks kosong (icu *Minimum Evidence Triggered*), potong histori paksa menjadi 1 giliran (maksimal 2 pesan terakhir) untuk mode obrolan biasa.
+     - **Adaptive History**: Jika dokumen konteks kosong (icu _Minimum Evidence Triggered_), potong histori paksa menjadi 1 giliran (maksimal 2 pesan terakhir) untuk mode obrolan biasa.
      - Hitung profil token input dan output menggunakan `tiktoken`.
      - Susun pesan konteks dan histori sebagai array `SystemMessage`, `HumanMessage`, dan `AIMessage`.
      - Masukkan konteks dan panggil LLM.
@@ -1846,6 +1803,7 @@ ALGORITMA GENERASI JAWABAN CHATBOT (chain.py)
 ```
 
 **Bentuk Data Setelah Diproses:**
+
 ```json
 // Hasil Output Chatbot ke User
 {
@@ -1853,7 +1811,7 @@ ALGORITMA GENERASI JAWABAN CHATBOT (chain.py)
   "num_docs": 1,
   "intent": "needs_retrieval",
   "confidence": 0.99,
-  "sources": [{"title": "Syarat Pendaftaran", "section": "BAB II"}]
+  "sources": [{ "title": "Syarat Pendaftaran", "section": "BAB II" }]
 }
 ```
 
@@ -1871,7 +1829,7 @@ ALGORITMA KONFIGURASI SISTEM (config/settings.py)
 1. IMPOR PUSTAKA
    - pydantic dan pydantic_settings (untuk memvalidasi dan memuat tipe data otomatis dari .env)
 
-2. FUNGSI _find_env_file()
+2. FUNGSI \_find_env_file()
    - Cari file konfigurasi ".env".
    - Mulai dari direktori saat ini.
    - ULANGI hingga 5 level folder ke atas:
@@ -1881,21 +1839,17 @@ ALGORITMA KONFIGURASI SISTEM (config/settings.py)
 
 3. KELAS Settings (mewarisi BaseSettings)
    - Konfigurasi ini otomatis memuat variabel dari file `.env`.
-   
    - VARIABEL APLIKASI UTAMA:
      - APP_NAME (Default: "Chatbot KKP/PI Assistant")
      - VERSION
      - ENVIRONMENT ("development", "staging", "production")
      - DEBUG mode
-   
    - KONFIGURASI OPENAI (Wajib Diisi):
      - open_api_key, llm_model, embedding_model
      - Rate limit dan toleransi timeout OpenAI (retry max 3 kali).
-     
    - KONFIGURASI DATABASE SUPABASE (Wajib Diisi):
      - supabase_url, supabase_service_key
      - Nama-nama tabel database (parent_documents, child_documents, user_quotas, chat_logs, conversation_sessions)
-     
    - PENGATURAN RETRIEVAL (Pencarian RAG):
      - retrieval_top_k: jumlah potongan dokumen maksimal dicari (default 30)
      - rerank_top_n: jumlah dokumen final setelah disaring (default 8)
@@ -1905,14 +1859,11 @@ ALGORITMA KONFIGURASI SISTEM (config/settings.py)
      - rerank_relative_gap: gap skor dari top score untuk menjaga dokumen (default 2.5)
      - bm25_weight: bobot pencarian teks BM25 (default 0.4)
      - dense_weight: bobot pencarian vektor semantic (default 0.6)
-     
    - PENGATURAN MODEL LOKAL:
      - cross_encoder_model (untuk reranking dokumen lokal)
-     
    - PENGATURAN TELEGRAM BOT:
      - TELEGRAM_BOT_TOKEN
      - Webhook URL, Secret Token, Path Webhook
-     
    - PENGATURAN RATE LIMIT & MEMORI:
      - Batas request per hari (RATE_LIMIT_REQUESTS).
      - Maksimal sesi chat aktif, interval pembersihan sesi lama.
@@ -1921,7 +1872,7 @@ ALGORITMA KONFIGURASI SISTEM (config/settings.py)
 
 4. METODE VALIDATOR DATA:
    - FUNGSI validate_weights_sum:
-     - Pastikan bahwa `bm25_weight` + `dense_weight` sama dengan 1.0. 
+     - Pastikan bahwa `bm25_weight` + `dense_weight` sama dengan 1.0.
      - JIKA hasil jumlah tidak 1.0, lemparkan error "must equal 1.0".
    - FUNGSI validate_webhook_secret:
      - JIKA environment = "production" DAN ada webhook URL:
@@ -1970,7 +1921,7 @@ ALGORITMA MIDDLEWARE PEMANTAUAN KINERJA (monitoring.py)
      - Setelah selesai, catat waktu akhir dan hitung `duration_ms`.
      - Buat objek `RequestMetrics` dan simpan ke `_system_metrics`.
      - JIKA durasi > 5 detik: Tulis Peringatan (Warning) di log konsol (Request terlalu lambat).
-     - Sisipkan *Header HTTP* "X-Response-Time" ke respon balik klien.
+     - Sisipkan _Header HTTP_ "X-Response-Time" ke respon balik klien.
 
 5. KELAS PerformanceTracker & AsyncPerformanceTracker
    - Digunakan dengan blok `with` (Context Manager) untuk menghitung lama waktu eksekusi sepotong fungsi tertentu (seperti Timer stopwatch).
@@ -1998,7 +1949,7 @@ ALGORITMA MIDDLEWARE KEAMANAN (security.py)
    - Konfigurasi aplikasi.
 
 2. KELAS RateLimitMiddleware
-   - Tujuan: Membatasi jumlah *request* dari 1 klien per waktu (misal: 100 req per 60 detik) untuk cegah spam/DDoS.
+   - Tujuan: Membatasi jumlah _request_ dari 1 klien per waktu (misal: 100 req per 60 detik) untuk cegah spam/DDoS.
    - `__init__`: Set batas limit dan jendela waktu (dari settings).
    - `_get_client_id`:
      - Tentukan identitas klien: Cek `session_id`.
@@ -2025,7 +1976,7 @@ ALGORITMA MIDDLEWARE KEAMANAN (security.py)
      - Jika status Server adalah Produksi, aktifkan juga HSTS (`Strict-Transport-Security`).
 
 4. FUNGSI verify_telegram_webhook(request_body, signature)
-   - Digunakan agar orang luar tidak bisa sembarangan memalsukan *push message* seolah dari server Telegram.
+   - Digunakan agar orang luar tidak bisa sembarangan memalsukan _push message_ seolah dari server Telegram.
    - Lakukan perhitungan HASH/HMAC SHA-256 pada body dengan Kunci Rahasia.
    - Bandingkan hasilnya (signature dari header) dengan hasil hitung kita secara konstan (pakai `hmac.compare_digest`).
 
@@ -2067,7 +2018,7 @@ ALGORITMA EVALUASI RAGAS DENGAN GROUND TRUTH (ragas_eval.py)
 4. FUNGSI create_evaluation_dataset(dataset)
    - Wrapper untuk mengambil list soal dan ground truth-nya.
 
-5. FUNGSI _diagnose_metric(metric_name, score)
+5. FUNGSI \_diagnose_metric(metric_name, score)
    - FUNGSI DIAGNOSTIK: Menganalisa penyebab jika ada skor metrik yang di bawah 0.85.
    - JIKA "faithfulness" gagal: "LLM berhalusinasi". Rekomendasi: perkuat prompt "jangan menambah info".
    - JIKA "answer_relevancy" gagal: "Jawaban menyimpang". Rekomendasi: perbaiki prompt "jawab langsung".
@@ -2080,7 +2031,7 @@ ALGORITMA EVALUASI RAGAS DENGAN GROUND TRUTH (ragas_eval.py)
 6. FUNGSI UTAMA run_evaluation(pipeline_fn, eval_data, output_path)
    - Siapkan data evaluasi.
    - TAHAP 1: Generate Jawaban
-     - LOOP semua soal: 
+     - LOOP semua soal:
        - Panggil `pipeline_fn` (Chatbot) dengan pertanyaan.
        - Simpan teks jawaban (answer) dan dokumen (contexts).
        - Buat objek `SingleTurnSample` yang berisi: input user, response, contexts, reference (ground truth).
@@ -2131,8 +2082,8 @@ ALGORITMA EVALUASI RAGAS TANPA GROUND TRUTH (ragas_eval_no_gt.py)
 4. FUNGSI PEMBANTU (Helpers)
    - `_safe_score(value)`: Amankan hasil perhitungan metrik, jika tidak ada/error ganti jadi None.
    - `_get_score_at_index(metric_result, index)`: Ambil skor spesifik untuk 1 pertanyaan dalam daftar hasil evaluasi.
-   - `_is_faithfulness_false_negative_suspect(score, context, answer)`: 
-     - JIKA skor faithfulness terlalu rendah (< 0.8), TAPI ada dokumen panjang dan jawaban panjang: 
+   - `_is_faithfulness_false_negative_suspect(score, context, answer)`:
+     - JIKA skor faithfulness terlalu rendah (< 0.8), TAPI ada dokumen panjang dan jawaban panjang:
      - Tandai sebagai suspek "False Negative" (mungkin LLM salah nilai karena beda bahasa/parafrase).
    - `_categorize_item_result(item_metrics)`: Kategori status:
      - JIKA precision rendah -> "RETRIEVER_ISSUE"
@@ -2171,13 +2122,14 @@ ALGORITMA EVALUASI RAGAS TANPA GROUND TRUTH (ragas_eval_no_gt.py)
 
 ---
 
-
 ---
 
 ## 6. Referensi Tambahan & Infrastruktur
 
 ### 6.1 Dependency & Versi Tech Stack
-Berikut adalah *library* utama dan versinya berdasarkan file `requirements.txt`:
+
+Berikut adalah _library_ utama dan versinya berdasarkan file `requirements.txt`:
+
 - **Web Framework**: `fastapi==0.136.1`, `uvicorn==0.46.0`
 - **Telegram Bot**: `python-telegram-bot==22.7`
 - **Langchain (RAG)**: `langchain==1.2.15`, `langchain-core==1.2.31`, `langchain-openai==1.1.14`
@@ -2186,9 +2138,11 @@ Berikut adalah *library* utama dan versinya berdasarkan file `requirements.txt`:
 - **Evaluasi**: `ragas==0.4.3`
 
 ### 6.2 Data Konfigurasi: `section_keywords.yaml`
-Digunakan oleh modul `src/retrieval/self_query.py` untuk menyaring dokumen berdasarkan Bab tertentu (Self Querying). Pemetaannya berformat YAML *key-value*.
+
+Digunakan oleh modul `src/retrieval/self_query.py` untuk menyaring dokumen berdasarkan Bab tertentu (Self Querying). Pemetaannya berformat YAML _key-value_.
 
 **Skema:**
+
 ```yaml
 Nama Bab (Section):
   - kata kunci 1
@@ -2196,6 +2150,7 @@ Nama Bab (Section):
 ```
 
 **Contoh Cuplikan YAML:**
+
 ```yaml
 Front Matter:
   - kata pengantar
@@ -2212,70 +2167,71 @@ BAB II:
 ```
 
 ### 6.3 Daftar Lengkap Environment Variables (`config/settings.py`)
-| Nama Variabel | Default | Deskripsi | Validasi / Aturan |
-| --- | --- | --- | --- |
-| `APP_NAME` | `"Chatbot KKP/PI Assistant"` | Nama aplikasi. | Opsional |
-| `VERSION` | `"1.0.0"` | Versi rilis aplikasi. | Opsional |
-| `ENVIRONMENT` | `"development"` | Mode enviroment aplikasi. | `"development"`, `"staging"`, `"production"` |
-| `DEBUG` | `False` | Mengaktifkan mode debug. | Opsional |
-| `OPEN_API_KEY` | *(Wajib)* | Kunci API OpenAI (Sengaja typo di kode). | Tidak boleh kosong |
-| `LLM_MODEL` | `"gpt-4o-mini"` | Model generasi bahasa alami OpenAI. | Opsional |
-| `EMBEDDING_MODEL` | `"text-embedding-3-large"` | Model konversi teks ke vektor. | Opsional |
-| `OPENAI_MAX_RETRIES` | `3` | Batas retries koneksi OpenAI. | 1 s/d 10 |
-| `OPENAI_TIMEOUT` | `60` | Batas timeout koneksi OpenAI (detik). | 10 s/d 300 |
-| `SUPABASE_URL` | *(Wajib)* | URL proyek basis data Supabase. | Tidak boleh kosong |
-| `SUPABASE_SERVICE_KEY`| *(Wajib)* | Kunci otorisasi khusus (*service role*) Supabase. | Tidak boleh kosong |
-| `TABLE_PARENT_CHUNKS` | `"parent_documents"` | Nama tabel induk dokumen. | Opsional |
-| `TABLE_CHILD_CHUNKS` | `"child_documents"` | Nama tabel anak (vektor). | Opsional |
-| `TABLE_USER_QUOTAS` | `"user_quotas"` | Nama tabel kuota user. | Opsional |
-| `TABLE_CHAT_LOGS` | `"chat_logs"` | Nama tabel riwayat log percakapan. | Opsional |
-| `TABLE_CONVERSATION_SESSIONS` | `"conversation_sessions"` | Nama tabel manajemen sesi. | Opsional |
-| `RETRIEVAL_TOP_K` | `30` | Jumlah awal chunk vektor ditarik sebelum *rerank*. | 5 s/d 100 |
-| `RERANK_TOP_N` | `8` | Jumlah dokumen final setelah *rerank*. | 3 s/d 20 |
-| `BM25_WEIGHT` | `0.4` | Bobot keyword *Hybrid Search*. | **Wajib 1.0** dg `DENSE_WEIGHT` |
-| `DENSE_WEIGHT` | `0.6` | Bobot vektor *Hybrid Search*. | **Wajib 1.0** dg `BM25_WEIGHT` |
-| `RAGAS_SAMPLE_SIZE` | `50` | Jumlah sampel untuk metrik evaluasi Ragas. | 10 s/d 500 |
-| `RAGAS_TIMEOUT` | `300` | Batas waktu evaluasi Ragas (detik). | 60 s/d 600 |
-| `CROSS_ENCODER_MODEL` | `"cross-encoder/ms-marco-MiniLM-L-6-v2"` | Model klasifikasi silang untuk Reranking lokal. | Opsional |
-| `CROSS_ENCODER_BATCH_SIZE` | `32` | Ukuran batch reranker model. | 1 s/d 128 |
-| `HF_TOKEN` | `None` | Token akses Hugging Face (opsional). | Opsional |
-| `LOG_LEVEL` | `"INFO"` | Tingkat pencatatan Log (Loguru). | `"DEBUG"`, `"INFO"`, dll |
-| `LOG_FILE` | `None` | Lokasi file log lokal (opsional). | Opsional |
-| `TELEGRAM_BOT_TOKEN` | *(Wajib)* | Token bot Telegram. | Tidak boleh kosong |
-| `TELEGRAM_WEBHOOK_URL`| `""` (Kosong) | Endpoint webhook bot saat di production. | Opsional |
-| `TELEGRAM_WEBHOOK_SECRET` | `""` (Kosong) | Kunci rahasia pengaman webhook. | **Wajib** & min 16 char (prod) |
-| `TELEGRAM_WEBHOOK_PATH` | `"/api/telegram/webhook"` | Lokasi path URL internal webhook. | Opsional |
-| `RATE_LIMIT_REQUESTS` | `13` | Maksimal kueri per pengguna. | 1 s/d 100 |
-| `RATE_LIMIT_WINDOW` | `86400` | Jeda siklus pembatasan dalam detik. | 3600 s/d 604800 |
-| `MAX_CONCURRENT_REQUESTS`| `10` | Batas jumlah request serentak ke API. | 1 s/d 50 |
-| `REQUEST_TIMEOUT` | `30` | Waktu tunggu maksimum endpoint chat (detik). | 10 s/d 120 |
-| `MAX_ACTIVE_SESSIONS` | `1000` | Kapasitas batas atas manajemen sesi aktif. | 100 s/d 10000 |
-| `SESSION_CLEANUP_INTERVAL`| `3600` | Waktu kedaluwarsa sesi pasif (detik). | 300 s/d 7200 |
-| `USE_DATABASE_SESSIONS` | `True` | Menggunakan Supabase untuk state storage. | `True`/`False` |
-| `PORT` | `8000` | Variabel environment (non-settings.py) untuk port. | Opsional |
+
+| Nama Variabel                 | Default                                  | Deskripsi                                          | Validasi / Aturan                            |
+| ----------------------------- | ---------------------------------------- | -------------------------------------------------- | -------------------------------------------- |
+| `APP_NAME`                    | `"Chatbot KKP/PI Assistant"`             | Nama aplikasi.                                     | Opsional                                     |
+| `VERSION`                     | `"1.0.0"`                                | Versi rilis aplikasi.                              | Opsional                                     |
+| `ENVIRONMENT`                 | `"development"`                          | Mode enviroment aplikasi.                          | `"development"`, `"staging"`, `"production"` |
+| `DEBUG`                       | `False`                                  | Mengaktifkan mode debug.                           | Opsional                                     |
+| `OPEN_API_KEY`                | _(Wajib)_                                | Kunci API OpenAI (Sengaja typo di kode).           | Tidak boleh kosong                           |
+| `LLM_MODEL`                   | `"gpt-4o-mini"`                          | Model generasi bahasa alami OpenAI.                | Opsional                                     |
+| `EMBEDDING_MODEL`             | `"text-embedding-3-large"`               | Model konversi teks ke vektor.                     | Opsional                                     |
+| `OPENAI_MAX_RETRIES`          | `3`                                      | Batas retries koneksi OpenAI.                      | 1 s/d 10                                     |
+| `OPENAI_TIMEOUT`              | `60`                                     | Batas timeout koneksi OpenAI (detik).              | 10 s/d 300                                   |
+| `SUPABASE_URL`                | _(Wajib)_                                | URL proyek basis data Supabase.                    | Tidak boleh kosong                           |
+| `SUPABASE_SERVICE_KEY`        | _(Wajib)_                                | Kunci otorisasi khusus (_service role_) Supabase.  | Tidak boleh kosong                           |
+| `TABLE_PARENT_CHUNKS`         | `"parent_documents"`                     | Nama tabel induk dokumen.                          | Opsional                                     |
+| `TABLE_CHILD_CHUNKS`          | `"child_documents"`                      | Nama tabel anak (vektor).                          | Opsional                                     |
+| `TABLE_USER_QUOTAS`           | `"user_quotas"`                          | Nama tabel kuota user.                             | Opsional                                     |
+| `TABLE_CHAT_LOGS`             | `"chat_logs"`                            | Nama tabel riwayat log percakapan.                 | Opsional                                     |
+| `TABLE_CONVERSATION_SESSIONS` | `"conversation_sessions"`                | Nama tabel manajemen sesi.                         | Opsional                                     |
+| `RETRIEVAL_TOP_K`             | `30`                                     | Jumlah awal chunk vektor ditarik sebelum _rerank_. | 5 s/d 100                                    |
+| `RERANK_TOP_N`                | `8`                                      | Jumlah dokumen final setelah _rerank_.             | 3 s/d 20                                     |
+| `BM25_WEIGHT`                 | `0.4`                                    | Bobot keyword _Hybrid Search_.                     | **Wajib 1.0** dg `DENSE_WEIGHT`              |
+| `DENSE_WEIGHT`                | `0.6`                                    | Bobot vektor _Hybrid Search_.                      | **Wajib 1.0** dg `BM25_WEIGHT`               |
+| `RAGAS_SAMPLE_SIZE`           | `50`                                     | Jumlah sampel untuk metrik evaluasi Ragas.         | 10 s/d 500                                   |
+| `RAGAS_TIMEOUT`               | `300`                                    | Batas waktu evaluasi Ragas (detik).                | 60 s/d 600                                   |
+| `CROSS_ENCODER_MODEL`         | `"cross-encoder/ms-marco-MiniLM-L-6-v2"` | Model klasifikasi silang untuk Reranking lokal.    | Opsional                                     |
+| `CROSS_ENCODER_BATCH_SIZE`    | `32`                                     | Ukuran batch reranker model.                       | 1 s/d 128                                    |
+| `HF_TOKEN`                    | `None`                                   | Token akses Hugging Face (opsional).               | Opsional                                     |
+| `LOG_LEVEL`                   | `"INFO"`                                 | Tingkat pencatatan Log (Loguru).                   | `"DEBUG"`, `"INFO"`, dll                     |
+| `LOG_FILE`                    | `None`                                   | Lokasi file log lokal (opsional).                  | Opsional                                     |
+| `TELEGRAM_BOT_TOKEN`          | _(Wajib)_                                | Token bot Telegram.                                | Tidak boleh kosong                           |
+| `TELEGRAM_WEBHOOK_URL`        | `""` (Kosong)                            | Endpoint webhook bot saat di production.           | Opsional                                     |
+| `TELEGRAM_WEBHOOK_SECRET`     | `""` (Kosong)                            | Kunci rahasia pengaman webhook.                    | **Wajib** & min 16 char (prod)               |
+| `TELEGRAM_WEBHOOK_PATH`       | `"/api/telegram/webhook"`                | Lokasi path URL internal webhook.                  | Opsional                                     |
+| `RATE_LIMIT_REQUESTS`         | `13`                                     | Maksimal kueri per pengguna.                       | 1 s/d 100                                    |
+| `RATE_LIMIT_WINDOW`           | `86400`                                  | Jeda siklus pembatasan dalam detik.                | 3600 s/d 604800                              |
+| `MAX_CONCURRENT_REQUESTS`     | `10`                                     | Batas jumlah request serentak ke API.              | 1 s/d 50                                     |
+| `REQUEST_TIMEOUT`             | `30`                                     | Waktu tunggu maksimum endpoint chat (detik).       | 10 s/d 120                                   |
+| `MAX_ACTIVE_SESSIONS`         | `1000`                                   | Kapasitas batas atas manajemen sesi aktif.         | 100 s/d 10000                                |
+| `SESSION_CLEANUP_INTERVAL`    | `3600`                                   | Waktu kedaluwarsa sesi pasif (detik).              | 300 s/d 7200                                 |
+| `USE_DATABASE_SESSIONS`       | `True`                                   | Menggunakan Supabase untuk state storage.          | `True`/`False`                               |
+| `PORT`                        | `8000`                                   | Variabel environment (non-settings.py) untuk port. | Opsional                                     |
 
 ### 6.4 Autentikasi & Keamanan Endpoint (`/api/ai/chat`)
-Endpoint utama `/api/ai/chat` berjalan sebagai **endpoint publik** yang tidak memerlukan Autentikasi statis (seperti *API Key*). Sistem perlindungannya bersandar penuh pada:
+
+Endpoint utama `/api/ai/chat` berjalan sebagai **endpoint publik** yang tidak memerlukan Autentikasi statis (seperti _API Key_). Sistem perlindungannya bersandar penuh pada:
+
 1. **RateLimitMiddleware**: Setiap pengguna dibatasi maksimal 13 sesi pertanyaan per 24 jam (berdasarkan `session_id` atau Alamat IP).
-2. **Validasi Session ID & Input ValidationError**: `InputValidationError` (berlokasi di `security.py`) adalah sebuah *Custom Exception Class* kosong. Exception ini murni di-_raise_ untuk melempar error agar ditangani *Middleware* jika `session_id` berformat salah atau jika teks kueri `question` terlalu pendek (kurang dari 3 huruf).
+2. **Validasi Session ID & Input ValidationError**: `InputValidationError` (berlokasi di `security.py`) adalah sebuah _Custom Exception Class_ kosong. Exception ini murni di-_raise_ untuk melempar error agar ditangani _Middleware_ jika `session_id` berformat salah atau jika teks kueri `question` terlalu pendek (kurang dari 3 huruf).
 3. **Input Sanitization**: Menghilangkan kontrol karakter jahat.
 
 ### 6.5 Arsitektur Infrastruktur & Deployment
-1. **Testing**: Saat ini belum ada direktori khusus `/tests` untuk pengujian integrasi *(Unit Testing)*.
-2. **Deployment**: Sistem berjalan dan di-*deploy* melalui _containerization_ (Docker). Konfigurasi infrastruktur terdefinisi di file `Dockerfile` dan `docker-compose.yml`.
-3. **Migrasi Database**: File berektensi `.sql` di `/scripts` harus dieksekusi secara manual via Supabase SQL Editor. Tidak ada utilitas *Migration Runner* otomatis (seperti *Alembic*).
-4. **Data Retention / Cleanup**: Untuk menjamin memori sesi Telegram tidak membludak, Supabase RPC `cleanup_idle_sessions` melakukan penghapusan *session_id* yang sudah pasif melampaui `SESSION_CLEANUP_INTERVAL`.
-5. **Observability**: Log sistem menggunakan *library* `loguru` yang menyimpan catatannya secara lokal di *console* dan belum diekspor ke layanan sentralisasi (*Datadog* / *Sentry* dll).
 
+1. **Testing**: Saat ini belum ada direktori khusus `/tests` untuk pengujian integrasi _(Unit Testing)_.
+2. **Deployment**: Sistem berjalan dan di-_deploy_ melalui _containerization_ (Docker). Konfigurasi infrastruktur terdefinisi di file `Dockerfile` dan `docker-compose.yml`.
+3. **Migrasi Database**: File berektensi `.sql` di `/scripts` harus dieksekusi secara manual via Supabase SQL Editor. Tidak ada utilitas _Migration Runner_ otomatis (seperti _Alembic_).
+4. **Data Retention / Cleanup**: Untuk menjamin memori sesi Telegram tidak membludak, Supabase RPC `cleanup_idle_sessions` melakukan penghapusan _session_id_ yang sudah pasif melampaui `SESSION_CLEANUP_INTERVAL`.
+5. **Observability**: Log sistem menggunakan _library_ `loguru` yang menyimpan catatannya secara lokal di _console_ dan belum diekspor ke layanan sentralisasi (_Datadog_ / _Sentry_ dll).
 
 ## Checklist Kelengkapan File
+
 - Total file di project: **37** (Tidak termasuk file data seperti section_keywords.yaml)
 - Total file yang ada pseudocode-nya di dokumen ini: **37**
 
 > [!NOTE]
 > Semua file (100%) kode program sudah terwakili secara lengkap dalam dokumen ini.
 
-
-
-
-
+---
