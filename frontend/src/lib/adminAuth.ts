@@ -36,13 +36,18 @@ export function getAdminToken(): string | null {
   return localStorage.getItem('admin_access_token') || sessionStorage.getItem('admin_access_token') || null;
 }
 
-export function getAdminInfo(): any | null {
+interface AdminInfo {
+  full_name: string;
+  username: string;
+}
+
+export function getAdminInfo(): AdminInfo | null {
   if (typeof window === 'undefined') return null;
   const raw = localStorage.getItem('admin_info') || sessionStorage.getItem('admin_info');
   if (raw) {
     try {
       return JSON.parse(raw);
-    } catch (e) {
+    } catch {
       return null;
     }
   }

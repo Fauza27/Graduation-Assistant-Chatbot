@@ -38,7 +38,7 @@ async function adminFetch(path: string, options: RequestInit = {}) {
       if (data.detail) {
         errorMessage = typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail);
       }
-    } catch (e) {
+    } catch {
       // Ignored
     }
     throw new Error(errorMessage);

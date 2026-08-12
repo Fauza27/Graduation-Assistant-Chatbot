@@ -37,8 +37,9 @@ export default function ChatPage() {
     try {
       const response = await sendChatMessage(currentInput, session_id);
       addMessage('bot', response.answer || '...', response.sources || []);
-    } catch (err: any) {
-      addMessage('bot', `**Error:** ${err.message || 'Gagal terhubung ke server.'}`);
+    } catch (err: Error | unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Gagal terhubung ke server.';
+      addMessage('bot', `**Error:** ${errorMessage}`);
     } finally {
       setIsLoading(false);
     }
@@ -58,8 +59,9 @@ export default function ChatPage() {
         await deleteSession(session_id);
         resetSession();
         setMenuOpen(false);
-      } catch (err: any) {
-        alert(`Gagal menghapus percakapan: ${err.message}`);
+      } catch (err: Error | unknown) {
+        const errorMessage = err instanceof Error ? err.message : 'Terjadi kesalahan';
+        alert(`Gagal menghapus percakapan: ${errorMessage}`);
       }
     }
   };
