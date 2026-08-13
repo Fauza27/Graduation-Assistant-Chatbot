@@ -19,9 +19,6 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
   const pathname = usePathname();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   
-  // Use useState initializer for mounted state (no useEffect needed)
-  const [mounted, setMounted] = useState(false);
-  
   // App store hooks
   const {
     isDocPanelOpen, 
@@ -31,8 +28,13 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
     resetSession
   } = useAppStore();
 
+  // Check if we're on client side (no useEffect, no setState)
+  const isClient = typeof window !== 'undefined';
+
   // Authentication check - use useEffect only for side effects, not state updates
   useEffect(() => {
+    if (!isClient) return;
+    
     const token = getAuthToken();
     if (!token) {
       router.replace('/login');
@@ -47,15 +49,10 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
     } catch {
       logout();
     }
-  }, [router]);
+  }, [router, isClient]);
 
-  // Separate useEffect for mounting (runs once, no dependencies)
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // Early return for SSR hydration safety
-  if (!mounted) return null;
+  // Early return for SSR hydration safety - no state needed
+  if (!isClient) return null;
 
   return (
     <div className="app">
