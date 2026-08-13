@@ -34,20 +34,23 @@ export default function ReembedStatusModal({ childId, onDone, onClose }: Reembed
     return 14;
   };
 
-  const startProcess = async () => {
-    setLogStatus("starting");
-    setErrorMessage(null);
-    try {
-      const res = await triggerReembed(childId);
-      setLogStatus(res.status);
-    } catch (err: any) {
-      setLogStatus("failed");
-      setErrorMessage(err.message || "Gagal memulai proses re-embed.");
-    }
-  };
-
+  // Start reembed process when modal opens
   useEffect(() => {
-    startProcess();
+    const initializeReembed = async () => {
+      setLogStatus("starting");
+      setErrorMessage(null);
+      try {
+        const res = await triggerReembed(childId);
+        setLogStatus(res.status);
+      } catch (err: Error | unknown) {
+        const errorMessage = err instanceof Error ? err.message : "Gagal memulai proses re-embed.";
+        setLogStatus("failed");
+        setErrorMessage(errorMessage);
+      }
+    };
+    
+    initializeReembed();
+    
     return () => {
       if (pollingRef.current) clearInterval(pollingRef.current);
     };
@@ -66,7 +69,7 @@ export default function ReembedStatusModal({ childId, onDone, onClose }: Reembed
             }
             onDone(res.status === "success" ? "success" : "failed");
           }
-        } catch (err) {
+        } catch {
           // Keep polling unless it fails hard, but we assume transient network errors
         }
       }, 1500);

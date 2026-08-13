@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { Database, LogOut, ChevronUp, Menu, X } from 'lucide-react';
+import { Database, LogOut, ChevronUp, X } from 'lucide-react';
 import { adminLogout, getAdminInfo } from '@/lib/adminAuth';
 
 interface AdminSidebarProps {
@@ -12,12 +12,9 @@ interface AdminSidebarProps {
 export default function AdminSidebar({ onCloseMobile }: AdminSidebarProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const [adminInfo, setAdminInfo] = useState<{ full_name: string; username: string } | null>(null);
+  // Get admin info on mount (derived state pattern)
+  const adminInfo = getAdminInfo();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-
-  useEffect(() => {
-    setAdminInfo(getAdminInfo());
-  }, []);
 
   const handleLogout = () => {
     adminLogout();

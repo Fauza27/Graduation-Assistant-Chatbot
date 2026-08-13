@@ -17,7 +17,7 @@ export default function DeleteConfirmModal({ chunk, onConfirm, onCancel }: Delet
     setIsDeleting(true);
     try {
       await onConfirm();
-    } catch (err) {
+    } catch {
       // errors should be caught by caller to show toast
       setIsDeleting(false);
     }

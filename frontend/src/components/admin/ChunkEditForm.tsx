@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { RefreshCw, Trash2, Save } from 'lucide-react';
+import { RefreshCw, Trash2 } from 'lucide-react';
 import { ChunkDetail } from '@/lib/adminTypes';
 import { saveChunk, deleteChunk, ChunkSaveResponse } from '@/lib/adminApi';
 import { useAdminStore } from '@/lib/adminStore';
@@ -17,28 +17,25 @@ interface ChunkEditFormProps {
 }
 
 export default function ChunkEditForm({ chunk, onSaved, onDeleted, layout = 'sidebar' }: ChunkEditFormProps) {
-  const router = useRouter();
   const { patchChunkInTree, removeChunkFromTree } = useAdminStore();
   
   const [activeTab, setActiveTab] = useState<'metadata' | 'content'>('metadata');
   
+  // Initialize draft state from chunk prop (derived state pattern)
   const [titleDraft, setTitleDraft] = useState(chunk.title);
   const [pagesDraft, setPagesDraft] = useState(chunk.pages);
   const [contentDraft, setContentDraft] = useState(chunk.content);
-  
-  const [isSaving, setIsSaving] = useState(false);
-  const [showReembedModal, setShowReembedModal] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-  // Sync draft when chunk prop changes
+  // Sync draft when chunk changes (key-based reset pattern)
+  const chunkKey = `${chunk.id}-${chunk.title}-${chunk.pages}-${chunk.content}`;
   useEffect(() => {
     setTitleDraft(chunk.title);
     setPagesDraft(chunk.pages);
     setContentDraft(chunk.content);
-  }, [chunk]);
+  }, [chunkKey, chunk.title, chunk.pages, chunk.content]);
 
   const handleSave = async () => {
-    const updates: any = {};
+    const updates: Partial<{ title: string; pages: string; content: string }> = {};
     if (titleDraft !== chunk.title) updates.title = titleDraft;
     if (pagesDraft !== chunk.pages) updates.pages = pagesDraft;
     if (contentDraft !== chunk.content) updates.content = contentDraft;
@@ -54,8 +51,9 @@ export default function ChunkEditForm({ chunk, onSaved, onDeleted, layout = 'sid
       patchChunkInTree(chunk.id, { embedding_status: result.embedding_status });
       onSaved(result);
       showToast(result.message);
-    } catch (err: any) {
-      showToast(err.message || 'Gagal menyimpan.');
+    } catch (err: Error | unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Gagal menyimpan.';
+      showToast(errorMessage);
     } finally {
       setIsSaving(false);
     }
@@ -70,8 +68,9 @@ export default function ChunkEditForm({ chunk, onSaved, onDeleted, layout = 'sid
       if (onDeleted) {
         onDeleted();
       }
-    } catch (err: any) {
-      showToast(err.message || 'Gagal menghapus chunk.');
+    } catch (err: Error | unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Gagal menghapus chunk.';
+      showToast(errorMessage);
       throw err; // rethrow to let modal know it failed
     }
   };
