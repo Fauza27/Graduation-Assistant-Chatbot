@@ -8,11 +8,21 @@ import Link from 'next/link';
 import { jwtDecode } from 'jwt-decode';
 import { DOCUMENTS } from '../../lib/documentSources';
 
+// JWT payload interface
+interface JWTPayload {
+  exp: number;
+  [key: string]: unknown;
+}
+
 export default function SiteLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isClient, setIsClient] = useState(false);
+  
+  // Use derived state pattern for client-side check
+  const [mounted, setMounted] = useState(false);
+  
+  // App store hooks
   const {
     isDocPanelOpen, 
     activeDoc, 
@@ -21,26 +31,31 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
     resetSession
   } = useAppStore();
 
-  // Authentication check
+  // Authentication check with proper async handling
   useEffect(() => {
-    setIsClient(true);
-    const token = getAuthToken();
-    if (!token) {
-      router.replace('/login');
-      return;
-    }
+    const checkAuth = () => {
+      const token = getAuthToken();
+      if (!token) {
+        router.replace('/login');
+        return;
+      }
 
-    try {
-      const decoded: any = jwtDecode(token);
-      if (decoded.exp * 1000 < Date.now()) {
+      try {
+        const decoded = jwtDecode<JWTPayload>(token);
+        if (decoded.exp * 1000 < Date.now()) {
+          logout();
+        }
+      } catch {
         logout();
       }
-    } catch {
-      logout();
-    }
+    };
+    
+    checkAuth();
+    setMounted(true);
   }, [router]);
 
-  if (!isClient) return null; // Avoid hydration mismatch
+  // Early return for SSR hydration safety
+  if (!mounted) return null;
 
   return (
     <div className="app">
