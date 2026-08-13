@@ -181,7 +181,7 @@ export default function ReembedStatusModal({ childId, onDone, onClose }: Reembed
               <button className="btn btn-outline-gray" onClick={onClose} type="button">
                 Tutup
               </button>
-              <button className="btn btn-primary" onClick={startProcess} type="button">
+              <button className="btn btn-primary" onClick={() => window.location.reload()} type="button">
                 Coba Lagi
               </button>
             </>

@@ -1,7 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect } from 'react';
 import { RefreshCw, Trash2 } from 'lucide-react';
 import { ChunkDetail } from '@/lib/adminTypes';
 import { saveChunk, deleteChunk, ChunkSaveResponse } from '@/lib/adminApi';
@@ -20,19 +19,22 @@ export default function ChunkEditForm({ chunk, onSaved, onDeleted, layout = 'sid
   const { patchChunkInTree, removeChunkFromTree } = useAdminStore();
   
   const [activeTab, setActiveTab] = useState<'metadata' | 'content'>('metadata');
+  const [isSaving, setIsSaving] = useState(false);
+  const [showReembedModal, setShowReembedModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   
-  // Initialize draft state from chunk prop (derived state pattern)
-  const [titleDraft, setTitleDraft] = useState(chunk.title);
-  const [pagesDraft, setPagesDraft] = useState(chunk.pages);
-  const [contentDraft, setContentDraft] = useState(chunk.content);
-
-  // Sync draft when chunk changes (key-based reset pattern)
-  const chunkKey = `${chunk.id}-${chunk.title}-${chunk.pages}-${chunk.content}`;
-  useEffect(() => {
+  // Draft state with key-based reset to avoid useEffect
+  const chunkKey = `${chunk.id}`;
+  const [titleDraft, setTitleDraft] = useState(() => chunk.title);
+  const [pagesDraft, setPagesDraft] = useState(() => chunk.pages);
+  const [contentDraft, setContentDraft] = useState(() => chunk.content);
+  
+  // Reset draft when chunk changes (using key prop pattern)
+  React.useEffect(() => {
     setTitleDraft(chunk.title);
-    setPagesDraft(chunk.pages);
+    setPagesDraft(chunk.pages);  
     setContentDraft(chunk.content);
-  }, [chunkKey, chunk.title, chunk.pages, chunk.content]);
+  }, [chunkKey]); // Only depend on chunk ID, not content
 
   const handleSave = async () => {
     const updates: Partial<{ title: string; pages: string; content: string }> = {};
