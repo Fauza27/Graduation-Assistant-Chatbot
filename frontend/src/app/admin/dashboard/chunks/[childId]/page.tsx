@@ -32,7 +32,8 @@ export default function EditChunkPage({ params }: { params: Promise<{ childId: s
       try {
         const data = await getChunkDetail(childId);
         if (isMounted) setDetail(data);
-      } catch (err) {
+      } catch (error) {
+        console.error('Error fetching chunk detail:', error);
         if (isMounted) setDetail(null);
       } finally {
         if (isMounted) setIsLoading(false);

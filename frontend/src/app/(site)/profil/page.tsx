@@ -4,16 +4,14 @@ import { useEffect, useState } from 'react';
 import { fetchProfile } from '../../../lib/api';
 import { logout } from '../../../lib/auth';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 export default function ProfilPage() {
   const router = useRouter();
   const [profile, setProfile] = useState<{ nama: string; email: string; avatar_url: string | null } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    loadProfile();
-  }, []);
-
+  // Move function declaration before useEffect
   const loadProfile = async () => {
     try {
       const data = await fetchProfile();
@@ -29,6 +27,10 @@ export default function ProfilPage() {
     }
   };
 
+  useEffect(() => {
+    loadProfile();
+  }, []);
+
   return (
     <>
       <div className="main-header">
@@ -43,7 +45,14 @@ export default function ProfilPage() {
             <>
               <div className="profil-avatar">
                 {profile?.avatar_url ? (
-                  <img src={profile.avatar_url} alt="Avatar" style={{ width: '100%', height: '100%', borderRadius: '50%' }} />
+                  <Image 
+                    src={profile.avatar_url} 
+                    alt="Avatar" 
+                    width={68}
+                    height={68}
+                    style={{ borderRadius: '50%' }}
+                    unoptimized
+                  />
                 ) : (
                   <svg viewBox="0 0 24 24" style={{ width: 34, height: 34 }}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                 )}

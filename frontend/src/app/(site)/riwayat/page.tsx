@@ -5,26 +5,39 @@ import { fetchSessions, fetchSessionDetails } from '../../../lib/api';
 import { useAppStore } from '../../../lib/store';
 import { useRouter } from 'next/navigation';
 
+// Define proper types
+interface SessionData {
+  session_id: string;
+  title: string;
+  last_access: string;
+  [key: string]: unknown;
+}
+
+interface GroupedSessions {
+  [key: string]: SessionData[];
+}
+
 export default function RiwayatPage() {
   const router = useRouter();
-  const [sessions, setSessions] = useState<any[]>([]);
+  const [sessions, setSessions] = useState<SessionData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { setSessionId, setMessages } = useAppStore();
 
-  useEffect(() => {
-    loadSessions();
-  }, []);
-
+  // Move function declaration before useEffect
   const loadSessions = async () => {
     try {
       const data = await fetchSessions();
       setSessions(data.sessions || []);
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
+      console.error('Error loading sessions:', error);
     } finally {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    loadSessions();
+  }, []);
 
   const openSession = async (id: string) => {
     try {
@@ -34,15 +47,16 @@ export default function RiwayatPage() {
         setMessages(details.messages);
         router.push('/chat');
       }
-    } catch (err) {
+    } catch (error) {
+      console.error('Error opening session:', error);
       alert('Gagal memuat sesi ini');
     }
   };
 
   // Group logic
-  const groupSessions = () => {
+  const groupSessions = (): GroupedSessions => {
     const today = new Date();
-    const groups: { [key: string]: any[] } = {
+    const groups: GroupedSessions = {
       'Hari Ini': [],
       'Kemarin': [],
       'Lebih Lama': []
