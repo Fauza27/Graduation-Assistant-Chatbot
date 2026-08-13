@@ -5,6 +5,13 @@ import { useRouter } from 'next/navigation';
 import { GoogleLogin } from '@react-oauth/google';
 import { setAuthToken } from '../../lib/auth';
 
+// Define proper types for Google OAuth response
+interface GoogleCredentialResponse {
+  credential: string;
+  select_by?: string;
+  client_id?: string;
+}
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://127.0.0.1:8000';
 
 export default function LoginPage() {
@@ -12,7 +19,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
-  const handleGoogleSuccess = async (credentialResponse: any) => {
+  const handleGoogleSuccess = async (credentialResponse: GoogleCredentialResponse) => {
     try {
       setIsLoading(true);
       setErrorMsg('');
@@ -36,9 +43,10 @@ export default function LoginPage() {
       } else {
         throw new Error('Token tidak valid dari server');
       }
-    } catch (err: any) {
+    } catch (err: Error | unknown) {
       console.error('Login error:', err);
-      setErrorMsg(err.message || 'Terjadi kesalahan saat login.');
+      const errorMessage = err instanceof Error ? err.message : 'Terjadi kesalahan saat login.';
+      setErrorMsg(errorMessage);
       setIsLoading(false);
     }
   };
