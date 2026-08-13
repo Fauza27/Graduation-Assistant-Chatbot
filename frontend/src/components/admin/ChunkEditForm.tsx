@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { RefreshCw, Trash2 } from 'lucide-react';
 import { ChunkDetail } from '@/lib/adminTypes';
 import { saveChunk, deleteChunk, ChunkSaveResponse } from '@/lib/adminApi';
@@ -15,7 +15,8 @@ interface ChunkEditFormProps {
   layout?: 'sidebar' | 'full';
 }
 
-export default function ChunkEditForm({ chunk, onSaved, onDeleted, layout = 'sidebar' }: ChunkEditFormProps) {
+// Internal component that will be reset via key prop
+function ChunkEditFormInternal({ chunk, onSaved, onDeleted, layout = 'sidebar' }: ChunkEditFormProps) {
   const { patchChunkInTree, removeChunkFromTree } = useAdminStore();
   
   const [activeTab, setActiveTab] = useState<'metadata' | 'content'>('metadata');
@@ -23,18 +24,10 @@ export default function ChunkEditForm({ chunk, onSaved, onDeleted, layout = 'sid
   const [showReembedModal, setShowReembedModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   
-  // Draft state with key-based reset to avoid useEffect
-  const chunkKey = `${chunk.id}`;
-  const [titleDraft, setTitleDraft] = useState(() => chunk.title);
-  const [pagesDraft, setPagesDraft] = useState(() => chunk.pages);
-  const [contentDraft, setContentDraft] = useState(() => chunk.content);
-  
-  // Reset draft when chunk changes (using key prop pattern)
-  React.useEffect(() => {
-    setTitleDraft(chunk.title);
-    setPagesDraft(chunk.pages);  
-    setContentDraft(chunk.content);
-  }, [chunkKey]); // Only depend on chunk ID, not content
+  // Initialize draft state from chunk prop - no useEffect needed!
+  const [titleDraft, setTitleDraft] = useState(chunk.title);
+  const [pagesDraft, setPagesDraft] = useState(chunk.pages);
+  const [contentDraft, setContentDraft] = useState(chunk.content);
 
   const handleSave = async () => {
     const updates: Partial<{ title: string; pages: string; content: string }> = {};
@@ -225,4 +218,10 @@ export default function ChunkEditForm({ chunk, onSaved, onDeleted, layout = 'sid
       )}
     </div>
   );
+}
+
+// Wrapper component that uses key prop to reset internal state
+export default function ChunkEditForm(props: ChunkEditFormProps) {
+  // Use chunk.id as key to force component remount when chunk changes
+  return <ChunkEditFormInternal key={props.chunk.id} {...props} />;
 }
