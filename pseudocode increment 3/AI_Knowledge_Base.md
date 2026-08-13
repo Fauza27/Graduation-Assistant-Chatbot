@@ -323,6 +323,7 @@ ALGORITMA ADMIN API ENDPOINTS (admin.py)
 
 1. ROUTER DAN DEPENDENCY
    - APIRouter prefix "/admin".
+   - **Note**: Router ini didaftarkan dengan prefix `/api` di application.py, sehingga endpoint final menjadi `/api/admin/*`.
    - Semua endpoint protected dengan get_current_admin, kecuali login.
    - get_supabase() membuat client Supabase dari settings.supabase_url dan settings.supabase_service_key.
 
@@ -397,7 +398,7 @@ ALGORITMA MIGRASI ADMIN STATUS
 5. Delete chunk hanya untuk child chunk, lalu parent kosong dibersihkan otomatis.
 6. Error handling menggunakan 404 untuk resource tidak ditemukan dan 400 untuk update kosong.
 
-Sistem admin ini sekarang selaras dengan implementasi nyata di `backend/src/admin/auth.py`, `backend/src/admin/chunk_editor.py`, dan `backend/src/api/admin.py`. - created_at (Timestamp)
+Sistem admin ini sekarang selaras dengan implementasi nyata di `backend/src/admin/auth.py`, `backend/src/admin/chunk_editor.py`, dan `backend/src/api/admin.py`.
 
 4. PEMBUATAN INDEX UNTUK PERFORMA PENCARIAN
    - Buat index `ivfflat` menggunakan `vector_cosine_ops` untuk kolom embedding (pencarian kemiripan vektor).
@@ -543,6 +544,37 @@ ALGORITMA MIGRASI PENYIMPANAN SESI KE DATABASE (supabase_session_migration.sql)
 }
 ```
 
+**API Routes Overview:**
+
+**Student APIs (dengan prefix /api):**
+- `POST /api/auth/google/verify` - Verifikasi Google OAuth token
+- `GET /api/auth/me` - Get current user profile  
+- `POST /api/auth/logout` - Logout endpoint
+- `POST /api/ai/chat` - Send chat message, get AI response
+- `GET /api/sessions/` - Get user's chat sessions
+- `GET /api/sessions/{id}` - Get specific session details
+- `DELETE /api/sessions/{id}` - Delete specific session
+
+**Admin APIs (dengan prefix /api):**
+- `POST /api/admin/login` - Admin username/password login
+- `POST /api/admin/logout` - Admin logout
+- `GET /api/admin/documents` - Get knowledge tree structure
+- `GET /api/admin/chunks/{childId}` - Get chunk detail for editing
+- `PUT /api/admin/chunks/{childId}` - Update chunk content/metadata
+- `POST /api/admin/chunks/{childId}/reembed` - Trigger re-embedding process
+- `GET /api/admin/chunks/{childId}/edit-status` - Get edit/reembed status
+- `DELETE /api/admin/chunks/{childId}` - Delete chunk
+
+**Health APIs (tanpa prefix /api):**
+- `GET /health/` - Basic health check
+- `GET /health/detailed` - Detailed health with dependencies
+- `GET /health/readiness` - Kubernetes readiness probe
+- `GET /health/liveness` - Kubernetes liveness probe
+
+**Special Endpoints:**
+- `POST /api/telegram/webhook` - Telegram webhook receiver
+- `GET /` - Root welcome endpoint
+
 **File Pemroses (Pseudocode):**
 
 #### File: `main.py`
@@ -657,10 +689,11 @@ ALGORITMA INISIALISASI SERVER APLIKASI (application.py)
    - Tambahkan middleware CORS (Cross-Origin Resource Sharing) untuk mengizinkan aplikasi diakses HANYA dari origin frontend secara eksplisit (seperti Vercel atau localhost).
 
 5. FUNGSI \_register_routers(app)
-   - Daftarkan router `/api` (untuk endpoint sistem AI dan chat).
-   - Daftarkan router `/auth` (untuk endpoint otentikasi login).
-   - Daftarkan router `/sessions` (untuk endpoint riwayat chat).
-   - Daftarkan router `/health` (untuk mengecek kesehatan server).
+   - Daftarkan router `/api/ai` (untuk endpoint sistem AI dan chat).
+   - Daftarkan router `/api/auth` (untuk endpoint otentikasi login).
+   - Daftarkan router `/api/sessions` (untuk endpoint riwayat chat).
+   - Daftarkan router `/api/admin` (untuk endpoint admin management).
+   - Daftarkan router `/health` (untuk mengecek kesehatan server - tanpa prefix /api).
    - DEFINISI ENDPOINT POST `/api/telegram/webhook`:
      - Fungsi ini dipanggil otomatis oleh Telegram setiap ada chat masuk.
      - Ambil pengaturan rahasia webhook.
@@ -690,8 +723,10 @@ ALGORITMA ENDPOINT AUTENTIKASI GOOGLE (auth.py)
 
 2. INISIALISASI ROUTER
    - Buat `APIRouter` dengan prefix `/auth` dan tag "Auth".
+   - **Note**: Router ini didaftarkan dengan prefix `/api` di application.py, sehingga endpoint final menjadi `/api/auth/*`.
 
 3. ENDPOINT POST `/google/verify`
+   - **Final URL**: `/api/auth/google/verify` (karena prefix dari application.py)
    - Terima payload JSON berisi `id_token`.
    - TAHAP 1: Verifikasi token -> Profil Google dengan menanyakan ke SDK Google (`verify_google_id_token`).
    - TAHAP 2: Simpan/Perbarui Database (`mahasiswa_accounts`):
@@ -703,6 +738,7 @@ ALGORITMA ENDPOINT AUTENTIKASI GOOGLE (auth.py)
    - KEMBALIKAN token beserta informasi dasar.
 
 4. ENDPOINT GET `/me`
+   - **Final URL**: `/api/auth/me` (karena prefix dari application.py)
    - Validasi Authorization Header berisi Bearer token.
    - Ekstrak token, dekripsi dengan `verify_access_token`.
    - Ambil profil spesifik (opsional dari tabel `mahasiswa_accounts` di Supabase).
@@ -899,7 +935,10 @@ ALGORITMA ROUTER SESSIONS (sessions.py)
        - Panggil Supabase: `SELECT turns FROM conversation_sessions WHERE session_id = ? AND mahasiswa_id = ?`.
        - Jika tidak ditemukan, kembalikan HTTP 404 (Not Found).
      - TAHAP 3: Pemrosesan Data
-       - Format ulang `turns` agar sesuai dengan yang diharapkan oleh frontend (ganti nama field: `content` menjadi `text`, `role: "assistant"` menjadi `role: "bot"`, dan `retrieved_doc_contents` menjadi `sources`).
+       - Format ulang `turns` agar sesuai dengan yang diharapkan oleh frontend:
+         - Ganti `role: "assistant"` menjadi `role: "bot"`
+         - Ganti field `content` menjadi `text` 
+         - Ganti `retrieved_doc_contents` menjadi `sources` (dengan fallback)
        - KEMBALIKAN daftar pesan lengkap untuk ditampilkan di UI percakapan.
 
 5. ENDPOINT DELETE "/{session_id}"
@@ -2352,13 +2391,13 @@ METHOD `invoke_clarification(question, history, last_context)` - TIDAK EXIST:
 
 ---
 
-## Checklist Kelengkapan File
 
-- Total file di project: **37** (Tidak termasuk file data seperti section_keywords.yaml)
-- Total file yang ada pseudocode-nya di dokumen ini: **37**
-- Total tabel database terdokumentasi lengkap: **8** (parent_documents, child_documents, mahasiswa_accounts, conversation_sessions, admin_users, chunk_edit_logs, user_quotas, chat_logs)
+## Checklist Kelengkapan Dokumentasi
 
-> [!NOTE]
-> Semua file (100%) kode program sudah terwakili secara lengkap dalam dokumen ini.
+> **Dokumentasi Status**: Dokumen ini menyediakan pseudocode dan dokumentasi lengkap untuk semua komponen utama sistem AI Chatbot Asisten Akademik berdasarkan implementasi aktual di increment 3.
+
+> **Database Coverage**: Semua 8 tabel database terdokumentasi lengkap (parent_documents, child_documents, mahasiswa_accounts, conversation_sessions, admin_users, chunk_edit_logs, user_quotas, chat_logs).
+
+> **Last Updated**: Agustus 2026
 
 ---

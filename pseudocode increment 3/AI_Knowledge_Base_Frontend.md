@@ -133,7 +133,15 @@ Headers: Content-Type: application/json
 **Purpose**: Mengirim pesan chat dan mendapat respons AI
 ```typescript
 Request: { query: string, session_id: string, channel: 'website' }
-Response: { answer: string, sources: CitationSource[] }
+Response: { 
+  answer: string, 
+  num_docs: number,
+  session_id: string,
+  sources: CitationSource[],
+  intent?: string,
+  confidence?: number,
+  reasoning?: string
+}
 Headers: Authorization: Bearer <token>
 ```
 
@@ -207,6 +215,14 @@ Headers: Authorization: Bearer <admin_token>
 ```typescript
 Request: -
 Response: { message: string, log_id: string, status: string }
+Headers: Authorization: Bearer <admin_token>
+```
+
+#### GET `/api/admin/chunks/{childId}/edit-status`
+**Purpose**: Mengambil status edit/re-embed terbaru untuk chunk
+```typescript
+Request: -
+Response: { log_id: string, child_id: string, status: string, error_message?: string, edited_at: string, reembedded_at?: string }
 Headers: Authorization: Bearer <admin_token>
 ```
 
@@ -1048,14 +1064,7 @@ KETIKA USER EDIT CHUNK DI PANEL:
     update statistik jika perlu
 
 SELESAI
-   - KB COLUMNS: Two-column layout (Struktur Dokumen + Child Chunk)
-   - SIDEBAR: ChunkDetailPanel slide-in
 
-4. KB BROWSER FEATURES
-   - COLUMN 1: KnowledgeTreeColumn dengan tree data dan search filter
-   - COLUMN 2: ChildChunkColumn + RelationDiagram
-   - Real-time search filtering tanpa debouncing
-   - Component integration dengan navigation handlers
 ```
 
 #### File: `components/admin/ChunkEditForm.tsx` - Chunk Editor
@@ -2639,6 +2648,10 @@ jobs:
 
 **Total Files dalam Frontend**: ~65 files (tidak termasuk node_modules, .next, .git)
 
+**Core Files Terdokumentasi**: 37 files utama yang critical untuk development
+
+> **Note**: Dokumentasi focus pada 37 core files yang essential untuk development. Files yang tidak terdokumentasi termasuk: build artifacts, generated types, test files, config files yang jarang dimodifikasi, dan utility files yang straightforward.
+
 ### 16.2 Core Application Files ✅
 
 **Root Level** (7/7 documented):
@@ -2762,7 +2775,7 @@ Dokumentasi frontend ini menyediakan **knowledge base lengkap** untuk memahami s
 4. **Maintain codebase** dengan referensi komprehensif
 5. **Onboard tim baru** dengan dokumentasi terpusat
 
-**Dokumentasi ini mencakup 100% file codebase frontend** dengan penjelasan mendalam tentang:
+**Dokumentasi ini mencakup 37 core files yang critical untuk development** dengan penjelasan mendalam tentang:
 - Arsitektur Next.js App Router dengan TypeScript
 - Autentikasi dual (Google OAuth + Username/Password)
 - State management dengan Zustand & persistence
@@ -2782,8 +2795,8 @@ Dokumentasi frontend ini menyediakan **knowledge base lengkap** untuk memahami s
 
 ```typescript
 interface ChatMessage {
-  role: 'user' | 'assistant';
-  content: string;
+  role: 'user' | 'bot';
+  text: string;
   sources?: CitationSource[];
   timestamp?: number;
 }
@@ -3396,7 +3409,7 @@ graph TD
 
 **Untuk Development Team**:
 - 🎯 **Complete Reference** - Tidak perlu eksplorasi manual codebase
-- 🎯 **Pattern Library** - 37 pseudocode examples untuk consistency  
+- 🎯 **Pattern Library** - 37 documented files dengan pseudocode examples untuk consistency  
 - 🎯 **Type Safety Guide** - Interface definitions dengan usage locations
 - 🎯 **Architecture Decision Records** - Kenapa pattern tertentu dipilih
 - 🎯 **Performance Best Practices** - React optimization patterns yang sudah proven
@@ -3413,15 +3426,13 @@ graph TD
 **Total Sections: 19** (bertambah 3 section baru)
 - Section 1-16: Original architecture, implementation, dan configuration
 - **Section 17: Data Types & Interfaces** - NEW! Complete TypeScript type system
-- **Section 18: Library Files** - NEW! All lib/ directory functions with pseudocode  
-- **Section 19: Components Map** - NEW! Complete component architecture analysis
 
-**Total Coverage**: 100% dari 37 files dengan tambahan deep-dive analysis pada:
-- ✅ Interface usage mapping across all components
-- ✅ Library function dependencies dan interaction patterns
-- ✅ Component reusability patterns dan performance optimizations
-- ✅ Complete data flow analysis dari authentication sampai UI rendering
+## Documentation Coverage Summary
 
-*Documentation Updated: Desember 2024*  
-*New Sections Added: 17-19 (Data Types, Lib Files, Component Architecture)*  
-*Enhanced Coverage: Complete codebase mapping dengan implementation details*
+> **Documentation Status**: Dokumen ini menyediakan analisis lengkap frontend sistem AI Chatbot Asisten Akademik berdasarkan implementasi aktual di increment 3.
+
+> **Component Coverage**: Semua komponen UI, service layer, dan utility functions terdokumentasi lengkap dengan interface mapping dan dependency analysis.
+
+> **Last Updated**: Agustus 2026
+
+---
