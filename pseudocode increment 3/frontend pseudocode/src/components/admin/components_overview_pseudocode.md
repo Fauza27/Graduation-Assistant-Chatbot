@@ -9,22 +9,25 @@ ALGORITMA ADMIN COMPONENTS ECOSYSTEM
 
 ## ChunkEditForm.tsx
 ALGORITMA CHUNK EDIT FORM (ChunkEditForm.tsx)
+- Architecture: Wrapper + Internal component pattern untuk state reset
 - Props: {chunk, onSaved, onDeleted, layout?: 'sidebar' | 'full'}
 - State Management:
   - activeTab: 'metadata' | 'content'
-  - Draft states: titleDraft, pagesDraft, contentDraft
+  - Draft states: titleDraft, pagesDraft, contentDraft (initialized from chunk)
   - Loading states: isSaving
   - Modal states: showReembedModal, showDeleteModal
+- Key Pattern: Uses chunk.id as key prop untuk force component remount
 - Key Functions:
   - handleSave(): Validate changes, call saveChunk API, update tree
-  - handleDelete(): Call deleteChunk API, update tree, navigation
+  - handleDelete(): Call deleteChunk API, update tree, navigation  
   - showToast(): Global toast notifications untuk feedback
 - UI Features:
   - Tabbed interface untuk metadata vs content editing
-  - Real-time draft synchronization
+  - State reset via key prop (no useEffect synchronization)
   - Save/delete/re-embed action buttons
   - Mengadaptasi layout secara dinamis (sidebar vs full-page)
   - Textarea stretch (flex: 1) untuk editor konten luas
+- Performance: No setState dalam useEffect, eliminates cascading renders
 
 2. NAVIGATION COMPONENTS
 
@@ -61,12 +64,14 @@ ALGORITMA CHILD CHUNK LIST (ChildChunkColumn.tsx)
 ## ChunkDetailPanel.tsx
 ALGORITMA CHUNK DETAIL PANEL (ChunkDetailPanel.tsx)
 - Props: {childId, isMobileShell?: boolean}
+- State Pattern: Derived state (currentDetail = childId ? detail : null)
 - Features:
   - Slide-in panel behavior
-  - Real-time chunk data loading
+  - Real-time chunk data loading dengan cleanup
   - Metadata display dengan formatting
   - Quick action buttons
   - Mobile responsive dengan overlay
+- Performance: No setState dalam useEffect, uses derived state pattern
 - Content Sections:
   - Chunk identification info
   - Parent relationship context
@@ -92,25 +97,29 @@ ALGORITMA DASHBOARD STATISTICS (StatGrid.tsx)
 ## ReembedStatusModal.tsx
 ALGORITMA RE-EMBED STATUS MODAL (ReembedStatusModal.tsx)
 - Props: {childId, isOpen, onClose}
+- State Pattern: Inline effect initialization (no external function calls)
 - Features:
   - Modal overlay dengan backdrop
-  - Real-time status polling
+  - Real-time status polling dengan cleanup
   - Progress indicators
-  - Error handling dan retry options
+  - Error handling dengan proper typing (Error | unknown)
+  - Retry dengan page reload
 - Status Display:
   - Pending/Processing/Success/Failed states
   - Progress animations
   - Error message display
   - Action buttons untuk retry
+- Performance: Direct async function dalam useEffect, proper cleanup
 
 ## DeleteConfirmModal.tsx
 ALGORITMA DELETE CONFIRMATION (DeleteConfirmModal.tsx)
 - Props: {isOpen, onClose, onConfirm, chunkTitle}
+- Error Handling: Proper Error | unknown typing, no unused variables
 - Features:
   - Warning modal dengan destructive styling
   - Confirmation flow dengan typing verification
   - Loading states during deletion
-  - Error handling
+  - Error handling dengan proper typing
 - Safety Features:
   - Clear warning text
   - Confirmation button styling
@@ -122,10 +131,11 @@ ALGORITMA DELETE CONFIRMATION (DeleteConfirmModal.tsx)
 ## AdminSidebar.tsx
 ALGORITMA ADMIN SIDEBAR NAVIGATION (AdminSidebar.tsx)
 - Props: {onCloseMobile}
+- State Pattern: Direct getAdminInfo() call (no useEffect state sync)
 - Features:
   - Navigation menu struktur
   - Active route highlighting  
-  - User profile display
+  - User profile display dengan derived state
   - Logout functionality
   - Mobile collapse behavior
 - Navigation Items:
@@ -133,6 +143,7 @@ ALGORITMA ADMIN SIDEBAR NAVIGATION (AdminSidebar.tsx)
   - Knowledge base management
   - User profile section
   - Logout dengan confirmation
+- Performance: Derived state pattern eliminates useEffect usage
 
 ## MobileKnowledgeShell.tsx
 ALGORITMA MOBILE KNOWLEDGE SHELL (MobileKnowledgeShell.tsx)
@@ -170,6 +181,12 @@ ALGORITMA PARENT-CHILD RELATION DIAGRAM (RelationDiagram.tsx)
 - Consistent prop interfaces dan TypeScript typing
 - Responsive design dengan mobile-first approach
 - Real-time state synchronization dengan Zustand
-- Comprehensive error handling dan loading states
+- Comprehensive error handling dengan proper Error | unknown typing
 - Accessibility compliance dengan ARIA labels
-- Performance optimization dengan React best practices
+- Performance optimization dengan React best practices:
+  - Key prop pattern untuk state reset (eliminates useEffect sync)
+  - Derived state pattern (no setState in useEffect)
+  - Proper cleanup patterns dalam useEffect
+  - Wrapper + Internal component architecture untuk complex forms
+  - Direct function calls (no unused imports)
+  - ESLint compliant code (no warnings)

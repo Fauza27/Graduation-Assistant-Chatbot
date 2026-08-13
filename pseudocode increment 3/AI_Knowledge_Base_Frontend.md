@@ -833,8 +833,9 @@ ALGORITMA ADMIN AUTHENTICATION FRONTEND
 
 **AdminSidebar** (`components/admin/AdminSidebar.tsx`)
 - **Props**: `{ onCloseMobile?: () => void }`
-- **State**: `adminInfo`, `isProfileOpen` 
-- **Behavior**: Navigation, profile dropdown, responsive close button
+- **State Pattern**: Direct getAdminInfo() call (no useEffect state sync)
+- **Behavior**: Navigation, profile display dengan derived state, responsive close button
+- **Performance**: Eliminates useEffect usage dengan derived state pattern
 
 **KnowledgeTreeColumn** (`components/admin/KnowledgeTreeColumn.tsx`)
 - **Props**: `{ tree: KnowledgeTreeResponse | null, query: string }`
@@ -853,11 +854,12 @@ ALGORITMA ADMIN AUTHENTICATION FRONTEND
 
 **ChunkDetailPanel** (`components/admin/ChunkDetailPanel.tsx`)
 - **Props**: `{ childId: string | null, isMobileShell?: boolean }`
-- **State**: `detail`, `isLoading`
+- **State Pattern**: Derived state (currentDetail = childId ? detail : null)
 - **Behavior**:
   - Fetch chunk detail on childId change
   - Embed ChunkEditForm untuk editing
   - Responsive untuk mobile shell
+- **Performance**: No setState dalam useEffect, uses derived state pattern
 
 **StatGrid** (`components/admin/StatGrid.tsx`)  
 - **Props**: `{ summary?: SummaryStats }`
@@ -966,21 +968,29 @@ ALGORITMA ADMIN DASHBOARD PAGE
 ```markdown
 ALGORITMA CHUNK EDIT FORM
 
-1. PROPS & STATE
-   - Props: {chunk, onSaved, onDeleted, layout?: 'sidebar' | 'full'}
-   - State: activeTab, draft states, loading states, modal states
+1. ARCHITECTURE
+   - Pattern: Wrapper + Internal component untuk state reset
+   - Key Pattern: Uses chunk.id as key prop untuk force component remount
 
-2. KEY FUNCTIONS
+2. PROPS & STATE
+   - Props: {chunk, onSaved, onDeleted, layout?: 'sidebar' | 'full'}
+   - State: activeTab, draft states (initialized from chunk), loading states, modal states
+
+3. KEY FUNCTIONS
    - handleSave(): Validate changes, call saveChunk API, update tree
    - handleDelete(): Call deleteChunk API, update tree, navigation  
    - showToast(): Global toast notifications
 
-3. UI FEATURES
+4. UI FEATURES
    - Tabbed interface: metadata vs content editing
-   - Real-time draft synchronization
+   - State reset via key prop (no useEffect synchronization)
    - Save/delete/re-embed action buttons
    - Dynamic layout adaptation (sidebar vs full-page)
    - Textarea dengan flex: 1 untuk editor luas
+
+5. PERFORMANCE
+   - No setState dalam useEffect (eliminates cascading renders)
+   - Component remount pattern untuk clean state reset
 ```
 
 #### File: `components/admin/KnowledgeTreeColumn.tsx` - Tree Navigation
@@ -1092,22 +1102,28 @@ ALGORITMA LAYOUT UTAMA (APP SHELL)
 ### 8.4 Form Components
 
 **ChunkEditForm** (`components/admin/ChunkEditForm.tsx`)
+- **Architecture**: Wrapper + Internal component pattern untuk state reset
 - **Props**: `{ chunk: ChunkDetail, onSaved: (updated) => void, onDeleted: () => void }`
 - **State**: Form fields (title, pages, content), save status, modal states
+- **Key Pattern**: Uses chunk.id as key prop untuk force component remount
 - **Behavior**:
   - Controlled form dengan validation
-  - Auto-save draft functionality
+  - State reset via key prop (no useEffect synchronization)
   - Re-embed trigger
   - Delete confirmation modal
 - **Validation**: Required fields, pages format (comma-separated numbers)
+- **Performance**: No setState dalam useEffect, eliminates cascading renders
 
 **DeleteConfirmModal** (`components/admin/DeleteConfirmModal.tsx`)
 - **Props**: Modal state & confirmation handlers
-- **Behavior**: Confirmation dialog dengan chunk info
+- **Error Handling**: Proper Error | unknown typing, no unused variables
+- **Behavior**: Confirmation dialog dengan chunk info, loading states, proper error handling
 
 **ReembedStatusModal** (`components/admin/ReembedStatusModal.tsx`)
 - **Props**: Re-embed status tracking
-- **Behavior**: Real-time status updates, progress indication
+- **State Pattern**: Inline effect initialization (no external function calls)
+- **Behavior**: Real-time status updates dengan cleanup, progress indication, proper Error | unknown typing
+- **Performance**: Direct async function dalam useEffect, proper cleanup
 
 ### 8.5 Utility Components
 
