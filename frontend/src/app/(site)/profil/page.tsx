@@ -31,22 +31,6 @@ export default function ProfilPage() {
     fetchData();
   }, []);
 
-  // Keep loadProfile for potential reuse (like refresh button)
-  const loadProfile = async () => {
-    try {
-      const data = await fetchProfile();
-      setProfile({
-        nama: data.nama || 'Mahasiswa STMIK WCD',
-        email: data.email || 'mahasiswa@stmikwcd.ac.id',
-        avatar_url: data.avatar_url || null,
-      });
-    } catch (error) {
-      console.error('Error loading profile:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return (
     <>
       <div className="main-header">

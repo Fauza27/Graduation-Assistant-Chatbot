@@ -39,18 +39,6 @@ export default function RiwayatPage() {
     fetchData();
   }, []);
 
-  // Keep loadSessions for potential reuse (like refresh button)
-  const loadSessions = async () => {
-    try {
-      const data = await fetchSessions();
-      setSessions(data.sessions || []);
-    } catch (error) {
-      console.error('Error loading sessions:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const openSession = async (id: string) => {
     try {
       const details = await fetchSessionDetails(id);
