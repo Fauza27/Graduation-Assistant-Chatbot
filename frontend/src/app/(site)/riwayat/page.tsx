@@ -23,7 +23,23 @@ export default function RiwayatPage() {
   const [isLoading, setIsLoading] = useState(true);
   const { setSessionId, setMessages } = useAppStore();
 
-  // Move function declaration before useEffect
+  // Use useEffect for side effects only, inline the async operation
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const data = await fetchSessions();
+        setSessions(data.sessions || []);
+      } catch (error) {
+        console.error('Error loading sessions:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, []);
+
+  // Keep loadSessions for potential reuse (like refresh button)
   const loadSessions = async () => {
     try {
       const data = await fetchSessions();
@@ -34,10 +50,6 @@ export default function RiwayatPage() {
       setIsLoading(false);
     }
   };
-
-  useEffect(() => {
-    loadSessions();
-  }, []);
 
   const openSession = async (id: string) => {
     try {

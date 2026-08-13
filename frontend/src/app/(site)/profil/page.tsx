@@ -11,7 +11,27 @@ export default function ProfilPage() {
   const [profile, setProfile] = useState<{ nama: string; email: string; avatar_url: string | null } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Move function declaration before useEffect
+  // Use useEffect for side effects only, inline the async operation
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const data = await fetchProfile();
+        setProfile({
+          nama: data.nama || 'Mahasiswa STMIK WCD',
+          email: data.email || 'mahasiswa@stmikwcd.ac.id',
+          avatar_url: data.avatar_url || null,
+        });
+      } catch (error) {
+        console.error('Error loading profile:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, []);
+
+  // Keep loadProfile for potential reuse (like refresh button)
   const loadProfile = async () => {
     try {
       const data = await fetchProfile();
@@ -20,16 +40,12 @@ export default function ProfilPage() {
         email: data.email || 'mahasiswa@stmikwcd.ac.id',
         avatar_url: data.avatar_url || null,
       });
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
+      console.error('Error loading profile:', error);
     } finally {
       setIsLoading(false);
     }
   };
-
-  useEffect(() => {
-    loadProfile();
-  }, []);
 
   return (
     <>
