@@ -245,44 +245,67 @@ Headers: Authorization: Bearer <admin_token>
 
 #### File: `lib/api.ts` - Student API Client
 ```markdown
-ALGORITMA PEMANGGILAN API
+MULAI
 
-1. FUNGSI fetchWithAuth(endpoint: string, options: RequestInit = {})
-   - Ambil token lewat `getAuthToken()`.
-   - JIKA tidak ada token, paksa logout.
-   - Set headers:
-     - `Content-Type: application/json`
-     - `Authorization: Bearer <token>`
-   - Kirim request ke `API_BASE_URL + endpoint`
-   - JIKA response.status === 401: logout() dan throw Error('Session expired')
-   - JIKA !response.ok: Extract error dari response.json() atau throw HTTP error
-   - KEMBALIKAN response.json()
+Fungsi untuk komunikasi dengan server:
 
-2. FUNGSI sendChatMessage(query, session_id)
-   - PANGGIL fetchWithAuth('/api/ai/chat', {
-       method: 'POST',
-       body: JSON.stringify({
-         query: query,
-         session_id: session_id,
-         channel: "website"
-       })
-     })
-   - KEMBALIKAN response dengan answer dan sources
+FUNGSI kirim_pesan_chat(pesan, session_id):
+    ambil token login dari browser
+    
+    jika tidak ada token:
+        paksa user logout
+        berhenti
+    
+    kirim ke server:
+        URL = /api/ai/chat
+        method = POST
+        data = {query: pesan, session_id: session_id, channel: "website"}
+        header = token untuk authorization
+    
+    jika server berhasil:
+        kembalikan {answer: jawaban_bot, sources: sumber_referensi}
+    jika server gagal:
+        lempar error dengan pesan kesalahan
 
-3. FUNGSI fetchSessions()
-   - PANGGIL fetchWithAuth('/api/sessions/')
-   - KEMBALIKAN list sessions dengan metadata
+FUNGSI ambil_daftar_session():
+    ambil token login dari browser
+    
+    kirim ke server:
+        URL = /api/sessions/
+        method = GET
+        header = token untuk authorization
+    
+    kembalikan daftar session dengan metadata
 
-4. FUNGSI fetchSessionDetails(id: string)
-   - PANGGIL fetchWithAuth(`/api/sessions/${id}`)
-   - KEMBALIKAN session detail dengan messages
+FUNGSI ambil_detail_session(id):
+    ambil token login dari browser
+    
+    kirim ke server:
+        URL = /api/sessions/{id}
+        method = GET
+        header = token untuk authorization
+    
+    kembalikan detail session dengan semua pesan
 
-5. FUNGSI deleteSession(id: string)
-   - PANGGIL fetchWithAuth(`/api/sessions/${id}`, {method: 'DELETE'})
+FUNGSI hapus_session(id):
+    ambil token login dari browser
+    
+    kirim ke server:
+        URL = /api/sessions/{id}
+        method = DELETE
+        header = token untuk authorization
 
-6. FUNGSI fetchProfile()
-   - PANGGIL fetchWithAuth('/api/auth/me')
-   - KEMBALIKAN profile data (nama, email, avatar_url)
+FUNGSI ambil_profil():
+    ambil token login dari browser
+    
+    kirim ke server:
+        URL = /api/auth/me
+        method = GET
+        header = token untuk authorization
+    
+    kembalikan data profil (nama, email, avatar)
+
+SELESAI
 ```
 
 #### File: `lib/adminApi.ts` - Admin API Client
@@ -873,87 +896,158 @@ ALGORITMA ADMIN AUTHENTICATION FRONTEND
 
 #### File: `app/(site)/chat/page.tsx` - Main Chat Interface
 ```markdown
-ALGORITMA HALAMAN CHAT
+MULAI
 
-1. IMPORTS & DEPENDENCIES
-   - useState, useEffect, useRef dari React
-   - useAppStore, CitationSource dari lib/store
-   - sendChatMessage, deleteSession dari lib/api
-   - ReactMarkdown untuk rendering bot responses
-   - DOCUMENTS dari lib/documentSources untuk citation handling
+Siapkan halaman chat:
+    input pesan = kosong
+    status loading = false
+    menu terbuka = false
+    ambil data chat dari store (session_id, messages)
 
-2. STATE MANAGEMENT
-   - Local State: inputValue (string), isLoading (boolean), menuOpen (boolean)
-   - Global State dari useAppStore: session_id, messages, hasHydrated
-   - Ref: chatScrollRef untuk auto-scroll behavior
+Tunggu halaman siap:
+    jika belum siap:
+        tampilkan loading atau kosong
+    jika session_id tidak ada:
+        buat session baru
 
-3. USEEFFECTS
-   - Rehydration & Empty session initialization:
-     - JIKA hasHydrated = true DAN session_id = null: call resetSession()
-   - Auto scroll to bottom:
-     - Setiap kali messages atau isLoading berubah: scroll chatScrollRef ke bottom
+Tampilkan halaman chat:
+    BAGIAN ATAS:
+        tampilkan judul "Chat"
+        tampilkan menu titik tiga (untuk hapus session)
+    
+    BAGIAN TENGAH (isi chat):
+        jika belum ada pesan:
+            tampilkan pesan sambutan
+            tampilkan saran pertanyaan
+        
+        jika ada pesan:
+            untuk setiap pesan:
+                jika pesan dari user:
+                    tampilkan di sebelah kanan (bubble ungu)
+                jika pesan dari bot:
+                    tampilkan di sebelah kiri
+                    tampilkan sumber referensi (jika ada)
+        
+        jika sedang mengetik (loading):
+            tampilkan animasi titik-titik
+    
+    BAGIAN BAWAH:
+        tampilkan kolom input pesan
+        tampilkan tombol kirim
+        tampilkan hint "Tekan Enter untuk kirim"
 
-4. HANDLER FUNCTIONS
-   - handleSend(): 
-     - Validate input (trim, session_id exists)
-     - Add user message to store
-     - Clear input, set loading
-     - Call sendChatMessage API
-     - Add bot response dengan sources
-     - Handle errors dengan error message
-   
-   - handleKeyDown(e: React.KeyboardEvent):
-     - JIKA Enter pressed DAN !shiftKey: prevent default, call handleSend()
-   
-   - handleDeleteSession():
-     - Show confirmation dialog
-     - Call deleteSession API dengan session_id
-     - Call resetSession() untuk clear state
-     - Handle errors dengan alert
+KETIKA USER MENGETIK:
+    simpan text ke input pesan
 
-5. CITATION HANDLING
-   - handleCitationClick(src: CitationSource | string):
-     - Convert string sources ke object format
-     - Determine document domain berdasarkan parent_id (kkp, pi, non-skripsi, skripsi)
-     - Find document URL dari DOCUMENTS array
-     - Build PDF URL dengan page navigation atau search parameter
-     - Call openDocument() dari store untuk show document panel
+KETIKA USER TEKAN ENTER:
+    jika input kosong:
+        tidak lakukan apa-apa
+    jika input ada isinya:
+        lanjut ke proses kirim pesan
 
-6. RENDER LOGIC
-   - Hydration guard: return null jika !hasHydrated
-   - Header: Title "Chat" dengan dropdown menu (kebab) untuk delete session
-   - Main content:
-     - JIKA messages.length = 0: Empty state dengan welcome message dan suggestion chips
-     - JIKA ada messages: Map melalui messages array:
-       - User messages: bubble dengan background purple
-       - Bot messages: ReactMarkdown rendering dengan citations
-   - Citation rendering: Map sources dengan citation cards (clickable)
-   - Loading state: Typing dots animation
-   - Composer: Input field dengan suggestion chips, send button, hint text
+KETIKA USER KLIK TOMBOL KIRIM:
+    cek input tidak kosong
+    
+    simpan pesan user ke chat
+    kosongkan input
+    ubah status menjadi loading
+    
+    kirim pesan ke server:
+        URL = /api/ai/chat
+        data = pesan user + session_id
+    
+    jika server berhasil menjawab:
+        simpan jawaban bot ke chat
+        tampilkan sumber referensi (jika ada)
+        scroll ke bawah otomatis
+    
+    jika server gagal:
+        tampilkan pesan error
+    
+    ubah status menjadi tidak loading
 
-7. RESPONSIVE BEHAVIOR
-   - Auto-resize input field
-   - Keyboard shortcuts (Enter to send)
-   - Mobile-friendly touch interactions
-   - Scroll behavior management
+KETIKA USER KLIK SUMBER REFERENSI:
+    buka panel dokumen
+    arahkan ke halaman yang sesuai di PDF
+
+KETIKA USER KLIK MENU TITIK TIGA:
+    tampilkan opsi "Hapus Session"
+
+KETIKA USER KLIK "HAPUS SESSION":
+    tanya konfirmasi user
+    
+    jika user setuju:
+        kirim permintaan hapus ke server
+        bersihkan chat saat ini
+        mulai session baru
+
+SELESAI
 ```
 
 #### File: `app/admin/dashboard/page.tsx` - Admin Dashboard  
 ```markdown
-ALGORITMA ADMIN DASHBOARD PAGE
+MULAI
 
-1. STATE MANAGEMENT
-   - Local State: searchDoc, searchChild, showNotif
-   - Global State dari useAdminStore: tree, selectedChildId, selectedParentKey
+Siapkan dashboard admin:
+    pencarian dokumen = kosong
+    pencarian child = kosong
+    ambil data tree dari store
 
-2. HELPER FUNCTIONS
-   - getSelectedParent(): Parse selectedParentKey untuk find active parent
-   - Loop melalui tree: documents -> chapters -> parents
-   - Match berdasarkan composite key format
+Tampilkan dashboard:
+    BAGIAN ATAS:
+        tampilkan hamburger menu (mobile)
+        tampilkan judul "Knowledge Base Management"
+        tampilkan deskripsi
+        tampilkan tombol notifikasi
 
-3. UI STRUCTURE LAYOUT
-   - HEADER: Mobile hamburger + title + description + notification dropdown
-   - CONTENT: StatGrid + KB Browser
+    BAGIAN TENGAH:
+        tampilkan statistik (StatGrid):
+            - total dokumen
+            - total parent
+            - total child
+            - tanggal update terakhir
+        
+        tampilkan browser knowledge base (2 kolom):
+            KOLOM KIRI: Struktur Dokumen (KnowledgeTreeColumn)
+                - tampilkan tree hierarki
+                - tampilkan kotak pencarian dokumen
+                - filter berdasarkan pencarian
+            
+            KOLOM KANAN: Daftar Child Chunk (ChildChunkColumn)
+                - tampilkan child chunks dari parent yang dipilih
+                - tampilkan kotak pencarian child
+                - tampilkan diagram relasi parent-child
+
+    BAGIAN SAMPING:
+        tampilkan panel detail chunk (ChunkDetailPanel)
+        - slide dari kanan ketika chunk dipilih
+        - tampilkan form edit chunk
+
+KETIKA USER MENGETIK DI PENCARIAN DOKUMEN:
+    filter tree berdasarkan text pencarian
+    highlight text yang cocok
+
+KETIKA USER MENGETIK DI PENCARIAN CHILD:
+    filter child chunks berdasarkan text pencarian
+    highlight text yang cocok
+
+KETIKA USER KLIK PARENT DI TREE:
+    pilih parent ini
+    muat daftar child chunks untuk parent ini
+    tampilkan diagram relasi
+
+KETIKA USER KLIK CHILD CHUNK:
+    pilih child ini
+    buka panel detail di samping
+    muat detail chunk dari server
+    tampilkan form edit
+
+KETIKA USER EDIT CHUNK DI PANEL:
+    simpan perubahan otomatis
+    update data di tree
+    update statistik jika perlu
+
+SELESAI
    - KB COLUMNS: Two-column layout (Struktur Dokumen + Child Chunk)
    - SIDEBAR: ChunkDetailPanel slide-in
 
@@ -966,138 +1060,318 @@ ALGORITMA ADMIN DASHBOARD PAGE
 
 #### File: `components/admin/ChunkEditForm.tsx` - Chunk Editor
 ```markdown
-ALGORITMA CHUNK EDIT FORM
+MULAI
 
-1. ARCHITECTURE
-   - Pattern: Wrapper + Internal component untuk state reset
-   - Key Pattern: Uses chunk.id as key prop untuk force component remount
+Terima data CHUNK dari component lain
 
-2. PROPS & STATE
-   - Props: {chunk, onSaved, onDeleted, layout?: 'sidebar' | 'full'}
-   - State: activeTab, draft states (initialized from chunk), loading states, modal states
+Simpan data CHUNK ke form sementara:
+    judul sementara = judul chunk
+    halaman sementara = halaman chunk  
+    isi sementara = isi chunk
 
-3. KEY FUNCTIONS
-   - handleSave(): Validate changes, call saveChunk API, update tree
-   - handleDelete(): Call deleteChunk API, update tree, navigation  
-   - showToast(): Global toast notifications
+Tentukan tab yang aktif:
+    default = Metadata
 
-4. UI FEATURES
-   - Tabbed interface: metadata vs content editing
-   - State reset via key prop (no useEffect synchronization)
-   - Save/delete/re-embed action buttons
-   - Dynamic layout adaptation (sidebar vs full-page)
-   - Textarea dengan flex: 1 untuk editor luas
+Tampilkan form:
+    Tab Metadata:
+        tampilkan Judul
+        tampilkan Halaman
+        tampilkan Status Embedding
+        tampilkan informasi Parent Chunk
+    Tab Content:
+        tampilkan Isi Chunk
 
-5. PERFORMANCE
-   - No setState dalam useEffect (eliminates cascading renders)
-   - Component remount pattern untuk clean state reset
+Tampilkan tombol:
+    Re-Embed
+    Delete
+    Simpan Perubahan
+
+KETIKA USER MENGUBAH JUDUL:
+    ubah judul sementara
+
+KETIKA USER MENGUBAH HALAMAN:
+    ubah halaman sementara
+
+KETIKA USER MENGUBAH ISI:
+    ubah isi sementara
+
+KETIKA USER KLIK "SIMPAN":
+    cek apakah judul berubah
+    cek apakah halaman berubah
+    cek apakah isi berubah
+    
+    jika TIDAK ADA yang berubah:
+        tampilkan "Tidak ada perubahan"
+        berhenti
+    
+    jika ADA perubahan:
+        ubah status menjadi "sedang menyimpan"
+        kirim perubahan ke backend
+        
+        jika berhasil:
+            update status embedding di store
+            beri tahu component parent bahwa data berhasil disimpan
+            tampilkan pesan berhasil
+        jika gagal:
+            tampilkan pesan error
+        
+        ubah status menjadi "tidak sedang menyimpan"
+
+KETIKA USER KLIK "RE-EMBED":
+    tampilkan modal Re-Embed
+    
+    jika Re-Embed selesai:
+        update status embedding
+        beri tahu parent
+
+KETIKA USER KLIK "DELETE":
+    tampilkan modal konfirmasi Delete
+    
+    jika user mengonfirmasi:
+        kirim permintaan hapus ke backend
+        
+        jika berhasil:
+            hapus chunk dari store
+            tutup modal
+            beri tahu parent
+        jika gagal:
+            tampilkan pesan error
+
+SELESAI
 ```
 
 #### File: `components/admin/KnowledgeTreeColumn.tsx` - Tree Navigation
 ```markdown
-ALGORITMA KNOWLEDGE TREE NAVIGATION
+MULAI
 
-1. FEATURES
-   - Hierarchical tree rendering (Domain -> Chapter -> Parent)
-   - Search filtering dengan highlight
-   - Expandable/collapsible sections
-   - Click handlers untuk parent selection
-   - Empty states dan loading states
+Terima data TREE dan QUERY dari parent
 
-2. STRUCTURE
-   - Document groups dengan domain badges
-   - Chapter sections dengan parent counts  
-   - Parent items dengan child counts dan metadata
+Tentukan bagian yang terbuka:
+    dokumen yang terbuka = []
+    chapter yang terbuka = []
+
+Tampilkan struktur tree:
+    untuk setiap DOKUMEN di tree:
+        tampilkan header dokumen dengan domain badge
+        
+        jika dokumen tertutup:
+            tampilkan ikon ">"
+            sembunyikan chapter
+        
+        jika dokumen terbuka:
+            tampilkan ikon "v"
+            
+            untuk setiap CHAPTER di dokumen:
+                tampilkan nama chapter dengan jumlah parent
+                
+                jika chapter tertutup:
+                    tampilkan ikon ">"
+                    sembunyikan parent list
+                
+                jika chapter terbuka:
+                    tampilkan ikon "v"
+                    
+                    untuk setiap PARENT di chapter:
+                        jika QUERY tidak kosong:
+                            highlight text yang cocok dengan QUERY
+                        tampilkan nama parent dengan jumlah child
+                        tampilkan tombol select
+
+KETIKA USER KLIK DOKUMEN:
+    jika dokumen tertutup:
+        buka dokumen
+        tutup semua dokumen lain
+    jika dokumen terbuka:
+        tutup dokumen
+
+KETIKA USER KLIK CHAPTER:
+    jika chapter tertutup:
+        buka chapter
+        tutup semua chapter lain di dokumen yang sama
+    jika chapter terbuka:
+        tutup chapter
+
+KETIKA USER KLIK PARENT:
+    pilih parent ini
+    beri tahu component parent tentang parent yang dipilih
+    highlight parent yang dipilih
+
+KETIKA QUERY BERUBAH:
+    filter semua text berdasarkan QUERY
+    highlight text yang cocok
+    buka otomatis dokumen/chapter yang memiliki hasil pencarian
+
+SELESAI
 ```
 
 #### File: `components/DocPanel.tsx` - Document Panel (Virtual Component)
 ```markdown
-ALGORITMA PANEL DOKUMEN PANDUAN
+MULAI
 
-1. STATE GLOBAL (Zustand Store)
-   - isDocPanelOpen: boolean (panel terbuka/tertutup)
-   - activeDoc: string | null (URL file dokumen PDF dari Supabase Storage)
+Ambil status panel dari store:
+    apakah panel terbuka?
+    dokumen apa yang aktif?
 
-2. RENDER LOGIC
-   - JIKA isDocPanelOpen = false: CSS tersembunyi (width 0 / transform)
-   - JIKA isDocPanelOpen = true:
-     - Tampilkan toolbar dokumen (tabs, tombol close)
-     - Tampilkan iframe PDF viewer (direct link ke Supabase Storage)
-     - CATATAN: File PDF diakses langsung, bukan melalui backend API
+Tampilkan panel dokumen:
+    jika panel tertutup:
+        sembunyikan panel (width = 0)
+        berhenti
+    
+    jika panel terbuka:
+        tampilkan toolbar:
+            tombol back
+            tombol buka di tab baru 
+            tombol close
+        
+        tampilkan isi panel:
+            jika ada dokumen aktif:
+                tampilkan PDF viewer dengan iframe
+                URL dokumen = link langsung ke Supabase Storage
+            
+            jika tidak ada dokumen aktif:
+                tampilkan daftar dokumen tersedia
+                untuk setiap dokumen:
+                    tampilkan nama dan deskripsi
+                    tampilkan tombol "Buka"
 
-3. RESPONSIVE BEHAVIOR
-   - Desktop (≥1024px): Panel sebagai kolom ketiga
-   - Tablet (768-1023px): Panel sebagai overlay drawer  
-   - Mobile (≤767px): Panel full-screen overlay
+Sesuaikan tampilan berdasarkan ukuran layar:
+    Desktop (≥1024px): panel sebagai kolom ketiga
+    Tablet (768-1023px): panel sebagai overlay drawer
+    Mobile (≤767px): panel full-screen overlay
+
+KETIKA USER KLIK DOKUMEN:
+    set dokumen ini sebagai aktif
+    tampilkan PDF viewer
+
+KETIKA USER KLIK "CLOSE":
+    tutup panel
+    hapus dokumen aktif
+
+KETIKA USER KLIK "BUKA DI TAB BARU":
+    buka URL dokumen di tab browser baru
+
+SELESAI
 ```
 
 ### Layout & Page Implementation Pseudocode
 
 #### File: `app/login/page.tsx` - Student Login Page
 ```markdown
-ALGORITMA HALAMAN LOGIN
+MULAI
 
-1. SETUP & STATE
-   - useRouter untuk navigasi
-   - State: isLoading (boolean), errorMsg (string)
-   - API_BASE_URL dari environment variable
+Siapkan halaman login:
+    status loading = false
+    pesan error = kosong
+    router untuk navigasi
 
-2. FUNGSI handleGoogleSuccess(credentialResponse: any)
-   - Set isLoading = true, bersihkan errorMsg
-   - Kirim id_token ke `${API_BASE_URL}/api/auth/google/verify` (POST)
-   - Headers: Content-Type: application/json
-   - Body: JSON.stringify({ id_token: credentialResponse.credential })
-   - JIKA !response.ok: throw Error('Gagal login ke server WCD')
-   - JIKA berhasil:
-     - Extract access_token dari response.json()
-     - Call setAuthToken(data.access_token) dari lib/auth
-     - Redirect dengan router.replace('/chat')
-   - CATCH error: 
-     - Set errorMsg dengan error.message
-     - Set isLoading = false
+Tampilkan halaman login:
+    tampilkan logo STMIK WCD
+    tampilkan teks "Asisten WCD"
+    tampilkan deskripsi aplikasi
+    
+    jika ada pesan error:
+        tampilkan pesan error berwarna merah
+    
+    jika sedang loading:
+        tampilkan spinner loading
+        sembunyikan tombol login
+    
+    jika tidak sedang loading:
+        tampilkan tombol "Login dengan Google"
 
-3. FUNGSI handleGoogleError()
-   - Set errorMsg: "Login Google dibatalkan atau gagal"
-   - Set isLoading = false
+KETIKA USER KLIK "LOGIN DENGAN GOOGLE":
+    Google akan meminta user login
+    
+    jika user berhasil login di Google:
+        Google kirim token credential
+        lanjut ke proses verifikasi server
+    
+    jika user batal atau gagal login di Google:
+        tampilkan pesan "Login Google dibatalkan atau gagal"
 
-4. RENDER
-   - Elemen dekoratif (blob) dan logo STMIK WCD
-   - Teks sambutan: "Asisten WCD" dan deskripsi
-   - JIKA errorMsg: tampilkan error berwarna merah
-   - JIKA loading: spinner animation
-   - SELAIN ITU: GoogleLogin component dengan onSuccess={handleGoogleSuccess}, onError={handleGoogleError}
+KETIKA DAPAT TOKEN DARI GOOGLE:
+    ubah status menjadi loading
+    bersihkan pesan error
+    
+    kirim token ke server WCD:
+        URL = /api/auth/google/verify
+        method = POST
+        data = token dari Google
+    
+    jika server berhasil verifikasi:
+        ambil access_token dari response server
+        simpan token untuk login
+        arahkan user ke halaman chat
+    
+    jika server gagal verifikasi:
+        tampilkan pesan error
+        ubah status menjadi tidak loading
+
+SELESAI
 ```
 
 #### File: `app/(site)/layout.tsx` - Protected Site Layout
 ```markdown
-ALGORITMA LAYOUT UTAMA (APP SHELL)
+MULAI
 
-1. AUTHENTICATION & HYDRATION
-   - Set isClient = true untuk hydration safety
-   - Ambil token autentikasi
-   - JIKA tidak ada token: redirect ke /login
-   - JIKA ada token: decode JWT dan check expiry
-   - JIKA expired: panggil logout()
+Cek apakah user sudah login:
+    ambil token dari browser
+    
+    jika tidak ada token:
+        arahkan ke halaman login
+        berhenti
+    
+    jika ada token tapi sudah expired:
+        hapus token
+        arahkan ke halaman login
+        berhenti
 
-2. RENDER STRUKTUR (3-column layout)
-   - SIDEBAR (aside.sidebar):
-     - Header: Logo + close button (mobile)
-     - Tombol "Chat Baru": resetSession() + navigate /chat
-     - Navigation links: Riwayat Chat, toggle doc panel
-     - Footer: Profil link, Logout button
-     - Sidebar overlay untuk mobile close
-   
-   - MAIN PANEL (main.main-panel):
-     - Mobile topbar: hamburger + title + chat baru button
-     - Dynamic content: {children} renders chat/riwayat/profil
-     - Mobile bottom nav: Chat, Riwayat, Profil tabs
-   
-   - DOCUMENT PANEL (aside.doc-panel):
-     - Header: back button, open in tab, close button
-     - Content: iframe PDF viewer atau document list
-     - JIKA activeDoc: render iframe dengan PDF URL
-     - SELAIN ITU: map DOCUMENTS dengan click handlers
-     - Doc overlay untuk mobile/tablet close
+Tampilkan layout utama (3 kolom):
+
+KOLOM 1 - SIDEBAR KIRI:
+    tampilkan logo WCD
+    tampilkan tombol "Chat Baru"
+    tampilkan menu navigasi:
+        - Riwayat Chat
+        - Toggle Panel Dokumen
+    tampilkan bagian bawah:
+        - Link Profil
+        - Tombol Logout
+
+KOLOM 2 - KONTEN UTAMA:
+    tampilkan topbar mobile (hamburger menu + judul)
+    tampilkan konten halaman (chat/riwayat/profil)
+    tampilkan bottom nav mobile (Chat/Riwayat/Profil)
+
+KOLOM 3 - PANEL DOKUMEN:
+    jika panel dokumen terbuka:
+        tampilkan toolbar:
+            - tombol back
+            - tombol buka di tab baru
+            - tombol close
+        
+        jika ada dokumen aktif:
+            tampilkan PDF viewer
+        jika tidak ada dokumen aktif:
+            tampilkan daftar dokumen panduan
+
+Sesuaikan tampilan berdasarkan ukuran layar:
+    Desktop: tampilkan 3 kolom
+    Tablet: sidebar dan panel dokumen jadi overlay
+    Mobile: hanya konten utama + bottom nav
+
+KETIKA USER KLIK "CHAT BARU":
+    hapus riwayat chat saat ini
+    arahkan ke halaman chat kosong
+
+KETIKA USER KLIK "LOGOUT":
+    hapus token login
+    arahkan ke halaman login
+
+KETIKA USER KLIK HAMBURGER (MOBILE):
+    buka/tutup sidebar overlay
+
+SELESAI
 ```
 ### 8.4 Form Components
 
