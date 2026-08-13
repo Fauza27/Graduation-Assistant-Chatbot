@@ -21,7 +21,6 @@ export default function ChunkDetailPanel({ childId, isMobileShell = false }: Chu
 
   useEffect(() => {
     if (!childId) {
-      setDetail(null);
       return;
     }
 
@@ -49,6 +48,9 @@ export default function ChunkDetailPanel({ childId, isMobileShell = false }: Chu
     };
   }, [childId]);
 
+  // Reset detail when childId becomes null (derived state pattern)
+  const currentDetail = childId ? detail : null;
+
   const renderBody = () => {
     if (!childId) {
       return (
@@ -75,11 +77,11 @@ export default function ChunkDetailPanel({ childId, isMobileShell = false }: Chu
       );
     }
 
-    if (detail) {
+    if (currentDetail) {
       return (
         <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
           <ChunkEditForm 
-            chunk={detail} 
+            chunk={currentDetail} 
             onSaved={(updated) => setDetail(prev => prev ? { ...prev, ...updated } : prev)}
             onDeleted={() => {
               selectChild(null, null);
