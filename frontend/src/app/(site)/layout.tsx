@@ -19,7 +19,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
   const pathname = usePathname();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   
-  // Use derived state pattern for client-side check
+  // Use useState initializer for mounted state (no useEffect needed)
   const [mounted, setMounted] = useState(false);
   
   // App store hooks
@@ -31,28 +31,28 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
     resetSession
   } = useAppStore();
 
-  // Authentication check with proper async handling
+  // Authentication check - use useEffect only for side effects, not state updates
   useEffect(() => {
-    const checkAuth = () => {
-      const token = getAuthToken();
-      if (!token) {
-        router.replace('/login');
-        return;
-      }
+    const token = getAuthToken();
+    if (!token) {
+      router.replace('/login');
+      return;
+    }
 
-      try {
-        const decoded = jwtDecode<JWTPayload>(token);
-        if (decoded.exp * 1000 < Date.now()) {
-          logout();
-        }
-      } catch {
+    try {
+      const decoded = jwtDecode<JWTPayload>(token);
+      if (decoded.exp * 1000 < Date.now()) {
         logout();
       }
-    };
-    
-    checkAuth();
-    setMounted(true);
+    } catch {
+      logout();
+    }
   }, [router]);
+
+  // Separate useEffect for mounting (runs once, no dependencies)
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Early return for SSR hydration safety
   if (!mounted) return null;
