@@ -2,15 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { GoogleLogin } from '@react-oauth/google';
+import { GoogleLogin, CredentialResponse } from '@react-oauth/google';
 import { setAuthToken } from '../../lib/auth';
-
-// Define proper types for Google OAuth response
-interface GoogleCredentialResponse {
-  credential: string;
-  select_by?: string;
-  client_id?: string;
-}
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://127.0.0.1:8000';
 
@@ -19,10 +12,15 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
-  const handleGoogleSuccess = async (credentialResponse: GoogleCredentialResponse) => {
+  const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
     try {
       setIsLoading(true);
       setErrorMsg('');
+      
+      // Check if credential exists
+      if (!credentialResponse.credential) {
+        throw new Error('Tidak ada credential dari Google');
+      }
       
       const res = await fetch(`${API_BASE_URL}/api/auth/google/verify`, {
         method: 'POST',
