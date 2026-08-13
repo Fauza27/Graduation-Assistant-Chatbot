@@ -15,6 +15,30 @@ Proyek ini adalah **AI Chatbot Asisten Akademik** yang dirancang untuk menjawab 
 - **Database & Storage**: Supabase (PostgreSQL dengan pgvector), RPC Functions.
 - **LLM & Embedding**: OpenAI API (`gpt-4o-mini` untuk teks, `text-embedding-3-large`/2000d untuk vektor), `ms-marco-MiniLM-L-6-v2` untuk _Reranking_.
 
+### Peta Alur Sistem Utama (Overview)
+
+```
+📝 USER QUERY
+    ↓
+🔐 REQUEST VALIDATION & RATE LIMIT
+    ↓
+💾 LOAD/CREATE SESSION MEMORY
+    ↓
+🔤 QUERY NORMALIZATION & REFORMULATION
+    ↓
+🔍 HYBRID RETRIEVAL (Vector + BM25)
+    ↓
+🎯 CROSS-ENCODER RERANKING
+    ↓
+🤖 LLM GENERATION (GPT-4o-mini)
+    ↓
+💾 SAVE MEMORY & CHAT LOG
+    ↓
+📤 RESPONSE TO USER
+```
+
+**Arsitektur Utama**: **Retrieval-First** (Evidence-Driven) - Sistem langsung melakukan pencarian dokumen tanpa klasifikasi intent terlebih dahulu, menggunakan adaptive history management berdasarkan ketersediaan konteks.
+
 ---
 
 ## 2. Database
@@ -66,14 +90,7 @@ _Contoh Data_:
 - `email`, `nama`, `avatar_url` (text): Profil mahasiswa.
 - `created_at`, `last_login` (timestamptz): Waktu pembuatan dan login.
 
-**4. `admin_users`** (Akun Admin untuk Dashboard CMS)
-
-- `admin_id` (uuid, PK): ID unik admin.
-- `username` (text, UNIQUE): Username login.
-- `password_hash`, `full_name` (text): Profil kredensial.
-- `created_at`, `last_login` (timestamptz): Waktu pembuatan dan login.
-
-**5. `conversation_sessions`** (Menyimpan riwayat obrolan user)
+**4. `conversation_sessions`** (Menyimpan riwayat obrolan user)
 
 - `session_id` (text, PK): ID sesi / ID User Telegram.
 - `mahasiswa_id` (uuid, FK ke `mahasiswa_accounts`): Nullable jika akses via Telegram anonim.
@@ -96,8 +113,6 @@ _Contoh Data_:
 }
 ```
 
-**6. `chunk_edit_logs`** (Log Audit Perubahan Data dan Antrean Re-Embedding)
-
 ## SECTION ADMIN: Content Management System
 
 Bagian admin pada increment ini merealisasikan dashboard pengelolaan knowledge base dengan alur yang sudah benar-benar ada di kode: login admin berbasis username/password, pemuatan knowledge tree penuh, edit child chunk, re-embed manual dengan polling status, dan delete child chunk dengan housekeeping parent kosong.
@@ -106,7 +121,7 @@ Bagian admin pada increment ini merealisasikan dashboard pengelolaan knowledge b
 
 ## Admin Database Schema dan Asumsi Data
 
-**7. `admin_users`**
+**5. `admin_users`**
 
 - `admin_id` (uuid, PK): ID unik admin.
 - `username` (text, UNIQUE): Username login.
@@ -114,7 +129,7 @@ Bagian admin pada increment ini merealisasikan dashboard pengelolaan knowledge b
 - `full_name` (text): Nama admin untuk UI.
 - `created_at`, `last_login` (timestamptz): Tracking aktivitas login.
 
-**8. `chunk_edit_logs`**
+**6. `chunk_edit_logs`**
 
 - `log_id` (uuid, PK): ID log.
 - `child_id` (text, FK): Chunk yang diedit.
@@ -124,6 +139,37 @@ Bagian admin pada increment ini merealisasikan dashboard pengelolaan knowledge b
 - `status` (text): `pending`, `processing`, `success`, `failed`.
 - `error_message` (text): Pesan error jika re-embed gagal.
 - `edited_at`, `reembedded_at` (timestamptz): Timestamp proses.
+
+**7. `user_quotas`** (Batas Request User Harian)
+
+> **Catatan**: Dalam kode Python, tabel ini direferensikan menggunakan variabel konfigurasi `settings.TABLE_USER_QUOTAS`.
+
+- `user_id` (text, PK): ID unik pengguna (session_id Telegram atau mahasiswa_id website).
+- `date` (text, PK): Tanggal dalam format YYYY-MM-DD.
+- `message_count` (integer, DEFAULT 0): Jumlah pesan yang telah dikirim pada tanggal tersebut.
+
+_Contoh Data_:
+
+```json
+{"user_id": "tg-123456789", "date": "2026-08-13", "message_count": 5}
+```
+
+**8. `chat_logs`** (Log Percakapan Historis)
+
+> **Catatan**: Dalam kode Python, tabel ini direferensikan menggunakan variabel konfigurasi `settings.TABLE_CHAT_LOGS`.
+
+- `id` (bigint, PK, AUTO-INCREMENT): ID unik log.
+- `created_at` (timestamptz, DEFAULT now()): Waktu percakapan terjadi.
+- `user_id` (text): ID pengguna (mahasiswa_id atau session_id).
+- `username` (text): Nama pengguna untuk tracking.
+- `question` (text): Pertanyaan yang diajukan user.
+- `answer` (text): Jawaban yang diberikan sistem.
+
+_Contoh Data_:
+
+```json
+{"id": 1, "created_at": "2026-08-13T10:30:00Z", "user_id": "tg-123456789", "username": "john_doe", "question": "Apa syarat KKP?", "answer": "Berdasarkan panduan KKP..."}
+```
 
 **Tambahan status pada child_documents**
 
@@ -387,8 +433,8 @@ Sistem admin ini sekarang selaras dengan implementasi nyata di `backend/src/admi
    - Aktifkan RLS di `parent_documents` dan `child_documents`.
    - Buat aturan (policy): Hanya pengguna dengan peran `service_role` (backend aplikasi dengan kunci service role) yang boleh membaca (SELECT) dan menambah data (INSERT) ke tabel ini.
    - Buat tabel tambahan:
-     - `user_quotas` (Batas request user harian).
-     - `chat_logs` (Penyimpanan log percakapan historis).
+     - `user_quotas` (Tabel #7): Batas request user harian dengan kolom user_id, date, message_count.
+     - `chat_logs` (Tabel #8): Penyimpanan log percakapan historis dengan kolom id, created_at, user_id, username, question, answer.
    - Aktifkan RLS untuk tabel-tabel tambahan ini.
    - Aturan kebijakannya juga sama: hanya bisa dibaca dan ditulis oleh `service_role`.
 
@@ -1143,70 +1189,74 @@ ALGORITMA PENYIMPANAN MEMORI PERCAKAPAN (memory.py)
 
 ---
 
-### Alur 4: Klasifikasi Niat (Intent)
+### Alur 4: Query Processing & Reformulation
+
+> **⚠️ PERUBAHAN ARSITEKTUR ⚠️**  
+> Pada increment 3, sistem telah beralih ke arsitektur **Retrieval-First** yang melewati (bypass) tahap klasifikasi intent. Dokumentasi classifier.py di bawah ini dipertahankan untuk referensi historis dan kemungkinan fallback, namun **TIDAK DIGUNAKAN** dalam alur produksi saat ini.
 
 **Bentuk Data Awal:**
 
 ```text
-// Pesan terbaru user beserta riwayat obrolan
+// Query user yang sudah dinormalisasi
 ```
 
-**File Pemroses (Pseudocode):**
+**File Pemroses Aktif (Pseudocode):**
 
 #### File: `src/services/ai_services.py`
 
 ```markdown
-ALGORITMA LAYANAN KECERDASAN BUATAN (ai_services.py)
+ALGORITMA LAYANAN KECERDASAN BUATAN - RETRIEVAL-FIRST ARCHITECTURE (ai_services.py)
 
 1. IMPOR PUSTAKA & INISIALISASI
-   - Memori percakapan, Klasifikasi Niat, Rantai (Chain) AI.
+   - Memori percakapan, Reformulator Query, RAG Chain.
    - Session store (database/penyimpanan di memori).
+   - Cache TTL untuk hasil retrieval (TTLCache: 500 items, 30 menit).
    - Pengaturan konfigurasi.
-   - Buat Instance (objek tunggal): Classifier dan RAG Chain.
-   - Tentukan penyimpanan: Coba sambungkan ke database (Supabase JSONB). Jika gagal, jatuh (fallback) gunakan kamus RAM biasa (`_legacy_session_store`).
+   - Buat Instance RAG Chain tunggal: _rag_chain = RAGChain().
 
 2. MANAJEMEN SESI (Memori Percakapan)
-   - `get_or_create_memory(session_id)`:
-     - Cari memori sesi ini di Database (jika pakai DB) atau RAM.
-     - Jika belum ada, buat objek `ConversationMemory` baru dengan maksimal 5 turn (10 pesan).
-     - Kembalikan memori.
-   - `_save_memory_if_needed(session_id, memory)`:
-     - (Hanya jika pakai DB): Simpan ulang memori yang ter-update ke Database.
-     - Tangkap error secara diam-diam agar chat tidak gagal hanya karena gagal menyimpan riwayat.
-   - `clear_session(session_id)`:
-     - Hapus data memori user tersebut dari penyimpanan.
+   - `get_or_create_memory(session_id, mahasiswa_id)`:
+     - Coba ambil dari database session store jika USE_DATABASE_SESSIONS = True.
+     - Fallback ke legacy in-memory storage jika database tidak tersedia.
+     - Jika belum ada, buat objek `ConversationMemory` baru dengan max 5 turns.
+     - Return memory object.
+   - `_save_memory_if_needed(session_id, memory, channel, mahasiswa_id)`:
+     - Simpan memory ke database jika menggunakan database sessions.
+     - Handle error secara graceful (tidak crash chat jika gagal save).
+   - Pembersihan Sesi: `cleanup_sessions()`, `_evict_idle_sessions()`, `_evict_lru_if_full()`.
 
-   - Pembersihan Sesi Tua (Cleanup):
-     - Membuang memori obrolan dari user yang sudah terlalu lama tidak aktif agar RAM / Database tidak penuh.
-
-3. FUNGSI UTAMA chat(query, session_id)
-   - Fungsi utama yang dipanggil oleh Bot Telegram atau API eksternal saat user bertanya.
-   - JIKA `query` atau `session_id` kosong: Kembalikan pesan error seketika.
-   - TAHAP 1: Normalisasi
-     - Panggil `normalize_query(question)`.
-   - TAHAP 2: Deteksi Reformulasi (Regex)
-     - Cek apakah butuh ditulis ulang dengan `needs_rewrite(normalized_query)`.
-     - _Slow Path_ (Jika butuh di-rewrite): Panggil `get_or_create_memory` (karena LLM butuh riwayat), lalu panggil `reformulate_query(normalized_query, memory)`.
-     - _Fast Path_ (Jika mandiri): Pakai kueri hasil normalisasi langsung.
-   - TAHAP 3: Cek Cache (LRU)
-     - Buat kunci cache `v1_{resolved_query}`.
-     - JIKA hasil sudah ada di `retrieval_cache`: Gunakan data itu langsung (_Cache Hit_).
-     - JIKA BELUM (_Cache Miss_): Panggil `run_retrieval(query, rerank_query)`. Simpan hasilnya ke cache.
-   - TAHAP 4: Muat Memori (Jika belum dimuat)
-     - Jika masuk _Fast Path_ tadi, muat memori di sini dan tambahkan giliran pertanyaan user.
-   - TAHAP 5: LLM Generation
-     - Panggil RAG Chain (`_rag_chain.invoke_with_history`) dengan memasukkan histori percakapan dan dokumen hasil cari (bisa kosong jika gagal Rerank/Threshold).
-     - Simpan jawaban AI (berserta teks isi dokumen referensi) ke memori.
-     - Simpan memori ke Database.
-   - TAHAP 6: Kembalikan Jawaban
-     - Siapkan dictionary hasil yang berisi: Teks Jawaban, Metode Rewrite, Jumlah Dokumen, dan Maksimal 3 Dokumen Sumber Referensi terbaik.
-     - JIKA ada error: Tangkap dan kembalikan pesan error _fallback_.
+3. FUNGSI UTAMA chat(query, session_id, username, channel, mahasiswa_id) - RETRIEVAL-FIRST FLOW
+   - **TAHAP 1: Query Normalization**
+     - Panggil `normalize_query(question)` untuk membersihkan input.
+     
+   - **TAHAP 2: Rewrite Detection & Query Reformulation**
+     - Panggil `needs_rewrite(normalized_query)` untuk deteksi regex-based.
+     - Jika butuh rewrite: Load memory early, panggil `reformulate_query(normalized_query, memory)`.
+     - Catat method rewrite yang digunakan (contextual/fallback/none).
+     
+   - **TAHAP 3: Retrieval Cache Check**
+     - Buat cache_key dari KNOWLEDGE_VERSION + resolved_query.
+     - Cek retrieval_cache terlebih dahulu.
+     - Jika cache miss: Panggil `run_retrieval(query=resolved_query, rerank_query=question)`.
+     - Cache hasil retrieval untuk request berikutnya.
+     
+   - **TAHAP 4: Memory Loading (Fast Path)**
+     - Jika belum load memory di tahap 2: Load sekarang dengan `get_or_create_memory()`.
+     - Add user turn ke memory.
+     
+   - **TAHAP 5: LLM Generation**
+     - Panggil `_rag_chain.invoke_with_history(question, retrieval_docs, memory.get_history_for_llm())`.
+     - Catat generation time.
+     
+   - **TAHAP 6: Save State & Chat Log**
+     - Add assistant turn ke memory dengan retrieved documents dan sources.
+     - Save memory via `_save_memory_if_needed()`.
+     - Insert chat log ke tabel `chat_logs` (jika database tersedia).
+     - Return response dengan answer, sources, metadata.
 
 4. FUNGSI preload_models()
-   - Dieksekusi secara asinkronus/synchronous saat server baru menyala.
-   - Fungsi: Memanaskan (_warm-up_) model AI agar tidak terjadi jeda dingin (_cold-start_) saat request pertama.
-   - TAHAP 1: _Preload Cross-Encoder_ -> Memaksa model lokal termuat ke RAM.
-   - TAHAP 2: _Preload Embedding Model_ -> Mengirim string dummy "warmup" ke API OpenAI untuk membangun koneksi HTTP _Keep-Alive_ dan memuat _tiktoken_ ke RAM.
+   - **TAHAP 1: Preload Cross-Encoder** -> Load model reranking ke RAM.
+   - **TAHAP 2: Preload Embedding Model** -> Warm-up OpenAI API connection.
 ```
 
 #### File: `src/generation/intent_classifier/classifier.py`
@@ -1749,10 +1799,7 @@ ALGORITMA GENERASI JAWABAN CHATBOT (chain.py)
 
 2. KONSTANTA PROMPT
    - `SYSTEM_PROMPT`: Peran AI sebagai asisten akademik STMIK Wicida. Mengatur aturan menjawab (berbasis dokumen, cantumkan bab sumber, dilarang halusinasi, format list).
-   - `HUMAN_PROMPT`: Format input untuk AI (Konteks dokumen + Pertanyaan User).
-   - `HUMAN_PROMPT_WITH_HISTORY`: Format input yang mempertimbangkan histori percakapan.
-   - `CONVERSATIONAL_PROMPT`: Format obrolan biasa (sapaan/terima kasih) tanpa pencarian dokumen.
-   - `CLARIFICATION_PROMPT`: Format untuk meminta penjelasan lebih lanjut dari jawaban sebelumnya.
+   - `HUMAN_PROMPT_WITH_HISTORY`: Format input yang mempertimbangkan histori percakapan dengan konteks dokumen dan pertanyaan user.
 
 3. FUNGSI \_format_context(documents)
    - Ambil list objek Dokumen dari proses Retrieval (Pencarian).
@@ -1772,33 +1819,27 @@ ALGORITMA GENERASI JAWABAN CHATBOT (chain.py)
 
 6. FUNGSI build_rag_chain(streaming)
    - Buat objek `ChatOpenAI` dengan model, suhu 0, dan token 1200.
-   - Gabungkan `SYSTEM_PROMPT` dan `HUMAN_PROMPT`.
+   - Gabungkan `SYSTEM_PROMPT` dan `HUMAN_PROMPT_WITH_HISTORY`.
    - BENTUK "Chain" RAG: (Format Input Konteks) -> Prompt -> LLM -> Output String.
    - KEMBALIKAN chain.
 
 7. KELAS RAGChain
-   - Inisialisasi: Buat dan simpan instance LLM.
-   - METHOD `invoke_with_history(question, context, history)`:
-     - Log informasi pemrosesan.
-     - **Adaptive History**: Jika dokumen konteks kosong (icu _Minimum Evidence Triggered_), potong histori paksa menjadi 1 giliran (maksimal 2 pesan terakhir) untuk mode obrolan biasa.
-     - Hitung profil token input dan output menggunakan `tiktoken`.
-     - Susun pesan konteks dan histori sebagai array `SystemMessage`, `HumanMessage`, dan `AIMessage`.
-     - Masukkan konteks dan panggil LLM.
-     - Cetak profil penggunaan token ke log.
-     - Kembalikan jawaban LLM + sumber referensi.
-   - METHOD `invoke_conversational(question, history)`:
-     - Gunakan saat pengguna hanya basa-basi ("Halo", "Terima kasih").
-     - Panggil LLM tanpa memasukkan dokumen konteks berat.
-     - Kembalikan jawaban saja (sumber = kosong).
-   - METHOD `invoke_clarification(question, history, last_context)`:
-     - Gunakan jika pengguna minta penjelasan tambahan ("Tolong jelaskan lebih detail").
-     - Cek apakah topik masih relevan dengan dokumen lama (`_check_context_relevance`).
-     - Jika TIDAK RELEVAN (< 0.3): Beralih (Fallback) jalankan Retrieval pencarian ulang.
-     - Jika RELEVAN: Minta LLM menjelaskan ulang dokumen sebelumnya.
-     - Kembalikan jawaban.
+   - Inisialisasi: Buat dan simpan instance LLM dan chain.
+   - METHOD `invoke_with_history(question, context_documents, conversation_history)` - ACTIVE METHOD:
+     - Log informasi pemrosesan dengan question preview dan history count.
+     - **Adaptive History**: Jika dokumen konteks kosong (Minimum Evidence Triggered), potong histori ke maksimal 2 pesan terakhir untuk conversational handling.
+     - **Token Profiling**: Hitung token untuk system, history, context, dan query menggunakan `tiktoken`.
+     - Susun pesan sebagai array `SystemMessage`, `HumanMessage`, dan `AIMessage` dari conversation history.
+     - Tambahkan human message dengan format `HUMAN_PROMPT_WITH_HISTORY` yang berisi context dan question.
+     - Panggil LLM dengan messages array dan dapatkan response.
+     - Log detailed token usage profile (input/output breakdown).
+     - Kembalikan answer dan sources (jika return_sources=True).
 
-8. FUNGSI generate_answer(question, context)
-   - Fungsi sederhana untuk mengeksekusi Chain reguler.
+> **⚠️ ARSITEKTUR TERKINI ⚠️**  
+> Hanya method `invoke_with_history` yang digunakan dalam alur produksi saat ini. Method lain seperti `invoke_conversational` dan `invoke_clarification` tidak ada dalam implementasi aktual - sistem menggunakan adaptive history management dalam satu method untuk semua skenario.
+
+8. FUNGSI generate_answer(question, context) - LEGACY WRAPPER
+   - Fungsi sederhana untuk mengeksekusi Chain reguler (tidak digunakan dalam ai_services.py).
    - Format jawaban dan kembalikan output-nya.
 ```
 
@@ -2226,10 +2267,96 @@ Endpoint utama `/api/ai/chat` berjalan sebagai **endpoint publik** yang tidak me
 4. **Data Retention / Cleanup**: Untuk menjamin memori sesi Telegram tidak membludak, Supabase RPC `cleanup_idle_sessions` melakukan penghapusan _session_id_ yang sudah pasif melampaui `SESSION_CLEANUP_INTERVAL`.
 5. **Observability**: Log sistem menggunakan _library_ `loguru` yang menyimpan catatannya secara lokal di _console_ dan belum diekspor ke layanan sentralisasi (_Datadog_ / _Sentry_ dll).
 
+---
+
+## Legacy/Deprecated Modules (Historical Reference)
+
+> **⚠️ PERHATIAN ⚠️**  
+> Modul-modul berikut ini masih ada dalam codebase untuk keperluan fallback dan kompatibilitas, namun **TIDAK DIGUNAKAN** dalam alur produksi arsitektur Retrieval-First saat ini.
+
+### Intent Classification System (DEPRECATED)
+
+#### File: `src/generation/intent_classifier/classifier.py`
+
+````markdown
+ALGORITMA KLASIFIKASI INTENT (classifier.py) - LEGACY MODULE
+
+> **STATUS: BYPASSED** - Modul ini telah di-bypass dalam arsitektur Retrieval-First. Core flow di `ai_services.py` tidak lagi memanggil classifier sebagai gatekeeper.
+
+1. IMPOR PUSTAKA
+   - JSON, Typing, Langchain (HumanMessage, SystemMessage, ChatOpenAI).
+   - loguru (logger).
+   - Konfigurasi, Memori percakapan.
+   - Konstanta dan Detektor (SwitchDetector, ClarificationDetector, ConversationalDetector).
+
+2. FUNGSI \_build_classifier_prompt(current_message, memory)
+   - Ambil riwayat pertanyaan dan jawaban terakhir dari memori (jika ada).
+   - Gabungkan histori tersebut dengan pesan user saat ini.
+   - Tambahkan instruksi untuk LLM: "Tentukan intent pesan user sekarang. Output hanya JSON."
+   - Kembalikan teks prompt.
+
+3. KELAS IntentClassifier
+   - `__init__()`:
+     - Buat LLM (ChatOpenAI) dengan suhu=0, max_tokens=200.
+     - Buat dictionary (kamus) kosong untuk _Cache_ hasil klasifikasi agar hemat API.
+     - Inisialisasi ketiga detektor (Switch, Clarification, Conversational).
+   - `classify(message, memory)`:
+     - TAHAP 1: Jalan pintas Obrolan Biasa.
+       - Cek dengan `ConversationalDetector`. Jika "conversational", kembalikan (IntentType.CONVERSATIONAL, 0.95, alasan).
+     - TAHAP 2: Jika ini pesan pertama (tidak ada histori).
+       - Langsung kembalikan "NEEDS_RETRIEVAL" (pasti butuh pencarian).
+     - TAHAP 3: Deteksi Perpindahan Topik (Switch).
+       - Cek dengan `SwitchDetector`.
+       - Jika terdeteksi pindah topik/domain/aspek, kembalikan "NEEDS_RETRIEVAL" karena pasti butuh mencari info baru.
+     - TAHAP 4: Deteksi Permintaan Penjelasan (Clarification).
+       - Cek dengan `ClarificationDetector`.
+       - Jika terdeteksi user minta kejelasan dari topik yang SAMA PERSIS, kembalikan "CLARIFICATION".
+     - TAHAP 5: Jika semua aturan gagal (Rule-based gagal).
+       - Lempar ke LLM untuk diproses dengan memanggil `_classify_with_llm(message, memory)`.
+
+   - `_classify_with_llm(message, memory)`:
+     - Buat kunci cache dari 50 karakter pertama pesan + jumlah riwayat percakapan.
+     - JIKA kunci ada di cache: kembalikan hasil cache tersebut (hemat pemanggilan LLM).
+     - Bangun prompt dari `_build_classifier_prompt`.
+     - Panggil API LLM (dengan `CLASSIFIER_SYSTEM_PROMPT` dan prompt yang dibuat).
+     - Bersihkan teks respon dari LLM (hilangkan tanda blok kode markdown ` ```json `).
+     - _Parse_ string menjadi objek JSON.
+     - Ambil `intent`, `confidence`, dan `reason` dari JSON tersebut.
+     - Simpan hasil ke cache.
+     - KEMBALIKAN (intent, confidence, reason).
+     - JIKA ERROR (JSON invalid, gagal API, dll): Jatuh ke pilihan aman (Fallback) yaitu "NEEDS_RETRIEVAL".
+````
+
+### RAGChain Deprecated Methods (HISTORICAL)
+
+#### Legacy Methods dari `src/generation/chain.py`
+
+```markdown
+DEPRECATED METHODS - TIDAK ADA DALAM IMPLEMENTASI AKTUAL
+
+METHOD `invoke_conversational(question, history)` - TIDAK EXIST:
+   - Seharusnya digunakan saat pengguna hanya basa-basi ("Halo", "Terima kasih").
+   - Seharusnya panggil LLM tanpa memasukkan dokumen konteks berat.
+   - Seharusnya kembalikan jawaban saja (sumber = kosong).
+   - STATUS: Method ini tidak ada dalam kode aktual chain.py
+
+METHOD `invoke_clarification(question, history, last_context)` - TIDAK EXIST:
+   - Seharusnya digunakan jika pengguna minta penjelasan tambahan ("Tolong jelaskan lebih detail").
+   - Seharusnya cek apakah topik masih relevan dengan dokumen lama (`_check_context_relevance`).
+   - Jika TIDAK RELEVAN (< 0.3): Seharusnya beralih (Fallback) jalankan Retrieval pencarian ulang.
+   - Jika RELEVAN: Seharusnya minta LLM menjelaskan ulang dokumen sebelumnya.
+   - STATUS: Method ini tidak ada dalam kode aktual chain.py
+
+> **CATATAN ARSITEKTUR**: Dalam implementasi Retrieval-First saat ini, semua skenario conversational dan clarification ditangani dalam satu method `invoke_with_history` menggunakan adaptive history management berdasarkan ketersediaan konteks dokumen.
+```
+
+---
+
 ## Checklist Kelengkapan File
 
 - Total file di project: **37** (Tidak termasuk file data seperti section_keywords.yaml)
 - Total file yang ada pseudocode-nya di dokumen ini: **37**
+- Total tabel database terdokumentasi lengkap: **8** (parent_documents, child_documents, mahasiswa_accounts, conversation_sessions, admin_users, chunk_edit_logs, user_quotas, chat_logs)
 
 > [!NOTE]
 > Semua file (100%) kode program sudah terwakili secara lengkap dalam dokumen ini.
