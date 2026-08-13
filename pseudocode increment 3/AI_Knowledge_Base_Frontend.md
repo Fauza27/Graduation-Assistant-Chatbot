@@ -2774,6 +2774,654 @@ Dokumentasi frontend ini menyediakan **knowledge base lengkap** untuk memahami s
 
 ---
 
-*Dokumentasi ini dibuat pada: Agustus 2026*  
-*Project: AI Chatbot Asisten Akademik STMIK Widya Cipta Dharma*  
-*Frontend Framework: Next.js 16.2.12 + React 19 + TypeScript*
+## 17. Data Types & Interface Architecture
+
+### 17.1 Core Type Definitions
+
+**Student Types** (`src/lib/store.ts` & API responses):
+
+```typescript
+interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+  sources?: CitationSource[];
+  timestamp?: number;
+}
+
+interface CitationSource {
+  parent_id: string;
+  title: string; 
+  pages: string;
+  content?: string;
+}
+
+interface SessionData {
+  session_id: string;
+  title: string;
+  last_access: string;
+  [key: string]: unknown;
+}
+
+interface UserProfile {
+  nama: string;
+  email: string; 
+  avatar_url: string | null;
+}
+```
+
+**Usage Locations**:
+- **ChatMessage**: `chat/page.tsx`, `store.ts`, `api.ts`
+- **CitationSource**: `chat/page.tsx`, `store.ts`, document panel
+- **SessionData**: `riwayat/page.tsx`, `api.ts`  
+- **UserProfile**: `profil/page.tsx`, `api.ts`
+
+**Admin Types** (`src/lib/adminTypes.ts`):
+
+```typescript
+interface KnowledgeTreeResponse {
+  summary: SummaryStats;
+  documents: DocumentNode[];
+}
+
+interface DocumentNode {
+  domain: string;
+  source: string;
+  chapters: ChapterNode[];
+}
+
+interface ChapterNode {
+  section: string;
+  parents: ParentNode[];
+}
+
+interface ParentNode {
+  parent_id: string;
+  title: string;
+  child_count: number;
+  children: ChildLite[];
+}
+
+interface ChildLite {
+  id: string;
+  title: string;
+  pages: string;
+  embedding_status: EmbeddingStatus;
+}
+
+interface ChunkDetail {
+  id: string;
+  title: string;
+  pages: string;
+  content: string;
+  embedding_status: EmbeddingStatus;
+  parent: {
+    parent_id: string;
+    title: string;
+  };
+  section: string;
+  domain: string;
+  source: string;
+  reembedded_at?: string;
+}
+
+type EmbeddingStatus = 'pending' | 'stale' | 'success' | 'failed';
+```
+
+**Usage Locations**:
+- **KnowledgeTreeResponse**: Admin dashboard, tree column, admin store
+- **DocumentNode/ChapterNode/ParentNode**: Tree navigation components
+- **ChildLite**: Child chunk column, relation diagram
+- **ChunkDetail**: Chunk edit form, detail panel, chunk editor page
+- **EmbeddingStatus**: Status badges, re-embed functionality
+
+### 17.2 Authentication Types
+
+**Google OAuth Types**:
+```typescript
+interface CredentialResponse {
+  credential: string;
+  select_by?: string;
+  client_id?: string;
+}
+
+interface JWTPayload {
+  exp: number;
+  [key: string]: unknown;
+}
+```
+
+**Admin Login Types**:
+```typescript
+interface AdminLoginRequest {
+  username: string;
+  password: string;
+  remember_me: boolean;
+}
+
+interface AdminLoginResponse {
+  success: boolean;
+  message: string;
+  access_token?: string;
+  admin_info?: {
+    username: string;
+    role: string;
+  };
+}
+```
+
+**Usage Locations**:
+- **CredentialResponse**: `login/page.tsx` (Google OAuth)
+- **JWTPayload**: `layout.tsx` (token validation)
+- **AdminLoginRequest/Response**: `admin/login/page.tsx`, `adminAuth.ts`
+
+### 17.3 API Response Types
+
+**Student API Responses**:
+```typescript
+interface ChatAPIResponse {
+  answer: string;
+  sources: CitationSource[];
+  session_id: string;
+}
+
+interface SessionListResponse {
+  sessions: SessionData[];
+  total: number;
+}
+
+interface ProfileResponse {
+  nama: string;
+  email: string;
+  avatar_url: string | null;
+  student_id?: string;
+}
+```
+
+**Admin API Responses**:
+```typescript
+interface ChunkSaveResponse {
+  success: boolean;
+  message: string;
+  updated_chunk?: ChunkDetail;
+}
+
+interface ReembedTriggerResponse {
+  success: boolean;
+  message: string;
+  status: EmbeddingStatus;
+}
+
+interface DeleteChunkResponse {
+  success: boolean;
+  message: string;
+  parent_deleted?: boolean;
+}
+```
+
+### 17.4 Component Prop Types
+
+**Common Component Props**:
+```typescript
+interface ModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  children: React.ReactNode;
+}
+
+interface ButtonProps {
+  variant?: 'primary' | 'secondary' | 'danger';
+  size?: 'sm' | 'md' | 'lg';
+  loading?: boolean;
+  disabled?: boolean;
+  onClick?: () => void;
+  children: React.ReactNode;
+}
+
+interface StatusBadgeProps {
+  status: EmbeddingStatus;
+  variant?: 'default' | 'large';
+}
+```
+
+**Admin Component Props**:
+```typescript
+interface ChunkEditFormProps {
+  chunk: ChunkDetail;
+  onSaved: (updated: Partial<ChunkDetail>) => void;
+  onDeleted: () => void;
+  layout?: 'sidebar' | 'full';
+}
+
+interface KnowledgeTreeColumnProps {
+  tree: KnowledgeTreeResponse | null;
+  query: string;
+}
+
+interface ChildChunkColumnProps {
+  parent: ParentNode | null;
+  query: string;
+  onOpenEditor: (childId: string) => void;
+}
+```
+
+**Usage Locations**:
+- **ChunkEditFormProps**: `ChunkEditForm.tsx`, chunk detail panel, admin pages
+- **KnowledgeTreeColumnProps**: `KnowledgeTreeColumn.tsx`, dashboard page
+- **ChildChunkColumnProps**: `ChildChunkColumn.tsx`, dashboard navigation
+
+---
+
+## 18. Library Files Architecture (`src/lib/`)
+
+### 18.1 Core Libraries Overview
+
+| File | Purpose | Dependencies | Used By |
+|------|---------|-------------|---------|
+| `store.ts` | Student state management | zustand | All student pages |
+| `adminStore.ts` | Admin state management | zustand | Admin components |
+| `api.ts` | Student API client | fetch, auth.ts | Student pages |
+| `adminApi.ts` | Admin API client | fetch, adminAuth.ts | Admin components |
+| `auth.ts` | Student authentication | localStorage | Student pages, API |
+| `adminAuth.ts` | Admin authentication | localStorage | Admin pages, API |
+| `adminTypes.ts` | Admin TypeScript definitions | - | Admin components |
+| `documentSources.ts` | Document metadata | - | Layout, chat page |
+
+### 18.2 State Management Libraries
+
+**Student Store** (`src/lib/store.ts`):
+```markdown
+MULAI
+
+Manage aplikasi state untuk student:
+    session_id: ID chat session saat ini
+    messages: daftar pesan chat (user + bot)
+    isDocPanelOpen: status panel dokumen terbuka/tutup
+    activeDoc: URL dokumen yang sedang dibuka
+
+Fungsi yang disediakan:
+    setSessionId(id): set session ID baru
+    setMessages(msgs): replace semua messages
+    addMessage(msg): tambah satu message ke chat
+    resetSession(): buat session baru, kosongkan messages
+    setDocPanelOpen(open): buka/tutup panel dokumen
+    setActiveDoc(url): set dokumen aktif
+    openDocument(url): buka dokumen + panel
+
+Persistent storage:
+    simpan session_id dan messages ke localStorage
+    restore otomatis saat app dimuat
+    handle hydration mismatch dengan hasHydrated flag
+
+SELESAI
+```
+
+**Admin Store** (`src/lib/adminStore.ts`):
+```markdown
+MULAI
+
+Manage admin dashboard state:
+    tree: struktur knowledge base (dokumen -> chapter -> parent -> child)
+    selectedChildId: child chunk yang sedang dipilih untuk edit
+    selectedParentKey: parent yang sedang dipilih di tree
+    isTreeLoading: status loading knowledge tree
+
+Fungsi yang disediakan:
+    fetchTree(): ambil knowledge tree dari server
+    selectChild(childId, parentKey): pilih child untuk edit
+    patchChunkInTree(childId, updates): update chunk di tree tanpa re-fetch
+    removeChunkFromTree(childId): hapus chunk dari tree
+
+Optimasi:
+    tidak ada persistent storage (admin session temporary)
+    tree di-cache sampai refresh page
+    update lokal untuk responsiveness
+
+SELESAI
+```
+
+### 18.3 API Client Libraries
+
+**Student API** (`src/lib/api.ts`):
+```markdown  
+MULAI
+
+Handle komunikasi dengan backend untuk student:
+    BASE_URL: dari environment variable
+    Token: ambil dari auth.ts untuk setiap request
+
+Fungsi yang disediakan:
+    sendChatMessage(query, session_id): kirim pesan, terima jawaban + sources
+    fetchSessions(): ambil daftar riwayat chat
+    fetchSessionDetails(id): ambil detail session dengan semua messages  
+    deleteSession(id): hapus session tertentu
+    fetchProfile(): ambil data profil user
+
+Error handling:
+    401 unauthorized: otomatis logout user
+    Network errors: throw dengan pesan yang jelas
+    Server errors: extract pesan error dari response
+
+SELESAI
+```
+
+**Admin API** (`src/lib/adminApi.ts`):
+```markdown
+MULAI
+
+Handle komunikasi dengan backend untuk admin:
+    BASE_URL: dari environment variable
+    Token: ambil dari adminAuth.ts untuk setiap request
+
+Fungsi knowledge base:
+    getKnowledgeTree(): ambil struktur dokumen lengkap
+    getChunkDetail(childId): ambil detail chunk untuk edit
+    saveChunk(childId, updates): simpan perubahan chunk
+    deleteChunk(childId): hapus chunk dan update tree
+    
+Fungsi embedding:
+    triggerReembed(childId): trigger ulang embedding process
+    getEditStatus(childId): cek status embedding terbaru
+
+Error handling:
+    Admin-specific error messages
+    Validation errors untuk form fields
+    Network timeout handling
+
+SELESAI
+```
+
+### 18.4 Authentication Libraries
+
+**Student Auth** (`src/lib/auth.ts`):
+```markdown
+MULAI
+
+Manage student authentication:
+    Token storage: localStorage dengan key 'access_token'
+    Server-side safe: check typeof window !== 'undefined'
+
+Fungsi yang disediakan:
+    getAuthToken(): ambil token dari localStorage
+    setAuthToken(token): simpan token ke localStorage  
+    logout(): hapus token, redirect ke login
+
+Digunakan oleh:
+    layout.tsx: cek token expired
+    api.ts: attach token ke request headers
+    login/page.tsx: simpan token setelah Google OAuth
+
+SELESAI
+```
+
+**Admin Auth** (`src/lib/adminAuth.ts`):
+```markdown
+MULAI
+
+Manage admin authentication:
+    Token storage: localStorage dengan key 'admin_access_token'
+    Admin info: localStorage dengan key 'admin_info'
+
+Fungsi yang disediakan:
+    adminLogin(username, password, rememberMe): login admin ke backend
+    getAdminToken(): ambil admin token dari localStorage
+    getAdminInfo(): ambil info admin (username, role)
+    adminLogout(): hapus token + info, redirect ke admin login
+
+Features khusus:
+    Remember me functionality
+    Role-based access (untuk future expansion)
+    Session persistence
+
+SELESAI
+```
+
+### 18.5 Data & Configuration Libraries
+
+**Document Sources** (`src/lib/documentSources.ts`):
+```markdown
+MULAI
+
+Konfigurasi dokumen panduan:
+    DOCUMENTS array: daftar semua PDF panduan yang available
+    
+Setiap dokumen berisi:
+    id: unique identifier
+    title: nama dokumen (contoh: "Panduan Skripsi 2024")
+    fileUrl: direct URL ke file PDF di Supabase Storage
+    domain: kategori (kkp, pi, skripsi, non-skripsi)
+
+Digunakan oleh:
+    layout.tsx: tampilkan daftar dokumen di panel
+    chat/page.tsx: mapping citation ke PDF URL dengan #page parameter
+    document panel: navigation antar dokumen
+
+SELESAI
+```
+
+**Admin Types** (`src/lib/adminTypes.ts`):
+```markdown  
+MULAI
+
+TypeScript definitions untuk admin interface:
+    Export semua interface yang dibutuhkan admin components
+    Tidak ada logic, pure type definitions
+    
+Categories:
+    Tree structures: KnowledgeTreeResponse, DocumentNode, ChapterNode
+    Chunk data: ChunkDetail, ChildLite, ParentNode
+    API responses: ChunkSaveResponse, ReembedTriggerResponse  
+    Enums: EmbeddingStatus, EditLogStatus
+
+Digunakan oleh:
+    Semua admin components untuk type safety
+    Admin API untuk request/response typing
+    Admin store untuk state typing
+
+SELESAI
+```
+
+---
+
+## 19. Component Architecture & Usage Map
+
+### 19.1 Page Components (Route Handlers)
+
+**Student Pages**:
+
+| Component | Route | Purpose | Key Dependencies | State Used |
+|-----------|--------|---------|------------------|------------|
+| `chat/page.tsx` | `/chat` | Main chat interface | useAppStore, api.ts | messages, session_id, isDocPanelOpen |
+| `riwayat/page.tsx` | `/riwayat` | Chat history listing | useAppStore, api.ts | - |
+| `profil/page.tsx` | `/profil` | User profile page | api.ts, auth.ts | - |
+| `login/page.tsx` | `/login` | Google OAuth login | @react-oauth/google, auth.ts | - |
+
+**Admin Pages**:
+
+| Component | Route | Purpose | Key Dependencies | State Used |
+|-----------|--------|---------|------------------|------------|
+| `admin/dashboard/page.tsx` | `/admin/dashboard` | Main admin dashboard | useAdminStore, adminApi.ts | tree, selectedChildId |
+| `admin/dashboard/chunks/[childId]/page.tsx` | `/admin/dashboard/chunks/[id]` | Full-page chunk editor | useAdminStore, adminApi.ts | tree |
+| `admin/login/page.tsx` | `/admin/login` | Username/password login | adminAuth.ts | - |
+
+### 19.2 Layout Components (Shared UI Structure)
+
+**Root Layouts**:
+
+| Component | Scope | Purpose | Key Features |
+|-----------|--------|---------|--------------|
+| `app/layout.tsx` | Global | HTML wrapper | Google OAuth provider, font loading |
+| `app/(site)/layout.tsx` | Student pages | 3-column layout | Sidebar, main panel, document panel, auth guard |
+| `app/admin/layout.tsx` | Admin wrapper | Admin CSS loading | Admin-specific styles |
+| `app/admin/dashboard/layout.tsx` | Admin dashboard | Admin sidebar layout | Navigation, logout, responsive |
+
+**Layout Responsibilities**:
+- **Root Layout**: Global providers, metadata, font optimization
+- **Site Layout**: Authentication, responsive navigation, document panel
+- **Admin Layout**: Admin-specific styling, authentication context
+- **Dashboard Layout**: Admin navigation, responsive sidebar
+
+### 19.3 Admin Components (Dashboard Interface)
+
+**Core Admin Components**:
+
+| Component | Used In | Purpose | Key Props | State Dependencies |
+|-----------|---------|---------|-----------|-------------------|
+| `AdminSidebar` | Dashboard layout | Admin navigation | `onCloseMobile?` | adminAuth.getAdminInfo() |
+| `KnowledgeTreeColumn` | Dashboard, chunk editor | Tree navigation | `tree, query` | useAdminStore.tree |
+| `ChildChunkColumn` | Dashboard | Child chunk listing | `parent, query, onOpenEditor` | selected parent |
+| `ChunkDetailPanel` | Dashboard | Sidebar chunk editor | `childId?, isMobileShell?` | API call per childId |
+| `ChunkEditForm` | Detail panel, chunk editor | Chunk editing form | `chunk, onSaved, onDeleted, layout?` | chunk state |
+
+**Modal Components**:
+
+| Component | Triggered By | Purpose | Props | Behavior |
+|-----------|--------------|---------|-------|----------|
+| `DeleteConfirmModal` | ChunkEditForm delete button | Confirm chunk deletion | `isOpen, onClose, onConfirm, chunkInfo` | Show chunk info, confirmation |
+| `ReembedStatusModal` | ChunkEditForm re-embed button | Re-embed progress | `isOpen, onClose, childId` | Real-time status updates |
+
+**Utility Components**:
+
+| Component | Used In | Purpose | Props | Behavior |
+|-----------|---------|---------|-------|----------|
+| `StatGrid` | Admin dashboard | Statistics cards | `tree` | Display totals, last updated |
+| `RelationDiagram` | ChildChunkColumn | Parent-child relationship | `parent` | Visual hierarchy |
+| `MobileKnowledgeShell` | Dashboard | Mobile responsive wrapper | `children` | Responsive layout management |
+
+### 19.4 Component Interaction Flow
+
+**Student Flow**:
+```mermaid
+graph TD
+    A[layout.tsx] --> B[chat/page.tsx]
+    A --> C[riwayat/page.tsx] 
+    A --> D[profil/page.tsx]
+    
+    B --> E[useAppStore]
+    B --> F[api.ts]
+    B --> G[Document Panel in Layout]
+    
+    C --> E
+    C --> F
+    
+    D --> F
+    D --> H[auth.ts]
+    
+    G --> I[documentSources.ts]
+```
+
+**Admin Flow**:
+```mermaid
+graph TD
+    A[admin/dashboard/layout.tsx] --> B[AdminSidebar]
+    A --> C[admin/dashboard/page.tsx]
+    
+    C --> D[StatGrid]
+    C --> E[KnowledgeTreeColumn]
+    C --> F[ChildChunkColumn]
+    C --> G[ChunkDetailPanel]
+    
+    E --> H[useAdminStore]
+    F --> H
+    G --> I[ChunkEditForm]
+    
+    I --> J[DeleteConfirmModal]
+    I --> K[ReembedStatusModal]
+    
+    H --> L[adminApi.ts]
+```
+
+### 19.5 Component Reusability Patterns
+
+**Reusable Patterns**:
+
+1. **Modal Pattern**: 
+   - Used by: DeleteConfirmModal, ReembedStatusModal
+   - Props: `isOpen, onClose, children`
+   - Features: Backdrop click to close, escape key, focus trap
+
+2. **Loading State Pattern**:
+   - Used by: All async components
+   - Implementation: Spinner component, skeleton loading, error boundaries
+   - States: loading, success, error
+
+3. **Form Pattern**:
+   - Used by: ChunkEditForm, login forms
+   - Features: Validation, loading states, error handling, responsive design
+   - State: Controlled components with local state
+
+4. **Navigation Pattern**:
+   - Used by: Sidebar, breadcrumbs, tree navigation
+   - Features: Active state highlighting, responsive collapse, keyboard navigation
+
+### 19.6 Component Performance Optimizations
+
+**React Optimization Strategies**:
+
+1. **Key Props**: ChunkEditForm uses chunk.id as key for clean remounting
+2. **Derived State**: Layout uses `typeof window !== 'undefined'` instead of useState
+3. **Inline Effects**: Async operations directly in useEffect, no external function calls
+4. **Cleanup Functions**: Proper cleanup in useEffect for API calls and event listeners
+5. **Error Boundaries**: Wrapped around admin components for graceful degradation
+
+**Bundle Optimization**:
+1. **Code Splitting**: Page-level components automatically split by Next.js
+2. **Lazy Loading**: Admin components only load when accessed
+3. **Tree Shaking**: Unused library functions eliminated in build
+4. **CSS Optimization**: Tailwind purges unused styles
+
+### Baru Ditambahkan dalam Update Ini
+
+**Section 17: Data Types & Interface Architecture** - Komprehensif mapping semua TypeScript interfaces:
+- ✅ Core types dengan usage locations (ChatMessage, CitationSource, SessionData, UserProfile)
+- ✅ Admin types dengan component dependencies (KnowledgeTreeResponse, ChunkDetail, EmbeddingStatus)
+- ✅ Authentication types dengan OAuth dan JWT handling
+- ✅ API response types untuk error handling dan validation
+- ✅ Component prop types untuk type safety dan reusability
+
+**Section 18: Library Files Architecture** - Detail mapping semua lib functions:
+- ✅ State management libraries (store.ts, adminStore.ts) dengan pseudocode
+- ✅ API client libraries (api.ts, adminApi.ts) dengan error handling patterns  
+- ✅ Authentication libraries (auth.ts, adminAuth.ts) dengan token management
+- ✅ Data configuration libraries (documentSources.ts, adminTypes.ts) dengan usage patterns
+- ✅ Library dependency mapping dan interaction flows
+
+**Section 19: Component Architecture & Usage Map** - Complete component analysis:
+- ✅ Page components dengan route mapping dan state dependencies
+- ✅ Layout components dengan responsibility breakdown
+- ✅ Admin components dengan prop interfaces dan state dependencies  
+- ✅ Component interaction flow dengan mermaid diagrams
+- ✅ Reusability patterns dan performance optimizations
+
+### Enhanced Knowledge Base Kegunaan
+
+**Untuk Development Team**:
+- 🎯 **Complete Reference** - Tidak perlu eksplorasi manual codebase
+- 🎯 **Pattern Library** - 37 pseudocode examples untuk consistency  
+- 🎯 **Type Safety Guide** - Interface definitions dengan usage locations
+- 🎯 **Architecture Decision Records** - Kenapa pattern tertentu dipilih
+- 🎯 **Performance Best Practices** - React optimization patterns yang sudah proven
+
+**Untuk AI/LLM Integration**:
+- 🤖 **Structured Knowledge** - JSON-like structure untuk parsing
+- 🤖 **Implementation Examples** - Concrete pseudocode untuk code generation
+- 🤖 **Context Understanding** - Relationship mapping antar components
+- 🤖 **Error Pattern Recognition** - Common issues dan solutions
+- 🤖 **Code Quality Guidelines** - ESLint compliance patterns
+
+### Update Documentation Coverage
+
+**Total Sections: 19** (bertambah 3 section baru)
+- Section 1-16: Original architecture, implementation, dan configuration
+- **Section 17: Data Types & Interfaces** - NEW! Complete TypeScript type system
+- **Section 18: Library Files** - NEW! All lib/ directory functions with pseudocode  
+- **Section 19: Components Map** - NEW! Complete component architecture analysis
+
+**Total Coverage**: 100% dari 37 files dengan tambahan deep-dive analysis pada:
+- ✅ Interface usage mapping across all components
+- ✅ Library function dependencies dan interaction patterns
+- ✅ Component reusability patterns dan performance optimizations
+- ✅ Complete data flow analysis dari authentication sampai UI rendering
+
+*Documentation Updated: Desember 2024*  
+*New Sections Added: 17-19 (Data Types, Lib Files, Component Architecture)*  
+*Enhanced Coverage: Complete codebase mapping dengan implementation details*
