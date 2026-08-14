@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { ChevronDown } from 'lucide-react';
-import { ParentNode } from '@/lib/adminTypes';
+import { ParentNode, ChildLite } from '@/lib/adminTypes';
 
 interface RelationDiagramProps {
   parent: ParentNode | null;
@@ -19,7 +19,7 @@ interface DiagramConfig {
 interface DiagramLayout {
   config: DiagramConfig;
   parentPos: { x: number; y: number };
-  childrenPos: Array<{ x: number; y: number; child: any }>;
+  childrenPos: Array<{ x: number; y: number; child: ChildLite | null }>;
 }
 
 function calculateDiagramLayout(childCount: number): DiagramLayout {
@@ -105,10 +105,9 @@ function ParentBox({ parent, position, config }: {
   );
 }
 
-function ChildNode({ child, position, index }: { 
-  child: any; 
+function ChildNode({ child, position }: { 
+  child: ChildLite; 
   position: { x: number; y: number }; 
-  index: number;
 }) {
   const { x, y } = position;
   
@@ -169,7 +168,6 @@ function DiagramContent({ parent }: { parent: ParentNode }) {
             key={child.id}
             child={child}
             position={layout.childrenPos[index]}
-            index={index}
           />
         ))}
       </svg>
