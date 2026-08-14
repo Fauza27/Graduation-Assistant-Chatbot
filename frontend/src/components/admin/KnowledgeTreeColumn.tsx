@@ -45,10 +45,12 @@ function matchesSearchQuery(parent: ParentNode, doc: DocumentNode, section: stri
 }
 
 function useProcessedDocuments(tree: KnowledgeTreeResponse | null, query: string): ProcessedDocument[] {
+  const documents = tree?.documents;
+  
   return useMemo(() => {
-    if (!tree?.documents) return [];
+    if (!documents) return [];
 
-    return tree.documents.map(doc => {
+    return documents.map(doc => {
       const docKey = `${doc.domain}-${doc.source}`;
       
       const filteredChapters = doc.chapters
@@ -74,7 +76,7 @@ function useProcessedDocuments(tree: KnowledgeTreeResponse | null, query: string
         totalChildren
       };
     }).filter(processed => !query || processed.filteredChapters.length > 0);
-  }, [tree?.documents, query]);
+  }, [documents, query]);
 }
 
 function DocumentRow({ processed, isExpanded, onToggle, hasQuery }: {
