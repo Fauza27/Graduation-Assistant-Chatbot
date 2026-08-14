@@ -1,42 +1,37 @@
-# Pseudocode untuk `src/bot/handlers/chat_handler.py`
+# Pseudocode untuk `src/bot/handlers/chat_handler.py` (Updated with Quota Service)
 
 ```markdown
-ALGORITMA PENANGANAN CHAT BOT (chat_handler.py)
+ALGORITMA PENANGANAN CHAT BOT (chat_handler.py) - UPDATED
 
-1. IMPOR PUSTAKA
+1. IMPOR PUSTAKA - UPDATED
    - asyncio, html, datetime, functools (lru_cache)
    - telegram.ext (Update, MessageHandler, ContextTypes, filters)
    - Konfigurasi, pesan-pesan teks, modul AI chat, alat pendeteksi sumber.
+   - quota_service.check_and_update_quota untuk shared quota logic (NEW)
 
-2. FUNGSI _get_supabase_client()
-   - Di-cache agar klien Supabase tidak dibuat ulang terus menerus.
-   - KEMBALIKAN klien Supabase yang dikonfigurasi dengan URL dan Service Key dari `settings`.
+2. REMOVED: Direct Supabase Client & Quota Functions
+   - ELIMINATED: _get_supabase_client() function (now handled by quota service)
+   - ELIMINATED: check_and_update_quota() local implementation
+   - BENEFIT: Code deduplication dengan api/ai.py
 
-3. FUNGSI check_and_update_quota(user_id) -> Boolean
-   - Cek apakah pengguna sudah melewati batas pesan per hari.
-   - Ambil limit harian dari konfigurasi (misal: 13).
-   - Dapatkan klien Supabase.
-   - Panggil fungsi database jarak jauh (RPC) `increment_quota_if_under_limit` dengan input ID pengguna, tanggal hari ini, dan batas kuota harian.
-   - JIKA respons berhasil (kuota masih ada), kembalikan TRUE.
-   - JIKA respons gagal (limit habis), kembalikan FALSE.
-   - JIKA koneksi ke database error/gagal (exception), anggap saja kuota tersedia (fallback True) agar pengguna tidak terblokir karena masalah infrastruktur.
-
-4. FUNGSI cmd_start(update, context)
+3. FUNGSI cmd_start(update, context)
    - Eksekusi ketika user mengetik `/start`.
    - Balas pesan dengan `messages.WELCOME` dan format dengan nama depan pengguna.
 
-5. FUNGSI _format_source_line(source) -> Teks
+4. FUNGSI _format_source_line(source) -> Teks
    - Konversi dan format rincian referensi dokumen menjadi teks yang aman (menghindari error HTML Parse di Telegram).
    - Jika dokumen punya Judul dan Bab berbeda, gabungkan.
    - Gunakan fungsi `html.escape` untuk mengamankan tanda-tanda baca unik (<, >, &).
    - KEMBALIKAN teks string "* [Nama Bagian] (Buku Panduan [PI/KKP])\n".
 
-6. FUNGSI handle_text_chat(update, context)
+5. FUNGSI handle_text_chat(update, context) - UPDATED
    - Dieksekusi otomatis ketika ada pesan teks biasa (bukan perintah garis miring /).
    - Pastikan teksnya tidak kosong.
    
-   - TAHAP 1: Cek Limit Kuota
-     - Panggil `check_and_update_quota` dengan `asyncio.to_thread` agar tidak memblokir event loop.
+   - TAHAP 1: Cek Limit Kuota - UPDATED (Menggunakan Shared Service)
+     - has_quota = await asyncio.to_thread(check_and_update_quota, user_id)
+     - MENGGUNAKAN: Shared quota_service.check_and_update_quota()
+     - CONSISTENT: Same logic dan error handling dengan api/ai.py
      - JIKA habis (False), balas dengan pesan `DAILY_LIMIT_REACHED` dan HENTIKAN proses.
      
    - TAHAP 2: Animasi Loading
@@ -48,6 +43,29 @@ ALGORITMA PENANGANAN CHAT BOT (chat_handler.py)
      - Panggil AI Service (`chat(query, session_id, username, channel="telegram", mahasiswa_id=None)`) secara asinkron di thread terpisah.
      - Ambil teks jawaban. Jika jawaban LLM kosong, isi dengan `messages.EMPTY_ANSWER_FALLBACK`.
      - Gunakan `html.escape` pada teks jawaban agar tidak bikin error saat dikirim via Telegram (karena parse_mode=HTML).
+     
+   - TAHAP 4: Format Sumber Referensi
+     - Jika ada sources dari AI response, format menggunakan _format_source_line()
+     - Escape HTML characters untuk safe Telegram rendering
+     - Tambahkan ke reply text dengan proper formatting
+     
+   - TAHAP 5: Kirim Response
+     - Update loading message dengan jawaban final menggunakan edit_text
+     - Handle exceptions dengan graceful error messages
+     - Log successful responses dengan document count
+
+6. FUNGSI build_text_chat_handler() -> MessageHandler
+   - Factory function untuk create MessageHandler instance
+   - Filter: TEXT & ~COMMAND (text messages yang bukan slash commands)
+   - Handler: handle_text_chat function
+
+7. ARCHITECTURE IMPROVEMENTS:
+   - ✅ SHARED QUOTA LOGIC: Eliminasi code duplication dengan api/ai.py
+   - ✅ CONSISTENT BEHAVIOR: Same quota checking logic across platforms  
+   - ✅ FAIL-OPEN PATTERN: Quota service handles DB errors gracefully
+   - ✅ CLEANER CODE: Removed duplicate Supabase client management
+   - ✅ MAINTAINABILITY: Single source of truth untuk quota logic
+```
      - JIKA bot memberikan list dokumen sumber (sources):
        - Tambahkan teks "📚 Sumber:\n"
        - Ulangi untuk setiap dokumen sumber dan panggil `_format_source_line`, gabungkan ke dalam balasan.

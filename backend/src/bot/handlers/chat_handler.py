@@ -7,51 +7,12 @@ from loguru import logger
 from telegram import Update
 from telegram.constants import ChatAction, ParseMode
 from telegram.ext import ContextTypes, MessageHandler, filters
-from supabase import create_client, Client
 
 from config.settings import get_settings
 from src.bot import messages
 from src.retrieval.source_utils import detect_panduan_type
 from src.services.ai_services import chat
-
-
-@lru_cache(maxsize=1)
-def _get_supabase_client() -> Client:
-    """Reuse single Supabase client instance across requests."""
-    settings = get_settings()
-    return create_client(settings.supabase_url, settings.supabase_service_key)
-
-
-def check_and_update_quota(user_id: str) -> bool:
-    """
-    Atomically increment quota and check daily limit via RPC.
-
-    Returns True if user is still under the daily limit and quota was incremented.
-    Returns False if user has reached the limit.
-    Falls back to allow on DB error so the system does not block users due to infra issues.
-    """
-    today = datetime.now().strftime("%Y-%m-%d")
-    settings = get_settings()
-    daily_limit = settings.RATE_LIMIT_REQUESTS
-
-    try:
-        supabase = _get_supabase_client()
-        response = supabase.rpc(
-            "increment_quota_if_under_limit",
-            {
-                "p_user_id": user_id,
-                "p_date": today,
-                "p_daily_limit": daily_limit,
-            },
-        ).execute()
-
-        # RPC returns boolean: True = allowed (and incremented), False = limit reached
-        return bool(response.data)
-    except Exception as e:
-        logger.error(f"Error checking quota for user {user_id}: {e}")
-        # If DB call fails, allow the request to avoid blocking legitimate users
-        return True
-
+from src.services.quota_service import check_and_update_quota
 
 
 async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:

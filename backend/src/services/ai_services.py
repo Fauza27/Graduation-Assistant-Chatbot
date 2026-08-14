@@ -6,7 +6,7 @@ from cachetools import TTLCache
 from src.generation.memory import ConversationMemory
 from src.generation.intent_classifier.reformulator import normalize_query, needs_rewrite, reformulate_query
 from src.generation.chain import RAGChain
-from src.services.session_store import get_session_store
+from src.services.session_strategy import create_session_store, SessionStore
 from config.settings import get_settings
 
 settings = get_settings()
@@ -15,24 +15,8 @@ settings = get_settings()
 retrieval_cache = TTLCache(maxsize=500, ttl=1800)
 KNOWLEDGE_VERSION = "v1"
 
-# Legacy in-memory session store (fallback jika database tidak tersedia)
-_legacy_session_store: dict[str, tuple[ConversationMemory, float]] = {}
-_legacy_session_lock = None
-
-# Initialize session store berdasarkan konfigurasi
-if settings.USE_DATABASE_SESSIONS:
-    try:
-        _session_store = get_session_store()
-        logger.info("Using database-backed session storage")
-    except Exception as e:
-        logger.error(f"Failed to initialize database session store: {e}")
-        logger.warning("Falling back to in-memory session storage")
-        settings.USE_DATABASE_SESSIONS = False
-
-if not settings.USE_DATABASE_SESSIONS:
-    from threading import Lock
-    _legacy_session_lock = Lock()
-    logger.info("Using in-memory session storage")
+# Initialize session store strategy (dipilih sekali saat startup)
+_session_store_strategy: SessionStore = create_session_store()
 
 _rag_chain = RAGChain()
 
@@ -47,101 +31,32 @@ class RetrievalError(ChatError):
     pass
 
 
-def _evict_idle_sessions(now: float) -> int:
-    """Hapus session yang idle melebihi SESSION_CLEANUP_INTERVAL detik (legacy in-memory only)."""
-    if settings.USE_DATABASE_SESSIONS:
-        return 0  # Database handles cleanup
-    
-    ttl = settings.SESSION_CLEANUP_INTERVAL
-    expired = [sid for sid, (_, last_ts) in _legacy_session_store.items() if now - last_ts > ttl]
-    for sid in expired:
-        _legacy_session_store.pop(sid, None)
-    if expired:
-        logger.info(f"Evicted {len(expired)} idle session(s)")
-    return len(expired)
-
-
-def _evict_lru_if_full() -> None:
-    """Jika store sudah penuh, hapus session paling lama tidak diakses (legacy in-memory only)."""
-    if settings.USE_DATABASE_SESSIONS:
-        return  # Database handles LRU
-    
-    cap = settings.MAX_ACTIVE_SESSIONS
-    if len(_legacy_session_store) <= cap:
-        return
-    # Sort by last_access_ts ascending; buang sampai cap.
-    overflow = len(_legacy_session_store) - cap
-    sorted_items = sorted(_legacy_session_store.items(), key=lambda kv: kv[1][1])
-    for sid, _ in sorted_items[:overflow]:
-        _legacy_session_store.pop(sid, None)
-    logger.info(f"Evicted {overflow} LRU session(s) due to MAX_ACTIVE_SESSIONS cap")
-
-
 def get_or_create_memory(session_id: str, mahasiswa_id: Optional[str] = None) -> ConversationMemory:
     """Get or create conversation memory for a session."""
-    if settings.USE_DATABASE_SESSIONS:
-        return _session_store.load_memory(session_id, mahasiswa_id=mahasiswa_id)
-    
-    # Legacy in-memory session storage
-    now = time.time()
-    with _legacy_session_lock:
-        _evict_idle_sessions(now)
-
-        existing = _legacy_session_store.get(session_id)
-        if existing is not None:
-            memory, _ = existing
-            _legacy_session_store[session_id] = (memory, now)
-            return memory
-
-        memory = ConversationMemory(max_turns=5)
-        _legacy_session_store[session_id] = (memory, now)
-        _evict_lru_if_full()
-        return memory
+    return _session_store_strategy.load_memory(session_id, mahasiswa_id=mahasiswa_id)
 
 
 def _save_memory_if_needed(session_id: str, memory: ConversationMemory, channel: str = "telegram", mahasiswa_id: Optional[str] = None) -> None:
-    """Save memory to persistent storage if using database sessions."""
-    if settings.USE_DATABASE_SESSIONS:
-        try:
-            _session_store.save_memory(session_id, memory, channel=channel, mahasiswa_id=mahasiswa_id)
-        except Exception as e:
-            logger.error(f"Failed to save session {session_id}: {e}")
+    """Save memory to persistent storage."""
+    try:
+        _session_store_strategy.save_memory(session_id, memory, channel=channel, mahasiswa_id=mahasiswa_id)
+    except Exception as e:
+        logger.error(f"Failed to save session {session_id}: {e}")
 
 
 def clear_session(session_id: str) -> bool:
     """Clear conversation memory for a session"""
-    if settings.USE_DATABASE_SESSIONS:
-        return _session_store.delete_session(session_id)
-    
-    with _legacy_session_lock:
-        if session_id in _legacy_session_store:
-            del _legacy_session_store[session_id]
-            logger.info(f"Session {session_id} cleared")
-            return True
-    return False
+    return _session_store_strategy.delete_session(session_id)
 
 
 def get_session_stats() -> Dict[str, Any]:
     """Get statistics about active sessions"""
-    if settings.USE_DATABASE_SESSIONS:
-        return _session_store.get_session_stats()
-    
-    with _legacy_session_lock:
-        return {
-            "active_sessions": len(_legacy_session_store),
-            "total_turns": sum(m.turn_count for m, _ in _legacy_session_store.values()),
-            "sessions": list(_legacy_session_store.keys()),
-        }
+    return _session_store_strategy.get_session_stats()
 
 
 def cleanup_sessions() -> int:
     """Manually trigger session cleanup. Returns number of sessions cleaned."""
-    if settings.USE_DATABASE_SESSIONS:
-        return _session_store.cleanup_idle_sessions()
-    
-    now = time.time()
-    with _legacy_session_lock:
-        return _evict_idle_sessions(now)
+    return _session_store_strategy.cleanup_idle_sessions()
 
 
 def chat(query: str, session_id: str, username: str, channel: str = "telegram", mahasiswa_id: Optional[str] = None) -> Dict[str, Any]:
@@ -240,16 +155,17 @@ def chat(query: str, session_id: str, username: str, channel: str = "telegram", 
         
         # 6. Catat chat log
         try:
-            if settings.USE_DATABASE_SESSIONS:
+            # Use strategy untuk get database access jika menggunakan database sessions
+            if hasattr(_session_store_strategy, '_store') and hasattr(_session_store_strategy._store, '_supabase'):
                 user_id_log = str(mahasiswa_id) if mahasiswa_id else str(session_id)
-                # Gunakan supabase client dari session_store
-                _session_store._supabase.table("chat_logs").insert({
+                _session_store_strategy._store._supabase.table("chat_logs").insert({
                     "user_id": user_id_log,
                     "username": username,
                     "question": question,
                     "answer": answer,
                 }).execute()
         except Exception as e:
+            user_id_log = str(mahasiswa_id) if mahasiswa_id else str(session_id)
             logger.error(f"Gagal menyimpan log chat untuk user {user_id_log}: {e}")
 
         return {
