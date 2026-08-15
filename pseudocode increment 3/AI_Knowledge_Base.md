@@ -148,6 +148,54 @@ Sistem admin menyediakan dashboard pengelolaan knowledge base dengan fitur login
 - `error_message` (text): Pesan error jika re-embed gagal.
 - `edited_at`, `reembedded_at` (timestamptz): Timestamp proses.
 
+_Contoh Data_:
+
+```json
+// Edit chunk berhasil dengan re-embedding
+{
+  "log_id": "550e8400-e29b-41d4-a716-446655440001",
+  "child_id": "pi-bab2-003-c2",
+  "parent_id": "pi-bab2-003",
+  "admin_id": "admin-001-uuid",
+  "old_content": "Dosen pembimbing PI wajib memiliki kualifikasi minimal S2.",
+  "new_content": "Dosen pembimbing PI wajib memiliki kualifikasi minimal S2 dengan pengalaman mengajar minimal 3 tahun.",
+  "status": "success",
+  "error_message": null,
+  "edited_at": "2026-08-15T14:30:00Z",
+  "reembedded_at": "2026-08-15T14:32:15Z"
+}
+
+// Manual re-embed tanpa edit content (old_content = null)
+{
+  "log_id": "550e8400-e29b-41d4-a716-446655440002",
+  "child_id": "skripsi-bab3-002-c3",
+  "parent_id": "skripsi-bab3-002",
+  "admin_id": "admin-001-uuid",
+  "old_content": null,
+  "new_content": "Metodologi penelitian harus mencakup desain penelitian, populasi dan sampel...",
+  "status": "success",
+  "error_message": null,
+  "edited_at": "2026-08-15T16:20:08Z",
+  "reembedded_at": "2026-08-15T16:22:33Z"
+}
+
+// Re-embed gagal dengan error message
+{
+  "log_id": "550e8400-e29b-41d4-a716-446655440003",
+  "child_id": "kkp-bab1-001-c1",
+  "parent_id": "kkp-bab1-001",
+  "admin_id": "admin-002-uuid",
+  "old_content": "Mahasiswa wajib mengikuti seminar proposal KKP.",
+  "new_content": "Mahasiswa wajib mengikuti seminar proposal KKP dan mendapat persetujuan pembimbing.",
+  "status": "failed",
+  "error_message": "OpenAI API rate limit exceeded. Please try again later.",
+  "edited_at": "2026-08-15T17:10:45Z",
+  "reembedded_at": null
+}
+```
+
+**Status Workflow**: `pending` → `processing` → `success`/`failed`. Admin dapat polling status via `/admin/chunks/{childId}/edit-status` untuk monitoring progress re-embedding.
+
 **7. `user_quotas`** (Batas Request User Harian)
 
 - `user_id` (text, PK): ID unik pengguna (session_id Telegram atau mahasiswa_id website).
