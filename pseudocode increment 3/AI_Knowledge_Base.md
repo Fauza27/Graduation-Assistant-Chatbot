@@ -53,38 +53,39 @@ Sistem menggunakan **PostgreSQL (via Supabase)** dengan ekstensi `pgvector` untu
 
 **1. `parent_documents`** (Menyimpan teks konteks besar untuk LLM)
 
-> **Catatan**: Dalam kode Python, tabel ini direferensikan menggunakan variabel konfigurasi `settings.table_parent_chunks`.
-
 - `parent_id` (text, PK): ID unik induk.
 - `title` (text): Judul dokumen/bab.
 - `content` (text): Teks isi utuh.
 - `section` (text): Kategori bagian (Misal: "BAB II").
 - `domain` (text): Domain data ('PI', 'KKP', 'SKRIPSI', 'NON_SKRIPSI').
 - `child_ids` (text[]): Daftar ID potongan anak yang merujuk ke sini.
+- `created_at` (timestamptz): Waktu pembuatan.
+- `updated_at` (timestamptz): Waktu update terakhir.
 
 _Contoh Data_:
 
 ```json
-{ "parent_id": "pi-bab2-001", "title": "Ketentuan Pembimbing", "content": "Dosen pembimbing PI wajib memiliki...", "section": "BAB II", "domain": "PI", "child_ids": ["pi-bab2-001-c1", "pi-bab2-001-c2"] }
+{ "parent_id": "pi-bab2-001", "title": "Ketentuan Pembimbing", "content": "Dosen pembimbing PI wajib memiliki...", "section": "BAB II", "domain": "PI", "child_ids": ["pi-bab2-001-c1", "pi-bab2-001-c2"], "updated_at": "2026-08-15T10:00:00Z" }
 ```
 
 **2. `child_documents`** (Menyimpan potongan kecil teks + Vektor untuk pencarian Hybrid)
 
-> **Catatan**: Dalam kode Python, tabel ini direferensikan menggunakan variabel konfigurasi `settings.table_child_chunks`.
-
 - `id` (text, PK): ID unik potongan anak.
 - `parent_id` (text, FK ke `parent_documents`): Induk dari potongan ini.
 - `title`, `content`, `section` (text): Data tekstual.
-- `pages` (int[]): Nomor halaman asli di dokumen cetak.
+- `pages` (text[]): Nomor halaman asli di dokumen cetak.
 - `source` (text): Nama dokumen sumber.
 - `domain` (text): Domain data ('PI', 'KKP', 'SKRIPSI', 'NON_SKRIPSI').
-- `metadata` (jsonb): Data pelengkap.
+- `metadata` (jsonb): Data pelengkap untuk LangChain compatibility.
 - `embedding` (vector(2000)): Representasi vektor numerik teks.
+- `embedding_status` (text): Status embedding ('pending', 'stale', 'success', 'failed').
+- `created_at` (timestamptz): Waktu pembuatan.
+- `updated_at` (timestamptz): Waktu update terakhir.
 
 _Contoh Data_:
 
 ```json
-{"id": "pi-bab2-001-c1", "parent_id": "pi-bab2-001", "title": "Ketentuan Pembimbing", "content": "Dosen pembimbing PI wajib minimal S2...", "section": "BAB II", "domain": "PI", "pages": [14], "source": "Panduan PI", "metadata": {"parent_id": "pi-bab2-001"}, "embedding": [0.012, -0.045, ...]}
+{"id": "pi-bab2-001-c1", "parent_id": "pi-bab2-001", "title": "Ketentuan Pembimbing", "content": "Dosen pembimbing PI wajib minimal S2...", "section": "BAB II", "domain": "PI", "pages": ["14"], "source": "Panduan PI", "metadata": {"parent_id": "pi-bab2-001"}, "embedding": [0.012, -0.045, ...], "embedding_status": "success", "updated_at": "2026-08-15T10:00:00Z"}
 ```
 
 **3. `mahasiswa_accounts`** (Akun Mahasiswa untuk login Website)
@@ -99,21 +100,11 @@ _Contoh Data_:
 - `session_id` (text, PK): ID sesi / ID User Telegram.
 - `mahasiswa_id` (uuid, FK ke `mahasiswa_accounts`): Nullable jika akses via Telegram anonim.
 - `channel` (text): Asal platform percakapan ('telegram' atau 'website').
-- `turns` (jsonb): Riwayat percakapan.
+- `turns` (jsonb): Riwayat percakapan dalam format array.
 - `last_access` (timestamptz): Penanda waktu untuk pembersihan sesi yang mati (idle cleanup).
+- `created_at` (timestamptz): Waktu pembuatan sesi.
 
-> **📋 Session Store Clarification**: Sistem menggunakan **dual session storage strategy** berdasarkan konfigurasi `settings.USE_DATABASE_SESSIONS`:
-> 
-> **Database Session Store (Default)**: Jika `USE_DATABASE_SESSIONS=True` (default), semua sesi disimpan di tabel ini dengan LRU cache lokal untuk performa. Ini adalah mode **primary** yang digunakan dalam produksi.
->
-> **Legacy In-Memory Store (Fallback)**: Jika database session store gagal diinisialisasi saat startup, sistem akan **fallback** ke penyimpanan in-memory menggunakan Python dictionary dengan cache TTL. Mode ini **jarang terpakai** dan hanya sebagai failsafe.
->
-> **Kapan Legacy Store Terpakai**:
-> - Database Supabase tidak dapat diakses saat startup
-> - Tabel `conversation_sessions` tidak ada atau error
-> - Koneksi database terputus secara permanen
->
-> Mode in-memory bersifat volatile (hilang saat restart) dan hanya menyimpan sesi di RAM server tanpa persistensi.
+> **📋 Session Management**: Sistem menggunakan **database session storage** sebagai default dengan fallback ke in-memory storage jika database tidak tersedia. Konfigurasi diatur melalui `settings.USE_DATABASE_SESSIONS`.
 
 _Contoh Data_:
 
@@ -132,11 +123,11 @@ _Contoh Data_:
 
 ## SECTION ADMIN: Content Management System
 
-Bagian admin pada increment ini merealisasikan dashboard pengelolaan knowledge base dengan alur yang sudah benar-benar ada di kode: login admin berbasis username/password, pemuatan knowledge tree penuh, edit child chunk, re-embed manual dengan polling status, dan delete child chunk dengan housekeeping parent kosong.
+Sistem admin menyediakan dashboard pengelolaan knowledge base dengan fitur login berbasis username/password, pengelolaan knowledge tree, edit child chunk, re-embed dengan polling status, dan delete chunk dengan pembersihan otomatis parent kosong.
 
 ---
 
-## Admin Database Schema dan Asumsi Data
+## Admin Database Schema
 
 **5. `admin_users`**
 
@@ -159,8 +150,6 @@ Bagian admin pada increment ini merealisasikan dashboard pengelolaan knowledge b
 
 **7. `user_quotas`** (Batas Request User Harian)
 
-> **Catatan**: Field `settings.table_user_quotas` ada di konfigurasi tapi **tidak digunakan** di kode manapun. Tabel ini diakses langsung via RPC functions (`increment_quota_if_under_limit`) tanpa referensi ke nama tabel dari settings.
-
 - `user_id` (text, PK): ID unik pengguna (session_id Telegram atau mahasiswa_id website).
 - `date` (text, PK): Tanggal dalam format YYYY-MM-DD.
 - `message_count` (integer, DEFAULT 0): Jumlah pesan yang telah dikirim pada tanggal tersebut.
@@ -172,8 +161,6 @@ _Contoh Data_:
 ```
 
 **8. `chat_logs`** (Log Percakapan Historis)
-
-> **Catatan**: Dalam kode Python, tabel ini saat ini di-**hardcode** sebagai string `"chat_logs"` langsung di `ai_services.py` (bukan menggunakan `settings.table_chat_logs` seperti tabel lainnya).
 
 - `id` (bigint, PK, AUTO-INCREMENT): ID unik log.
 - `created_at` (timestamptz, DEFAULT now()): Waktu percakapan terjadi.
@@ -188,15 +175,10 @@ _Contoh Data_:
 {"id": 1, "created_at": "2026-08-13T10:30:00Z", "user_id": "tg-123456789", "username": "john_doe", "question": "Apa syarat KKP?", "answer": "Berdasarkan panduan KKP..."}
 ```
 
-**Tambahan status pada child_documents**
+**Status dan Metadata pada child_documents**
 
-- `embedding_status` (text): status sinkronisasi permanen per child chunk.
-- `updated_at` (timestamptz): dipakai untuk statistik last updated.
-
-**Catatan penting tree**
-
-- `source` dibaca dari `child_documents`, bukan dari `parent_documents`.
-- Tree dashboard dibangun dari pasangan `domain + source`, lalu dikelompokkan lagi berdasarkan `section`.
+- `embedding_status` (text): Status sinkronisasi embedding per child chunk ('pending', 'stale', 'success', 'failed').
+- `updated_at` (timestamptz): Timestamp untuk tracking perubahan.
 
 ---
 
@@ -208,342 +190,206 @@ _Contoh Data_:
 ALGORITMA ADMIN AUTHENTICATION (auth.py)
 
 1. FUNGSI hash_password(plain_password) -> str
-   - Generate salt bcrypt.
-   - Hash password dengan bcrypt.
-   - Kembalikan string hash.
+   - Generate salt bcrypt dengan bcrypt.gensalt().
+   - Hash password dengan bcrypt.hashpw().
+   - Return encoded string hash untuk storage.
 
 2. FUNGSI verify_password(plain_password, password_hash) -> bool
-   - Gunakan bcrypt.checkpw.
-   - Jika hash rusak atau format tidak valid, kembalikan False.
+   - Gunakan bcrypt.checkpw untuk verifikasi.
+   - Handle ValueError untuk hash format invalid.
+   - Return boolean hasil verifikasi.
 
 3. FUNGSI authenticate_admin(username, plain_password, supabase) -> dict | None
-   - Query admin_users berdasarkan username, limit 1.
-   - Jika tidak ada baris: return None.
-   - Verifikasi password dengan verify_password.
+   - Query admin_users table berdasarkan username dengan limit 1.
+   - Jika tidak ada: return None.
+   - Verify password menggunakan verify_password().
    - Jika gagal: return None.
-   - Update last_login menggunakan nilai "now()" pada baris admin tersebut.
-   - Kembalikan profil tanpa password_hash: {admin_id, username, full_name}.
+   - Update last_login dengan "now()" (fire-and-forget).
+   - Return admin profile tanpa password_hash: {admin_id, username, full_name}.
 
 4. FUNGSI issue_admin_token(admin) -> str
-   - Payload JWT: {sub: admin_id, username, role: "admin"}.
-   - Panggil create_access_token(payload).
+   - Create JWT payload: {sub: admin_id, username, role: "admin"}.
+   - Call create_access_token(payload) untuk generate token.
 
 5. FUNGSI get_current_admin(authorization: str = Header(None)) -> dict
-   - Tolak jika header kosong atau bukan format "Bearer <token>".
-   - Verifikasi token dengan verify_access_token.
-   - Tolak jika payload tidak valid atau role != "admin".
-   - Kembalikan payload JWT.
+   - Validate header format "Bearer <token>".
+   - Extract dan verify token dengan verify_access_token().
+   - Check role == "admin" untuk authorization.
+   - Return payload JWT atau raise HTTPException.
 ```
 
 ---
 
-## Chunk Editor Service (Updated)
+## Chunk Editor Service
 
 ### File: `src/admin/chunk_editor.py`
 
 ```markdown
-ALGORITMA CHUNK EDITOR SYSTEM - READABLE VERSION (chunk_editor.py)
+ALGORITMA CHUNK EDITOR SYSTEM (chunk_editor.py)
 
 ================================================================================
-DATA STRUCTURES (DATACLASSES)
+DATA STRUCTURES
 ================================================================================
 
 1. DATACLASS ChunkSummary
-   - total_documents: int
-   - total_parents: int  
-   - total_children: int
-   - last_updated_at: Optional[str]
+   - total_documents: int (jumlah dokumen unik)
+   - total_parents: int (jumlah parent chunks)
+   - total_children: int (jumlah child chunks)
+   - last_updated_at: Optional[str] (timestamp terakhir update)
 
 2. DATACLASS ParentChunk
    - parent_id: str
    - title: str
    - child_count: int
-   - children: List[Dict]
+   - children: List[Dict] (simplified child info)
 
 3. DATACLASS DocumentSection
-   - section: str
+   - section: str (nama section seperti "BAB II")
    - parents: List[ParentChunk]
 
 4. DATACLASS Document
-   - domain: str
-   - source: str
+   - domain: str (PI/KKP/SKRIPSI/NON_SKRIPSI)
+   - source: str (nama file sumber)
    - chapters: List[DocumentSection]
 
 ================================================================================
-UTILITY FUNCTIONS
+KNOWLEDGE TREE FUNCTIONS
 ================================================================================
 
-5. FUNGSI format_pages_for_frontend(pages: Any) -> str
-   - Jika pages kosong: return ""
-   - Jika pages adalah list: join dengan ", "
-   - Selain itu: convert ke string
-   - Contoh: ["1", "2"] -> "1, 2", ["12-13"] -> "12-13"
-
-6. FUNGSI parse_pages_from_frontend(pages_string: str) -> List[str]
-   - Jika string kosong atau null: return []
-   - Split by comma, strip whitespace dari setiap item
-   - Filter out empty strings
-   - Contoh: "1, 2, 3" -> ["1", "2", "3"], "12-13" -> ["12-13"]
-
-7. FUNGSI calculate_last_updated_time(parents_data, children_data) -> Optional[str]
-   - Kumpulkan semua timestamps dari parents dan children
-   - Return max timestamp jika ada, None jika tidak ada
-
-================================================================================
-KNOWLEDGE TREE FUNCTIONS (MODULAR APPROACH)
-================================================================================
-
-8. FUNGSI get_knowledge_tree_data(supabase) -> Tuple[List[Dict], List[Dict]]
-   - Query parent_documents: select parent_id, title, domain, section, updated_at
-     ORDER BY domain, section, parent_id
-   - Query child_documents: select id, parent_id, title, pages, source, embedding_status, updated_at  
-     ORDER BY parent_id, pages
-   - Return (parents_data, children_data)
-
-9. FUNGSI build_parent_source_mapping(children_data) -> Dict[str, str]
-   - Untuk setiap child dalam children_data:
-     - Ambil parent_id dan source
-     - Jika parent_id belum ada di map DAN source tidak kosong:
-       - Map parent_id -> source (gunakan source child pertama sebagai representasi parent)
-   - Return mapping dictionary
-
-10. FUNGSI group_children_by_parent(children_data) -> Dict[str, List[Dict]]
-    - Untuk setiap child dalam children_data:
-      - Ambil parent_id
-      - Jika parent_id belum ada di grouping: inisialisasi list kosong
-      - Tambahkan simplified child info: {id, title, pages, embedding_status}
-    - Return grouping dictionary
-
-11. FUNGSI organize_documents_by_domain_and_source(parents_data, parent_to_source, children_by_parent) -> Dict[Tuple, Dict]
-    - Untuk setiap parent dalam parents_data:
-      - Extract parent_id, domain, section
-      - Ambil source dari parent_to_source mapping
-      - Ambil children dari children_by_parent grouping
-      - Buat document_key = (domain, source)
-      - Inisialisasi struktur jika belum ada
-      - Buat ParentChunk object dengan data parent dan children
-      - Tambahkan ke documents_tree[document_key][section]
-    - Return documents_tree dengan struktur: {(domain, source): {section: [ParentChunk]}}
-
-12. FUNGSI format_knowledge_tree_response(documents_tree, summary) -> Dict
-    - Untuk setiap (domain, source) dan sections_dict dalam documents_tree:
-      - Konversi sections ke list format
-      - Buat DocumentSection objects
-      - Buat Document object
-      - Tambahkan ke documents_list
-    - Return {summary: {total_documents, total_parents, total_children, last_updated_at}, documents: documents_list}
-
-13. FUNGSI list_knowledge_tree_readable(supabase) -> Dict[str, Any] **MAIN ORCHESTRATOR**
-    **ORCHESTRATOR FUNCTION - 5 CLEAR STEPS:**
-    
-    STEP 1: Get raw data
-    - parents_data, children_data = get_knowledge_tree_data(supabase)
-    
-    STEP 2: Build helper mappings  
-    - parent_to_source = build_parent_source_mapping(children_data)
-    - children_by_parent = group_children_by_parent(children_data)
-    
-    STEP 3: Organize into tree structure
-    - documents_tree = organize_documents_by_domain_and_source(parents_data, parent_to_source, children_by_parent)
-    
-    STEP 4: Calculate summary statistics
-    - summary = ChunkSummary dengan total counts dan last_updated_at
-    
-    STEP 5: Format response
-    - return format_knowledge_tree_response(documents_tree, summary)
+5. FUNGSI list_knowledge_tree_readable(supabase) -> Dict[str, Any]
+   **MAIN ORCHESTRATOR - 5 STEP PROCESS:**
+   
+   STEP 1: Get raw data
+   - parents_data, children_data = get_knowledge_tree_data(supabase)
+   
+   STEP 2: Build helper mappings
+   - parent_to_source = build_parent_source_mapping(children_data)
+   - children_by_parent = group_children_by_parent(children_data)
+   
+   STEP 3: Organize into tree structure
+   - documents_tree = organize_documents_by_domain_and_source(...)
+   
+   STEP 4: Calculate summary statistics
+   - summary = ChunkSummary dengan counts dan last_updated_at
+   
+   STEP 5: Format response
+   - return format_knowledge_tree_response(documents_tree, summary)
 
 ================================================================================
-CHUNK DETAIL FUNCTIONS
+CHUNK DETAIL & EDIT FUNCTIONS
 ================================================================================
 
-14. FUNGSI get_chunk_detail_readable(child_id, supabase) -> Dict[str, Any]
-    **3-TABLE DATA COMBINATION:**
-    
-    STEP 1: Get the child chunk
-    - Query child_documents dengan WHERE id = child_id
-    - Jika tidak ada: raise ResourceNotFoundError
-    
-    STEP 2: Get parent information
-    - Inisialisasi parent_info = None, section = child.section (fallback)
-    - Jika child punya parent_id:
-      - Query parent_documents untuk parent_id, title, section
-      - Jika ada data parent:
-        - parent_info = {parent_id, title}
-        - section = parent.section (prefer parent's section)
-    
-    STEP 3: Get latest successful reembed timestamp
-    - Query chunk_edit_logs dengan WHERE child_id = child_id AND status = 'success'
-      ORDER BY reembedded_at DESC LIMIT 1
-    - Ambil reembedded_at jika ada
-    
-    STEP 4: Format response
-    - Return {id, title, pages (formatted), content, embedding_status, reembedded_at, parent, section, domain, source}
+6. FUNGSI get_chunk_detail_readable(child_id, supabase) -> Dict[str, Any]
+   **3-TABLE DATA COMBINATION:**
+   
+   STEP 1: Get child chunk data
+   - Query child_documents dengan WHERE id = child_id
+   - Jika tidak ada: raise ResourceNotFoundError
+   
+   STEP 2: Get parent information (optional)
+   - Query parent_documents jika child.parent_id exists
+   - Build parent_info = {parent_id, title} atau None
+   
+   STEP 3: Get latest reembed timestamp
+   - Query chunk_edit_logs untuk successful reembedding
+   - ORDER BY reembedded_at DESC LIMIT 1
+   
+   STEP 4: Format response
+   - Return complete chunk detail dengan parent info dan reembed status
+
+7. FUNGSI save_chunk_readable(child_id, admin_id, supabase, title, pages, content) -> Dict
+   **CLEAR VALIDATION & LOGGING:**
+   
+   STEP 1: Validate chunk exists
+   - Query child_documents dengan WHERE id = child_id
+   - Raise ResourceNotFoundError jika tidak ada
+   
+   STEP 2: Build update data
+   - Initialize updates = {updated_at: "now()"}
+   - Check title changes: compare dengan current_chunk.title
+   - Check pages changes: parse dari frontend string ke array
+   - Check content changes: compare dan set embedding_status = 'stale'
+   
+   STEP 3: Early return jika no changes
+   - Jika hanya updated_at: return "Tidak ada perubahan"
+   
+   STEP 4: Save changes
+   - Execute update child_documents
+   
+   STEP 5: Log content changes
+   - Jika content berubah: insert ke chunk_edit_logs dengan status "pending"
+   
+   STEP 6: Return response
+   - Include embedding_status dan content_changed flag
 
 ================================================================================
-CHUNK SAVE FUNCTIONS
+REEMBEDDING SYSTEM
 ================================================================================
 
-15. FUNGSI save_chunk_readable(child_id, admin_id, supabase, title=None, pages=None, content=None) -> Dict
-    **CLEAR VALIDATION & LOGGING PROCESS:**
-    
-    STEP 1: Validate chunk exists
-    - Query child_documents dengan WHERE id = child_id
-    - Jika tidak ada: raise ResourceNotFoundError
-    
-    STEP 2: Build update data
-    - Inisialisasi updates = {updated_at: "now()"}
-    - content_was_changed = False, original_content = None
-    
-    - Check title changes:
-      - Jika title != current_chunk.title: updates["title"] = title
-    
-    - Check pages changes:
-      - new_pages_array = parse_pages_from_frontend(pages)
-      - Jika new_pages_array != current_pages: updates["pages"] = new_pages_array
-    
-    - Check content changes (most important):
-      - Jika content != current_chunk.content:
-        - content_was_changed = True
-        - original_content = current_chunk.content
-        - updates["content"] = content
-        - updates["embedding_status"] = 'stale'
-    
-    STEP 3: Early return if no changes
-    - Jika len(updates) == 1: return "Tidak ada perubahan."
-    
-    STEP 4: Save changes to database
-    - Execute update child_documents dengan updates WHERE id = child_id
-    
-    STEP 5: Log content changes for reembedding tracking
-    - Jika content_was_changed:
-      - Insert ke chunk_edit_logs: {child_id, parent_id, admin_id, old_content, new_content, status: "pending"}
-    
-    STEP 6: Build response
-    - message = "Perubahan disimpan."
-    - Jika content_was_changed: message += " Klik Re-Embed agar chatbot pakai versi terbaru."
-    - Return {child_id, embedding_status, content_changed, message}
+8. FUNGSI prepare_chunk_for_reembedding(child_id, admin_id, supabase) -> Dict
+   **HANDLES PENDING LOGS:**
+   
+   STEP 1: Verify chunk exists
+   - Query child_documents untuk parent_id, content
+   
+   STEP 2: Look for existing pending log
+   - Query chunk_edit_logs dengan status = 'pending'
+   
+   STEP 3: Use existing atau create new log
+   - Jika ada pending: gunakan existing log
+   - Jika tidak: insert new log untuk manual reembed
+   
+   STEP 4: Mark as processing
+   - Update chunk_edit_logs SET status = "processing"
+   
+   STEP 5: Return data untuk background task
+
+9. FUNGSI process_chunk_reembedding(log_id, child_id, parent_id, old_content, new_content, supabase, settings)
+   **BACKGROUND TASK WITH ERROR HANDLING:**
+   
+   TRY BLOCK:
+     STEP 1: Generate new embedding
+     - Call get_openai_embeddings([new_content])[0]
+     
+     STEP 2: Update child document
+     - SET embedding, embedding_status = "success", updated_at = "now()"
+     
+     STEP 3: Sync parent content (jika edit)
+     - Jika old_content exists: replace di parent_content
+     
+     STEP 4: Mark success
+     - Update chunk_edit_logs status = "success", reembedded_at = "now()"
+   
+   EXCEPT BLOCK:
+     STEP 5: Handle errors
+     - Update embedding_status = "failed"
+     - Log error_message ke chunk_edit_logs
 
 ================================================================================
-REEMBEDDING FUNCTIONS
+UTILITY & CLEANUP FUNCTIONS
 ================================================================================
 
-16. FUNGSI prepare_chunk_for_reembedding(child_id, admin_id, supabase) -> Dict **ALIAS: trigger_reembed**
-    **HANDLES TWO SCENARIOS:**
-    
-    STEP 1: Verify chunk exists
-    - Query child_documents untuk parent_id, content WHERE id = child_id
-    - Jika tidak ada: raise ResourceNotFoundError
-    
-    STEP 2: Look for existing pending log
-    - Query chunk_edit_logs dengan WHERE child_id = child_id AND status = 'pending'
-      ORDER BY edited_at DESC LIMIT 1
-    
-    STEP 3: Use existing log or create new one
-    - Jika ada pending log:
-      - Gunakan existing log: log_id, old_content, new_content dari log
-    - Jika tidak ada pending log:
-      - Insert new log untuk manual reembed: {child_id, parent_id, admin_id, old_content: None, new_content: chunk.content, status: "pending"}
-      - Ambil log_id dari insert result
-    
-    STEP 4: Mark log as processing
-    - Update chunk_edit_logs SET status = "processing" WHERE log_id = log_id
-    
-    STEP 5: Return data for background task
-    - Return {log_id, parent_id, old_content, new_content}
+10. FUNGSI get_chunk_edit_status(child_id, supabase) -> Optional[Dict]
+    - Query latest chunk_edit_logs untuk child_id
+    - Return {log_id, status, error_message, timestamps} atau None
 
-17. FUNGSI process_chunk_reembedding(log_id, child_id, parent_id, old_content, new_content, supabase, settings) **ALIAS: process_chunk_reembed**
-    **BACKGROUND TASK WITH ERROR HANDLING:**
-    
-    TRY BLOCK:
-      STEP 1: Generate embedding using OpenAI
-      - embedding_vector = get_openai_embeddings([new_content])[0]
-      
-      STEP 2: Update child document with new embedding  
-      - Update child_documents SET embedding = embedding_vector, embedding_status = "success", updated_at = "now()"
-        WHERE id = child_id
-      
-      STEP 3: Sync parent content (if this was an edit, not initial embed)
-      - Jika old_content IS NOT None:
-        - Query parent_documents untuk content WHERE parent_id = parent_id
-        - Jika ada parent_content:
-          - Jika old_content in parent_content:
-            - updated_parent_content = parent_content.replace(old_content, new_content, 1)
-            - Update parent_documents SET content = updated_parent_content, updated_at = "now()" WHERE parent_id = parent_id
-          - Jika tidak: log warning "old content not found"
-      
-      STEP 4: Mark reembedding as successful
-      - Update chunk_edit_logs SET status = "success", reembedded_at = "now()" WHERE log_id = log_id
-      - Log info "Successfully reembedded chunk {child_id}"
-    
-    EXCEPT BLOCK:
-      STEP 5: Handle errors gracefully
-      - Log error "Reembedding failed for chunk {child_id}"
-      - Update child_documents SET embedding_status = "failed" WHERE id = child_id  
-      - Update chunk_edit_logs SET status = "failed", error_message = str(error)[:500] WHERE log_id = log_id
-      - Re-raise exception untuk upstream error handling
-
-================================================================================
-UTILITY FUNCTIONS
-================================================================================
-
-18. FUNGSI get_chunk_edit_status(child_id, supabase) -> Optional[Dict] **ALIAS: get_edit_status**
-    - Query chunk_edit_logs untuk child_id ORDER BY edited_at DESC LIMIT 1
-    - Jika tidak ada data: return None
-    - Return {log_id, child_id, status, error_message, edited_at, reembedded_at}
-
-19. FUNGSI delete_chunk_with_cleanup(child_id, supabase) -> Dict **ALIAS: delete_chunk**
+11. FUNGSI delete_chunk_with_cleanup(child_id, supabase) -> Dict
     **DELETION WITH AUTO-CLEANUP:**
     
-    STEP 1: Get chunk info before deletion
-    - Query child_documents untuk parent_id WHERE id = child_id
-    - Jika tidak ada: raise ResourceNotFoundError
+    STEP 1: Get chunk info
+    - Query parent_id before deletion
     
-    STEP 2: Delete the chunk
-    - DELETE FROM child_documents WHERE id = child_id
-    - Note: Database CASCADE constraints akan auto-delete chunk_edit_logs
+    STEP 2: Delete chunk
+    - CASCADE deletes chunk_edit_logs automatically
     
-    STEP 3: Check if parent becomes empty
-    - Query COUNT child_documents WHERE parent_id = parent_id
+    STEP 3: Check empty parent
+    - COUNT remaining children untuk parent_id
     
     STEP 4: Auto-delete empty parent (housekeeping)
-    - Jika children_count == 0:
-      - DELETE FROM parent_documents WHERE parent_id = parent_id
-      - parent_was_deleted = True
+    - Jika children_count == 0: DELETE parent_documents
     
-    STEP 5: Return cleanup information
-    - Return {child_id, parent_id, parent_deleted}
-
-================================================================================
-COMPATIBILITY LAYER & PERFORMANCE OPTIMIZATIONS
-================================================================================
-
-20. ALIAS FUNCTIONS FOR BACKWARD COMPATIBILITY
-    - list_knowledge_tree = list_knowledge_tree_readable
-    - get_chunk_detail = get_chunk_detail_readable  
-    - save_chunk = save_chunk_readable
-    - trigger_reembed = prepare_chunk_for_reembedding
-    - get_edit_status = get_chunk_edit_status
-    - delete_chunk = delete_chunk_with_cleanup
-    - process_chunk_reembed = process_chunk_reembedding
-
-21. DATABASE INDEXES UNTUK PERFORMA OPTIMAL
-    - idx_child_documents_parent_id_pages ON child_documents(parent_id, pages)
-    - idx_parent_documents_domain_section_id ON parent_documents(domain, section, parent_id)  
-    - idx_chunk_edit_logs_child_id_status_reembedded ON chunk_edit_logs(child_id, status, reembedded_at DESC)
-    - idx_chunk_edit_logs_child_id_edited ON chunk_edit_logs(child_id, edited_at DESC)
-
-22. PERFORMANCE IMPROVEMENTS ACHIEVED
-    - list_knowledge_tree: 2-5x faster dengan modular approach dan covering indexes
-    - get_chunk_detail: Same speed tapi lebih maintainable dengan step-by-step documentation  
-    - save_chunk: 1.5x faster dengan cleaner validation logic
-    - Memory usage: ~30% reduction dengan efficient data structures dan utility functions
-
-23. CODE QUALITY IMPROVEMENTS ACHIEVED
-    - 6 monolithic functions -> 19 focused single-purpose functions
-    - 91-line monster function -> 5-step readable orchestrator process
-    - Zero documentation -> Full docstrings dengan examples dan step-by-step comments
-    - Type hints & dataclasses untuk compile-time safety dan IDE support
-    - Clear error handling dengan graceful fallbacks dan proper logging
+    STEP 5: Return cleanup info
+    - {child_id, parent_id, parent_deleted}
 ```
 
 ---
@@ -601,12 +447,12 @@ ALGORITMA ADMIN API ENDPOINTS (admin.py)
 
 ---
 
-## Migration Script Untuk Increment 3
+## Migration Script
 
 ### File: `scripts/supabase_migration_admin_status.sql`
 
 ```markdown
-ALGORITMA MIGRASI ADMIN STATUS
+ALGORITMA MIGRASI DATABASE
 
 1. TAMBAH KOLOM KE child_documents
    - embedding_status TEXT NOT NULL DEFAULT 'success'
@@ -616,23 +462,22 @@ ALGORITMA MIGRASI ADMIN STATUS
 2. TAMBAH KOLOM KE parent_documents
    - updated_at TIMESTAMPTZ NOT NULL DEFAULT now().
 
-3. ASUMSI MIGRASI
-   - Data eksisting sudah ter-embed sebelum migrasi dijalankan.
-   - Status default 'success' aman untuk data lama.
+3. INDEXING UNTUK PERFORMA
+   - Buat index untuk pencarian dan filtering yang efisien
 ```
 
 ---
 
-## Ringkasan Perilaku Admin
+## Ringkasan Sistem Admin
 
-1. Login admin memakai username/password dan JWT role admin.
-2. Tree knowledge base dimuat penuh dari endpoint `/admin/documents`.
-3. Save chunk bersifat sinkron dan hanya menandai `embedding_status = stale` jika content berubah.
-4. Re-embed dipicu manual dan diproses async lewat background task + polling status.
-5. Delete chunk hanya untuk child chunk, lalu parent kosong dibersihkan otomatis.
-6. Error handling menggunakan 404 untuk resource tidak ditemukan dan 400 untuk update kosong.
+1. Login admin menggunakan username/password dengan JWT authentication dan role-based access.
+2. Knowledge base tree dimuat dari endpoint `/admin/documents` dengan struktur hierarkis lengkap.
+3. Edit chunk dilakukan secara sinkron, menandai `embedding_status = stale` jika content berubah.
+4. Re-embed dipicu manual dan diproses asynchronous melalui background task dengan polling status.
+5. Delete chunk otomatis membersihkan parent chunk yang kosong (housekeeping).
+6. Error handling komprehensif dengan response codes 404 untuk resource tidak ditemukan dan 400 untuk update kosong.
 
-Sistem admin ini sekarang selaras dengan implementasi nyata di `backend/src/admin/auth.py`, `backend/src/admin/chunk_editor.py`, dan `backend/src/api/admin.py`.
+Sistem admin ini terintegrasi penuh dengan arsitektur backend dan menyediakan interface management yang aman untuk knowledge base.
 
 4. PEMBUATAN INDEX UNTUK PERFORMA PENCARIAN
    - Buat index `ivfflat` menggunakan `vector_cosine_ops` untuk kolom embedding (pencarian kemiripan vektor).
@@ -667,21 +512,13 @@ Sistem admin ini sekarang selaras dengan implementasi nyata di `backend/src/admi
 8. KONFIGURASI KEAMANAN (Row Level Security - RLS)
    - Aktifkan RLS di `parent_documents` dan `child_documents`.
    - Buat aturan (policy): Hanya pengguna dengan peran `service_role` (backend aplikasi dengan kunci service role) yang boleh membaca (SELECT) dan menambah data (INSERT) ke tabel ini.
-   - Buat tabel tambahan:
-     - `user_quotas` (Tabel #7): Batas request user harian dengan kolom user_id, date, message_count.
-     - `chat_logs` (Tabel #8): Penyimpanan log percakapan historis dengan kolom id, created_at, user_id, username, question, answer.
-   - Aktifkan RLS untuk tabel-tabel tambahan ini.
-   - Aturan kebijakannya juga sama: hanya bisa dibaca dan ditulis oleh `service_role`.
+   - Tabel tambahan dengan RLS yang sama: `user_quotas`, `chat_logs`, `conversation_sessions`, `mahasiswa_accounts`, `admin_users`, `chunk_edit_logs`.
 
-````
+### Database Functions dan RPC
 
-#### File: `scripts/supabase_migration_quota_rpc.sql`
+#### FUNGSI increment_quota_if_under_limit (RPC Function)
 
-```markdown
-ALGORITMA FUNGSI PENAMBAHAN KUOTA USER (supabase_migration_quota_rpc.sql)
-
-1. DEFINISI FUNGSI
-   - Nama: `increment_quota_if_under_limit`
+- **Nama**: `increment_quota_if_under_limit`
    - Input/Parameter:
      - p_user_id (Teks): ID unik dari pengguna.
      - p_date (Teks): Tanggal dalam format YYYY-MM-DD.
@@ -690,55 +527,31 @@ ALGORITMA FUNGSI PENAMBAHAN KUOTA USER (supabase_migration_quota_rpc.sql)
      - Boolean (TRUE jika sukses ditambah, FALSE jika gagal karena sudah melebihi limit).
    - Bahasa: plpgsql (prosedural SQL PostgreSQL).
 
-2. ALGORITMA UTAMA (Proses Atomik Upsert)
-   - Deklarasikan variabel internal `v_new_count` untuk menyimpan jumlah pesan terbaru.
-   - COBA masukkan data pengguna ke tabel `user_quotas` (user_id, date, message_count bernilai 1).
-   - JIKA data sudah ada sebelumnya (Terjadi konflik/duplikasi pada user_id dan date yang sama):
-     - LAKUKAN UPDATE (Tambahkan message_count dengan 1).
-     - SYARAT UPDATE (WHERE): Lakukan update hanya jika `message_count` saat ini masih di bawah batas (`< p_daily_limit`).
-   - KEMBALIKAN (RETURNING) nilai `message_count` terbaru ke dalam variabel `v_new_count`.
+- **INPUT**: user_id (text), date (text), daily_limit (integer).
+- **OUTPUT**: Boolean (true jika kuota masih tersedia dan berhasil diincrement).
+- **ALGORITMA**:
+  - Cek current count untuk user_id pada tanggal tersebut.
+  - Jika count < daily_limit: increment count dan return true.
+  - Jika count >= daily_limit: return false.
+  - Menggunakan atomic upsert untuk thread safety.
 
-3. PENGECEKAN HASIL
-   - JIKA `v_new_count` bernilai NULL:
-     - Artinya, baris tidak di-update karena gagal memenuhi syarat WHERE (kuota sudah penuh atau sama dengan limit).
-     - KEMBALIKAN nilai FALSE.
-   - SELAIN ITU (Jika berhasil):
-     - KEMBALIKAN nilai TRUE.
-````
+#### FUNGSI cleanup_idle_sessions
 
-#### File: `scripts/supabase_session_migration.sql`
+- **INPUT**: TTL dalam detik (default 3600 detik/1 jam).
+- **OUTPUT**: Jumlah sesi yang berhasil dihapus.
+- **ALGORITMA**:
+  - Hapus sesi yang `last_access` melebihi TTL.
+  - Preserve sesi website mahasiswa untuk riwayat permanen.
+  - Return jumlah sesi yang dihapus.
 
-```markdown
-ALGORITMA MIGRASI PENYIMPANAN SESI KE DATABASE (supabase_session_migration.sql)
+#### FUNGSI get_session_statistics
 
-1. PEMBUATAN TABEL SESI PERCAKAPAN
-   - Buat tabel `conversation_sessions` (jika belum ada) dengan struktur:
-     - session_id (TEXT, Primary Key): ID unik untuk sesi obrolan.
-     - turns (JSONB): Menyimpan riwayat percakapan (array tanya-jawab) (Default: '[]').
-     - last_access (Timestamp): Kapan sesi ini terakhir digunakan (untuk penghapusan idle).
-     - created_at (Timestamp): Kapan sesi ini dibuat.
+- **OUTPUT**: Statistik lengkap sesi (total, active 1h/24h, avg turns, oldest/newest).
+- **ALGORITMA**:
+  - Query agregat dari tabel `conversation_sessions`.
+  - Hitung rata-rata turns per sesi dari `jsonb_array_length(turns)`.
 
-2. PEMBUATAN INDEKS
-   - Buat indeks pada kolom `last_access` untuk mempercepat pencarian dan penghapusan sesi yang sudah kedaluwarsa (idle cleanup).
-   - Buat indeks pada kolom `created_at` untuk keperluan analisis dan pelacakan umur sesi.
-
-3. PENGATURAN KEAMANAN (Row Level Security)
-   - Aktifkan fitur RLS (Row Level Security) pada tabel `conversation_sessions`.
-   - Hapus aturan akses (policy) yang sudah ada agar tidak terjadi duplikasi.
-   - Buat Aturan BACA:
-     - Hanya user database dengan peran `service_role` (sistem internal backend) yang diizinkan untuk melihat/membaca (SELECT) data sesi.
-   - Buat Aturan TULIS:
-     - Hanya user dengan peran `service_role` yang diizinkan untuk menambah atau memodifikasi (INSERT/UPDATE/DELETE) data sesi.
-
-4. FUNGSI PENGHAPUSAN SESI KEDALUWARSA (cleanup_idle_sessions)
-   - INPUT: Batas waktu tunggu/TTL dalam detik (p_ttl_seconds, default 3600 detik/1 jam).
-   - OUTPUT: Jumlah sesi yang berhasil dihapus (Integer).
-   - ALGORITMA:
-     - HAPUS baris dari tabel `conversation_sessions` DI MANA `last_access` lebih lama dari (WAKTU_SEKARANG dikurangi interval detik p_ttl_seconds) DAN (`mahasiswa_id IS NULL` ATAU `channel != 'website'`).
-     - (PENTING: Jangan hapus sesi Website milik mahasiswa agar riwayat mereka tetap ada secara permanen).
-     - Simpan jumlah baris yang berhasil dihapus ke dalam variabel.
-     - Tampilkan log peringatan (NOTICE) ke konsol sistem.
-     - KEMBALIKAN jumlah baris yang dihapus.
+---
 
 5. FUNGSI STATISTIK SESI (get_session_statistics)
    - OUTPUT: Tabel rekap data (total sesi, sesi aktif 1 jam, sesi aktif 24 jam, rata-rata panjang chat, sesi tertua, sesi terbaru).
@@ -889,365 +702,33 @@ ALGORITMA EMBEDDER DAN PENYIMPANAN (embedder.py)
 
 ## Security Middleware Status
 
-### File: `src/middleware/security.py` - **TIDAK AKTIF**
+### File: `src/middleware/security.py` - **TERINTEGRASI**
 
-> **⚠️ PENTING**: File `src/middleware/security.py` berisi definisi middleware keamanan yang **TIDAK DIGUNAKAN** dalam sistem aktif. Rate limiting dan keamanan sebenarnya ditangani oleh komponen lain.
+Komponen keamanan telah diintegrasikan langsung ke dalam `application.py`:
 
 ```markdown
-ALGORITMA MIDDLEWARE KEAMANAN (security.py) - HISTORICAL/UNUSED
+KOMPONEN KEAMANAN AKTIF (application.py)
 
-1. KELAS RateLimitMiddleware
-   - DEFINISI: Middleware rate limiting berbasis in-memory storage.
-   - STATUS: **TIDAK AKTIF** - tidak didaftarkan di application.py.
-   - ALASAN: Sistem menggunakan SlowAPI (100 request/menit per IP) sebagai rate limiter aktual.
+1. KELAS SecurityHeadersMiddleware
+   - Menambahkan security headers ke semua responses.
+   - Headers: X-Frame-Options, HSTS, X-Content-Type-Options, X-XSS-Protection.
 
-2. KELAS SecurityHeadersMiddleware  
-   - DEFINISI: Menambahkan security headers (X-Frame-Options, HSTS, X-Content-Type-Options).
-   - STATUS: **TIDAK AKTIF** - tidak didaftarkan di application.py.
-   - IMPLIKASI: Security headers tidak dikirim ke client.
+2. FUNGSI verify_telegram_webhook_secure
+   - Verifikasi HMAC signature webhook Telegram dengan compare_digest.
+   - Menggunakan constant-time comparison untuk mencegah timing attacks.
 
-3. FUNGSI verify_telegram_webhook
-   - DEFINISI: Verifikasi HMAC signature webhook Telegram dengan compare_digest.
-   - STATUS: **TIDAK DIGUNAKAN** - application.py melakukan verifikasi token manual dengan `!=`.
-   - IMPLIKASI: Validasi webhook kurang aman (tidak menggunakan constant-time comparison).
-
-4. FUNGSI sanitize_input & validate_chat_input
-   - DEFINISI: Pembersihan input dari control characters dan validasi panjang.
-   - STATUS: **TIDAK DIGUNAKAN** - api/ai.py hanya menggunakan Pydantic validation (min_length=1).
-   - IMPLIKASI: Tidak ada sanitasi input atau batas maksimum panjang pesan.
+3. SISTEM KEAMANAN AKTIF
+   - Rate Limiting: SlowAPI (100 request/menit per IP)
+   - Database Quota: RPC function `increment_quota_if_under_limit` 
+   - Input Validation: Pydantic dengan sanitization
+   - CORS: Configured untuk frontend origins
 ```
 
-### Sistem Keamanan Yang Benar-Benar Aktif
+## System Architecture
 
-**Rate Limiting Aktual:**
-- **SlowAPI**: 100 request/menit per IP (didaftarkan di `application.py`)
-- **RPC Database Quota**: Batas harian per user via `increment_quota_if_under_limit`
-
-**Validasi Input Aktual:**
-- **Pydantic**: Validasi minimal `min_length=1` untuk query
-- **Manual validation**: Session ID format check di beberapa endpoint
-
-**Keamanan Webhook Aktual:**
-- **Token comparison**: Menggunakan `!=` biasa (bukan constant-time)
-- **Header check**: `X-Telegram-Bot-Api-Secret-Token`
-
-**Rekomendasi:**
-1. **Hapus file** `src/middleware/security.py` jika tidak akan digunakan
-2. **Atau integrasikan** SecurityHeadersMiddleware ke `application.py`
-3. **Perbaiki** webhook validation menggunakan `hmac.compare_digest`
-4. **Tambahkan** input sanitization untuk chat messages
-
-```
+Backend mengimplementasikan arsitektur modular dengan clear separation of concerns. Sistem menggunakan Strategy pattern untuk session management dan dependency injection untuk komponen yang dapat dikonfigurasi. Security middleware terintegrasi langsung ke application layer untuk optimal performance.
 
 ---
-
-## Code Improvement Opportunities
-
-Berdasarkan review mendalam terhadap codebase, berikut adalah peluang perbaikan dan optimisasi yang dapat meningkatkan maintainability, performa, dan keamanan sistem:
-
-### File: `api/ai.py` & `bot/handlers/chat_handler.py`
-
-**❌ Masalah**: Duplikasi logic cek kuota harian
-
-**📍 Lokasi**: 
-- `api/ai.py` (TAHAP 2) 
-- `bot/handlers/chat_handler.py` (`check_and_update_quota`)
-
-**🔧 Perbaikan**:
-```python
-# Saat ini: Logic identical di-copy-paste di dua tempat
-# Solusi: Ekstrak ke satu modul bersama
-
-# File: src/services/quota.py
-async def check_and_update_quota(user_id: str, daily_limit: int = None) -> bool:
-    """Unified quota checking dengan fail-open behavior"""
-    # Implementation dengan RPC increment_quota_if_under_limit
-    # Error handling yang konsisten di kedua endpoint
-```
-
-### File: `services/ai_services.py`
-
-**❌ Masalah**: Branching berulang untuk session store
-
-**📍 Lokasi**: 6+ fungsi dengan pola `if settings.USE_DATABASE_SESSIONS: ... else: ...`
-
-**🔧 Perbaikan**:
-```python
-# Saat ini: Branching berulang di tiap fungsi
-if settings.USE_DATABASE_SESSIONS:
-    # database logic
-else:
-    # in-memory legacy logic
-
-# Solusi: Strategy Pattern dengan dependency injection
-class SessionStore(ABC):
-    @abstractmethod
-    def load_memory(self, session_id: str) -> ConversationMemory: ...
-    @abstractmethod  
-    def save_memory(self, session_id: str, memory: ConversationMemory): ...
-
-class DatabaseSessionStore(SessionStore): ...
-class InMemorySessionStore(SessionStore): ...
-
-# Dipilih sekali saat startup, tidak branching berulang
-```
-
-### File: `lib/adminStore.ts`
-
-**❌ Masalah**: Deep clone manual + triple nested loops untuk tree updates
-
-**📍 Lokasi**: `patchChunkInTree` & `removeChunkFromTree`
-
-**🔧 Perbaikan**:
-```typescript
-// Saat ini: O(n³) dengan full clone setiap update
-const updatedTree = JSON.parse(JSON.stringify(tree)); // Heavy clone
-// Triple nested loop dengan flag-based break
-
-// Solusi: Index-based updates dengan O(1) access
-interface TreeIndex {
-  [childId: string]: {
-    docIdx: number;
-    chapIdx: number; 
-    parentIdx: number;
-    childIdx: number;
-  }
-}
-
-// Maintain index paralel dengan tree
-// Update jadi O(1) tanpa full clone
-```
-
-### File: `src/middleware/security.py` (jika diaktifkan)
-
-**❌ Masalah**: Rate limit storage inefficient
-
-**📍 Lokasi**: `_check_rate_limit` function
-
-**🔧 Perbaikan**:
-```python
-# Saat ini: Dict dengan timestamp sebagai key, berpotensi collision
-_rate_limit_storage[client_id][str(timestamp)] = 1
-total_requests = sum(_rate_limit_storage[client_id].values())
-
-# Solusi: List-based dengan direct length calculation  
-_rate_limit_storage[client_id] = [
-    timestamp for timestamp in _rate_limit_storage[client_id]
-    if timestamp > window_start
-]
-total_requests = len(_rate_limit_storage[client_id])
-```
-
-### General Architecture Improvements
-
-**🏗️ Service Layer Consolidation**:
-- **Extract quota service**: Unified logic untuk semua quota checks
-- **Session store factory**: Eliminasi branching dengan factory pattern
-- **Middleware activation**: Integrate atau hapus unused security middleware
-
-**📊 Performance Optimizations**:
-- **Frontend tree updates**: Ganti full-clone dengan incremental updates
-- **Rate limiting efficiency**: Dari dict-sum ke list-length calculations
-- **Database indexing**: Pastikan semua query path ter-index dengan baik
-
-**🔒 Security Enhancements**:
-- **Webhook validation**: Pindah ke constant-time comparison (`hmac.compare_digest`)
-- **Input sanitization**: Aktifkan atau ganti dengan proper validation
-- **Security headers**: Integrate SecurityHeadersMiddleware ke application stack
-
-**🧹 Code Quality**:
-- **Dead code removal**: Hapus `src/middleware/security.py` jika tidak dipakai
-- **Settings consistency**: Fix hardcoded table names (`"chat_logs"` vs `settings.table_chat_logs`)
-- **Type safety**: Tambah type annotations di frontend API calls yang missing
-
-**🔄 Refactoring Priorities**:
-1. **High Impact**: Quota service extraction (eliminasi duplikasi logic)
-2. **Medium Impact**: Session store strategy pattern (cleaner architecture) 
-3. **Low Impact**: AdminStore tree optimization (performance gain untuk admin UI)
-
-Perbaikan ini akan meningkatkan maintainability tanpa mengubah fungsionalitas existing sistem.
-
----
-
-## 🚀 Code Improvements Implementation Status
-
-Berdasarkan analisis mendalam terhadap codebase, berikut adalah **implementasi perbaikan** yang telah **diterapkan** untuk meningkatkan maintainability, performance, dan security sistem:
-
-### ✅ **IMPLEMENTED**: Security Integration & Dead Code Elimination
-
-**File Removed**: `src/middleware/security.py` (Dead code - tidak pernah diimport)  
-**File Updated**: `application.py` (Security integration)
-
-```markdown
-ALGORITMA SECURITY INTEGRATION (application.py)
-
-1. CLASS SecurityHeadersMiddleware(BaseHTTPMiddleware)
-   - Integrated langsung ke application.py
-   - Menambahkan security headers ke semua responses:
-     - X-Content-Type-Options: "nosniff"
-     - X-Frame-Options: "DENY"
-     - X-XSS-Protection: "1; mode=block"  
-     - Referrer-Policy: "strict-origin-when-cross-origin"
-     - Strict-Transport-Security (production only)
-
-2. FUNGSI verify_telegram_webhook_secure()
-   - Menggunakan hmac.compare_digest() untuk secure comparison
-   - Mencegah timing attack vulnerabilities
-   - Menggantikan vulnerable != comparison
-
-3. MIDDLEWARE REGISTRATION ORDER
-   - SecurityHeadersMiddleware (NEW)
-   - SlowAPIMiddleware (existing rate limiting)
-   - CORSMiddleware (existing CORS)
-
-4. TELEGRAM WEBHOOK ENDPOINT (Updated)
-   - Secure HMAC token validation menggunakan constant-time comparison
-   - Fallback graceful untuk development environment
-```
-
-### ✅ **IMPLEMENTED**: Shared Quota Service Architecture
-
-**File Created**: `src/services/quota_service.py`  
-**Files Updated**: `src/api/ai.py`, `src/bot/handlers/chat_handler.py`
-
-```markdown  
-ALGORITMA QUOTA SERVICE (quota_service.py)
-
-1. FUNGSI check_and_update_quota(user_id, daily_limit=None)
-   - Unified quota logic untuk semua endpoints
-   - Atomic RPC call: increment_quota_if_under_limit
-   - Fail-open behavior: return True pada DB errors
-   - Configurable daily limits dengan fallback ke settings
-
-2. FUNGSI get_quota_status(user_id)
-   - Query current quota tanpa increment
-   - Return: current_count, limit, remaining, date
-   - Error handling dengan informative response
-
-3. CLIENT INTEGRATION
-   - api/ai.py: Menggunakan quota_service.check_and_update_quota()
-   - bot/chat_handler.py: Menggunakan shared service (eliminasi duplication)
-   - Consistent error messages dan behavior
-```
-
-### ✅ **IMPLEMENTED**: Strategy Pattern untuk Session Storage  
-
-**File Created**: `src/services/session_strategy.py`  
-**File Updated**: `src/services/ai_services.py`
-
-```markdown
-ALGORITMA SESSION STRATEGY PATTERN (session_strategy.py)
-
-1. ABSTRACT CLASS SessionStore
-   - load_memory(session_id, mahasiswa_id)
-   - save_memory(session_id, memory, channel, mahasiswa_id) 
-   - delete_session(session_id)
-   - get_session_stats()
-   - cleanup_idle_sessions()
-
-2. CLASS DatabaseSessionStrategy(SessionStore)
-   - Wrapper untuk existing DatabaseSessionStore
-   - Production-ready persistent storage strategy
-
-3. CLASS LegacyInMemorySessionStrategy(SessionStore)
-   - Fallback strategy dengan in-memory storage
-   - Thread-safe operations dengan Lock
-   - LRU eviction dan TTL cleanup
-
-4. FACTORY FUNCTION create_session_store()
-   - Try DatabaseSessionStrategy first
-   - Fallback to LegacyInMemorySessionStrategy on failure
-   - Strategy dipilih ONCE pada startup (bukan per-function call)
-
-5. AI_SERVICES INTEGRATION
-   - _session_store_strategy = create_session_store()
-   - Eliminasi 6+ repeated if/else branching patterns
-   - Single strategy interface untuk all session operations
-
-### ✅ **IMPLEMENTED**: Enhanced Input Validation & Sanitization
-
-**File Updated**: `src/api/ai.py` (Enhanced validation)
-
-```markdown
-ALGORITMA INPUT VALIDATION (api/ai.py)
-
-1. FUNGSI sanitize_input(text, max_length=1000)
-   - Remove Unicode control characters (kategori "Cc")
-   - Preserve whitespace yang valid (\t, \n, \r)
-   - Whitespace normalization dengan .split().join()
-   - Length truncation untuk prevent DoS
-   - Support Indonesian/international characters
-
-2. FUNGSI validate_session_id(session_id)
-   - Length validation (3-100 characters)
-   - Regex pattern: alphanumeric + underscore + hyphen
-   - Prevent injection attacks via session ID
-
-3. ENHANCED ChatRequest MODEL
-   - query: min_length=3, max_length=500 (updated from min_length=1)
-   - @validator('query'): sanitize_query dengan comprehensive checks
-   - @validator('session_id'): validate_session_id_field
-   - Pydantic validation dengan custom error messages
-
-4. VALIDATION FLOW
-   - Request → Pydantic validation → Sanitization → Business logic
-   - Early rejection untuk malformed input
-   - Secure-by-default approach
-```
-
-### ✅ **IMPLEMENTED**: Frontend Performance Optimization
-
-**File Updated**: `frontend/src/lib/adminStore.ts` (Tree operations optimization)
-
-```markdown
-ALGORITMA ADMIN STORE OPTIMIZATION (adminStore.ts)
-
-1. INTERFACE TreeIndex
-   - Mapping: childId → {docIdx, chapIdx, parentIdx, childIdx}
-   - O(1) lookup untuk any child ID
-   - Maintained paralel dengan tree structure
-
-2. FUNGSI buildTreeIndex(tree)
-   - Build index pada fetchTree() sekali
-   - Triple-nested loop HANYA pada tree load (rare operation)
-   - Index maintained untuk subsequent operations
-
-3. OPTIMIZED patchChunkInTree(childId, updates)
-   - BEFORE: JSON.parse(JSON.stringify()) + O(n³) loops
-   - AFTER: O(1) direct access via treeIndex[childId]
-   - Direct mutation (safe dengan Zustand)
-   - ~1000x performance improvement untuk large trees
-
-4. OPTIMIZED removeChunkFromTree(childId, parentDeleted)  
-   - O(1) child removal via index
-   - Index maintenance untuk affected siblings
-   - Cascading parent/chapter removal dengan index updates
-   - Smart re-indexing untuk shifted elements
-
-5. STATE MANAGEMENT
-   - tree: KnowledgeTreeResponse (data)
-   - treeIndex: TreeIndex (O(1) lookup table)  
-   - Synchronization pada fetchTree dan mutations
-```
-
-### 📊 **Performance & Security Improvements Summary**
-
-| Component | Before | After | Improvement |
-|-----------|---------|-------|-------------|
-| **Security Headers** | ❌ Not sent | ✅ Active on all responses | Headers protection enabled |
-| **Webhook Validation** | ⚠️ Timing vulnerable | ✅ Constant-time HMAC | Security vulnerability fixed |
-| **Quota Logic** | 🔄 Duplicated in 2 files | ✅ Shared service | DRY principle, easier maintenance |
-| **Session Branching** | 🔄 6+ if/else patterns | ✅ Strategy pattern | Cleaner architecture |
-| **AdminStore Updates** | 🐌 O(n³) + deep clone | ⚡ O(1) index access | ~1000x faster operations |
-| **Input Validation** | ⚠️ min_length=1 only | ✅ Full sanitization | DoS protection + security |
-
-### 🏗️ **Architectural Benefits**
-
-1. **Maintainability**: Eliminasi code duplication, strategy pattern untuk extensibility
-2. **Performance**: O(1) frontend operations, reduced server-side branching  
-3. **Security**: Comprehensive input validation, timing attack prevention, active security headers
-4. **Reliability**: Fail-open quota behavior, graceful fallbacks untuk session storage
-5. **Testability**: Isolated services, abstract interfaces untuk mocking
 ```
 
 ---
@@ -1267,33 +748,33 @@ ALGORITMA ADMIN STORE OPTIMIZATION (adminStore.ts)
 **API Routes Overview:**
 
 **Student APIs (dengan prefix /api):**
-- `POST /api/auth/google/verify` - Verifikasi Google OAuth token
-- `GET /api/auth/me` - Get current user profile  
-- `POST /api/auth/logout` - Logout endpoint
-- `POST /api/ai/chat` - Send chat message, get AI response
-- `GET /api/sessions/` - Get user's chat sessions
-- `GET /api/sessions/{id}` - Get specific session details
-- `DELETE /api/sessions/{id}` - Delete specific session
+- `POST /api/auth/google/verify` - Verifikasi Google OAuth token, upsert mahasiswa ke database
+- `GET /api/auth/me` - Get current user profile dari Bearer token
+- `POST /api/auth/logout` - Logout endpoint (stateless)
+- `POST /api/ai/chat` - Send chat message, get AI response dengan quota check
+- `GET /api/sessions/` - Get user's chat sessions (website users only)
+- `GET /api/sessions/{id}` - Get specific session details dengan message history
+- `DELETE /api/sessions/{id}` - Delete specific session (website users only)
 
 **Admin APIs (dengan prefix /api):**
-- `POST /api/admin/login` - Admin username/password login
-- `POST /api/admin/logout` - Admin logout
-- `GET /api/admin/documents` - Get knowledge tree structure
-- `GET /api/admin/chunks/{childId}` - Get chunk detail for editing
+- `POST /api/admin/login` - Admin username/password login dengan JWT
+- `POST /api/admin/logout` - Admin logout (stateless)
+- `GET /api/admin/documents` - Get knowledge tree structure lengkap
+- `GET /api/admin/chunks/{childId}` - Get chunk detail untuk editing
 - `PUT /api/admin/chunks/{childId}` - Update chunk content/metadata
-- `POST /api/admin/chunks/{childId}/reembed` - Trigger re-embedding process
-- `GET /api/admin/chunks/{childId}/edit-status` - Get edit/reembed status
-- `DELETE /api/admin/chunks/{childId}` - Delete chunk
+- `POST /api/admin/chunks/{childId}/reembed` - Trigger re-embedding process (background)
+- `GET /api/admin/chunks/{childId}/edit-status` - Get edit/reembed status polling
+- `DELETE /api/admin/chunks/{childId}` - Delete chunk dengan cleanup parent
 
 **Health APIs (tanpa prefix /api):**
-- `GET /health/` - Basic health check
-- `GET /health/detailed` - Detailed health with dependencies
-- `GET /health/readiness` - Kubernetes readiness probe
-- `GET /health/liveness` - Kubernetes liveness probe
+- `GET /health/` - Basic health check dengan uptime
+- `GET /health/detailed` - Detailed health dengan dependencies status
+- `GET /health/readiness` - Kubernetes readiness probe (503 jika dependencies down)
+- `GET /health/liveness` - Kubernetes liveness probe (simple alive check)
 
 **Special Endpoints:**
-- `POST /api/telegram/webhook` - Telegram webhook receiver
-- `GET /` - Root welcome endpoint
+- `POST /api/telegram/webhook` - Telegram webhook receiver dengan HMAC validation
+- `GET /` - Root welcome endpoint dengan version info
 
 **File Pemroses (Pseudocode):**
 
@@ -1952,7 +1433,7 @@ ALGORITMA PENYIMPANAN MEMORI PERCAKAPAN (memory.py)
 ### Alur 4: Query Processing & Reformulation
 
 > **⚠️ PERUBAHAN ARSITEKTUR ⚠️**  
-> Pada increment 3, sistem telah beralih ke arsitektur **Retrieval-First** yang melewati (bypass) tahap klasifikasi intent. Dokumentasi classifier.py di bawah ini dipertahankan untuk referensi historis dan kemungkinan fallback, namun **TIDAK DIGUNAKAN** dalam alur produksi saat ini.
+> Sistem saat ini menggunakan arsitektur **Retrieval-First** yang melewati (bypass) tahap klasifikasi intent. Dokumentasi classifier.py di bawah ini dipertahankan untuk referensi historis dan kemungkinan fallback, namun **TIDAK DIGUNAKAN** dalam alur produksi saat ini.
 
 **Bentuk Data Awal:**
 
@@ -2724,23 +2205,9 @@ ALGORITMA MIDDLEWARE PEMANTAUAN KINERJA (monitoring.py)
      - JIKA durasi > 5 detik: Tulis Peringatan (Warning) di log konsol (Request terlalu lambat).
      - Sisipkan _Header HTTP_ "X-Response-Time" ke respon balik klien.
 
-5. KELAS PerformanceTracker & AsyncPerformanceTracker
-   - Digunakan dengan blok `with` (Context Manager) untuk menghitung lama waktu eksekusi sepotong fungsi tertentu (seperti Timer stopwatch).
-   - Saat masuk blok (Enter): Mulai timer.
-   - Saat keluar blok (Exit): Hentikan timer, hitung durasi.
-   - Jika > 1 detik, tulis Warning. Jika di bawah 1 detik, cukup tulis Debug.
-   - Jika ada error (exception), tulis Error log.
+---
 
-6. FUNGSI DEKORATOR track_performance
-   - Membungkus (wrap) suatu fungsi (baik sinkron maupun asinkron).
-   - Akan otomatis mengaplikasikan `PerformanceTracker` pada fungsi yang dipasangi penanda `@track_performance`.
-
-7. FUNGSI UTILITAS SISTEM (Cek RAM & CPU)
-   - `get_memory_usage()`: Gunakan modul `psutil` untuk mendapat total RAM yang dipakai aplikasi (dalam MB dan Persentase).
-   - `get_cpu_usage()`: Mendapat angka persentase pemakaian CPU.
-```
-
-#### File: `src/middleware/security.py`
+### File: `src/middleware/security.py`
 
 ```markdown
 ALGORITMA MIDDLEWARE KEAMANAN (security.py)
@@ -3021,426 +2488,21 @@ Endpoint utama `/api/ai/chat` berjalan sebagai **endpoint publik** yang tidak me
 
 ### 6.5 Arsitektur Infrastruktur & Deployment
 
-1. **Testing**: Saat ini belum ada direktori khusus `/tests` untuk pengujian integrasi _(Unit Testing)_.
-2. **Deployment**: Sistem berjalan dan di-_deploy_ melalui _containerization_ (Docker). Konfigurasi infrastruktur terdefinisi di file `Dockerfile` dan `docker-compose.yml`.
-3. **Migrasi Database**: File berektensi `.sql` di `/scripts` harus dieksekusi secara manual via Supabase SQL Editor. Tidak ada utilitas _Migration Runner_ otomatis (seperti _Alembic_).
-4. **Data Retention / Cleanup**: Untuk menjamin memori sesi Telegram tidak membludak, Supabase RPC `cleanup_idle_sessions` melakukan penghapusan _session_id_ yang sudah pasif melampaui `SESSION_CLEANUP_INTERVAL`.
-5. **Observability**: Log sistem menggunakan _library_ `loguru` yang menyimpan catatannya secara lokal di _console_ dan belum diekspor ke layanan sentralisasi (_Datadog_ / _Sentry_ dll).
+1. **Testing**: Sistem tidak memiliki direktori khusus untuk unit testing terotomatis.
+2. **Deployment**: Sistem menggunakan containerization (Docker) dengan konfigurasi di `Dockerfile` dan `docker-compose.yml`.
+3. **Database Migrations**: File SQL di `/scripts` dieksekusi manual via Supabase SQL Editor.
+4. **Data Retention**: RPC `cleanup_idle_sessions` melakukan pembersihan sesi idle berdasarkan `SESSION_CLEANUP_INTERVAL`.
+5. **Observability**: Logging menggunakan `loguru` dengan output ke console lokal.
 
 ---
-
-## Legacy/Deprecated Modules (Historical Reference)
-
-> **⚠️ PERHATIAN ⚠️**  
-> Modul-modul berikut ini masih ada dalam codebase untuk keperluan fallback dan kompatibilitas, namun **TIDAK DIGUNAKAN** dalam alur produksi arsitektur Retrieval-First saat ini.
-
-### Intent Classification System (DEPRECATED)
-
-#### File: `src/generation/intent_classifier/classifier.py`
-
-````markdown
-ALGORITMA KLASIFIKASI INTENT (classifier.py) - LEGACY MODULE
-
-> **STATUS: BYPASSED** - Modul ini telah di-bypass dalam arsitektur Retrieval-First. Core flow di `ai_services.py` tidak lagi memanggil classifier sebagai gatekeeper.
-
-1. IMPOR PUSTAKA
-   - JSON, Typing, Langchain (HumanMessage, SystemMessage, ChatOpenAI).
-   - loguru (logger).
-   - Konfigurasi, Memori percakapan.
-   - Konstanta dan Detektor (SwitchDetector, ClarificationDetector, ConversationalDetector).
-
-2. FUNGSI \_build_classifier_prompt(current_message, memory)
-   - Ambil riwayat pertanyaan dan jawaban terakhir dari memori (jika ada).
-   - Gabungkan histori tersebut dengan pesan user saat ini.
-   - Tambahkan instruksi untuk LLM: "Tentukan intent pesan user sekarang. Output hanya JSON."
-   - Kembalikan teks prompt.
-
-3. KELAS IntentClassifier
-   - `__init__()`:
-     - Buat LLM (ChatOpenAI) dengan suhu=0, max_tokens=200.
-     - Buat dictionary (kamus) kosong untuk _Cache_ hasil klasifikasi agar hemat API.
-     - Inisialisasi ketiga detektor (Switch, Clarification, Conversational).
-   - `classify(message, memory)`:
-     - TAHAP 1: Jalan pintas Obrolan Biasa.
-       - Cek dengan `ConversationalDetector`. Jika "conversational", kembalikan (IntentType.CONVERSATIONAL, 0.95, alasan).
-     - TAHAP 2: Jika ini pesan pertama (tidak ada histori).
-       - Langsung kembalikan "NEEDS_RETRIEVAL" (pasti butuh pencarian).
-     - TAHAP 3: Deteksi Perpindahan Topik (Switch).
-       - Cek dengan `SwitchDetector`.
-       - Jika terdeteksi pindah topik/domain/aspek, kembalikan "NEEDS_RETRIEVAL" karena pasti butuh mencari info baru.
-     - TAHAP 4: Deteksi Permintaan Penjelasan (Clarification).
-       - Cek dengan `ClarificationDetector`.
-       - Jika terdeteksi user minta kejelasan dari topik yang SAMA PERSIS, kembalikan "CLARIFICATION".
-     - TAHAP 5: Jika semua aturan gagal (Rule-based gagal).
-       - Lempar ke LLM untuk diproses dengan memanggil `_classify_with_llm(message, memory)`.
-
-   - `_classify_with_llm(message, memory)`:
-     - Buat kunci cache dari 50 karakter pertama pesan + jumlah riwayat percakapan.
-     - JIKA kunci ada di cache: kembalikan hasil cache tersebut (hemat pemanggilan LLM).
-     - Bangun prompt dari `_build_classifier_prompt`.
-     - Panggil API LLM (dengan `CLASSIFIER_SYSTEM_PROMPT` dan prompt yang dibuat).
-     - Bersihkan teks respon dari LLM (hilangkan tanda blok kode markdown ` ```json `).
-     - _Parse_ string menjadi objek JSON.
-     - Ambil `intent`, `confidence`, dan `reason` dari JSON tersebut.
-     - Simpan hasil ke cache.
-     - KEMBALIKAN (intent, confidence, reason).
-     - JIKA ERROR (JSON invalid, gagal API, dll): Jatuh ke pilihan aman (Fallback) yaitu "NEEDS_RETRIEVAL".
-````
-
-### RAGChain Deprecated Methods (HISTORICAL)
-
-#### Legacy Methods dari `src/generation/chain.py`
-
-```markdown
-DEPRECATED METHODS - TIDAK ADA DALAM IMPLEMENTASI AKTUAL
-
-METHOD `invoke_conversational(question, history)` - TIDAK EXIST:
-   - Seharusnya digunakan saat pengguna hanya basa-basi ("Halo", "Terima kasih").
-   - Seharusnya panggil LLM tanpa memasukkan dokumen konteks berat.
-   - Seharusnya kembalikan jawaban saja (sumber = kosong).
-   - STATUS: Method ini tidak ada dalam kode aktual chain.py
-
-METHOD `invoke_clarification(question, history, last_context)` - TIDAK EXIST:
-   - Seharusnya digunakan jika pengguna minta penjelasan tambahan ("Tolong jelaskan lebih detail").
-   - Seharusnya cek apakah topik masih relevan dengan dokumen lama (`_check_context_relevance`).
-   - Jika TIDAK RELEVAN (< 0.3): Seharusnya beralih (Fallback) jalankan Retrieval pencarian ulang.
-   - Jika RELEVAN: Seharusnya minta LLM menjelaskan ulang dokumen sebelumnya.
-   - STATUS: Method ini tidak ada dalam kode aktual chain.py
-
-> **CATATAN ARSITEKTUR**: Dalam implementasi Retrieval-First saat ini, semua skenario conversational dan clarification ditangani dalam satu method `invoke_with_history` menggunakan adaptive history management berdasarkan ketersediaan konteks dokumen.
-```
-
----
-
 
 ## Checklist Kelengkapan Dokumentasi
 
-> **Dokumentasi Status**: Dokumen ini menyediakan pseudocode dan dokumentasi lengkap untuk semua komponen utama sistem AI Chatbot Asisten Akademik berdasarkan implementasi aktual di increment 3.
+> **Dokumentasi Status**: Dokumen ini menyediakan pseudocode dan dokumentasi lengkap untuk semua komponen utama sistem AI Chatbot Asisten Akademik berdasarkan implementasi backend terkini.
 
 > **Database Coverage**: Semua 8 tabel database terdokumentasi lengkap (parent_documents, child_documents, mahasiswa_accounts, conversation_sessions, admin_users, chunk_edit_logs, user_quotas, chat_logs).
 
-> **Last Updated**: Agustus 2026
+> **Architecture Focus**: Retrieval-First dengan hybrid search, session management berbasis database, dan admin content management system.
 
 ---
 
----
-
-## 🎨 Frontend Components (Admin Dashboard) - Optimized Architecture
-
-### KnowledgeTreeColumn Component
-
-**File**: `frontend/src/components/admin/KnowledgeTreeColumn.tsx`
-
-**Purpose**: Menampilkan knowledge base dalam struktur tree hierarkis dengan performa tinggi dan readability yang baik. Menggunakan memoization dan component separation untuk optimal rendering.
-
-#### Core Architecture
-```typescript
-interface FilteredChapter extends ChapterNode {
-  key: string  // Pre-computed untuk performance
-}
-
-interface ProcessedDocument {
-  docKey: string        // Unique identifier
-  document: DocumentNode
-  filteredChapters: FilteredChapter[]
-  totalParents: number   // Pre-calculated stats
-  totalChildren: number
-}
-```
-
-#### Performance-Optimized Hooks
-```markdown
-HOOK useExpansionState():
-  STATE expandedDocs = {} (Record<string, boolean>)
-  STATE expandedChaps = {} (Record<string, boolean>)
-  
-  FUNCTION toggleDoc(docKey):
-    SET expandedDocs[docKey] = !expandedDocs[docKey]
-  END
-  
-  FUNCTION toggleChap(chapKey):
-    SET expandedChaps[chapKey] = !expandedChaps[chapKey]
-  END
-  
-  RETURN { expandedDocs, expandedChaps, toggleDoc, toggleChap }
-END
-
-HOOK useProcessedDocuments(tree, query) - MEMOIZED (60% Performance Improvement):
-  MEMO RETURN processDocuments(tree, query) DEPENDS ON [tree?.documents, query]
-  
-  FUNCTION processDocuments(tree, query):
-    IF NOT tree?.documents: RETURN []
-    
-    FOR EACH doc IN tree.documents:
-      docKey = "${doc.domain}-${doc.source}"
-      
-      // Filter chapters with search query
-      filteredChapters = []
-      FOR EACH chap IN doc.chapters:
-        chapKey = "${docKey}-${chap.section}"
-        
-        // Filter parents based on search
-        filteredParents = []
-        FOR EACH parent IN chap.parents:
-          IF matchesSearchQuery(parent, doc, chap.section, query):
-            ADD parent TO filteredParents
-          END
-        END
-        
-        IF filteredParents.length > 0:
-          ADD { ...chap, parents: filteredParents, key: chapKey } TO filteredChapters
-        END
-      END
-      
-      // Pre-calculate statistics for performance
-      totalParents = SUM(doc.chapters.parents.length)
-      totalChildren = SUM(doc.chapters.parents.children.length)
-      
-      CREATE processedDoc = {
-        docKey, document: doc, filteredChapters, totalParents, totalChildren
-      }
-      
-      // Only include if matches query or no query
-      IF NOT query OR filteredChapters.length > 0:
-        ADD processedDoc TO result
-      END
-    END
-    
-    RETURN result
-  END
-END
-```
-
-#### Component Hierarchy & Architecture
-```markdown
-COMPONENT KnowledgeTreeColumn({ tree, query }):
-  { expandedDocs, toggleDoc } = useExpansionState()
-  processedDocuments = useProcessedDocuments(tree, query)
-  
-  IF NOT tree?.documents:
-    RENDER <EmptyState />
-    RETURN
-  END
-  
-  hasQuery = Boolean(query.trim())
-  
-  RENDER:
-    FOR EACH processed IN processedDocuments:
-      <DocumentRow
-        key={processed.docKey}
-        processed={processed}
-        isExpanded={expandedDocs[processed.docKey]}
-        onToggle={() => toggleDoc(processed.docKey)}
-        hasQuery={hasQuery}
-      />
-    END
-END
-
-COMPONENT DocumentRow({ processed, isExpanded, onToggle, hasQuery }):
-  { document, totalParents, totalChildren } = processed
-  shouldExpand = hasQuery OR isExpanded
-  
-  RENDER:
-    <div className="tree-doc depth-1">
-      <button onClick={onToggle}>
-        <ChevronIcon rotated={shouldExpand} />
-        <FileIcon />
-        <Label>{document.source} ({document.domain})</Label>
-        <Count>{totalParents} parent | {totalChildren} child</Count>
-      </button>
-      
-      IF shouldExpand:
-        <ChapterList 
-          chapters={processed.filteredChapters}
-          docKey={processed.docKey}
-          hasQuery={hasQuery}
-        />
-      END
-    </div>
-END
-
-COMPONENT ChapterList({ chapters, docKey, hasQuery }):
-  { expandedChaps, toggleChap } = useExpansionState()
-  
-  RENDER:
-    <div className="tree-children">
-      FOR EACH chap IN chapters:
-        isExpanded = expandedChaps[chap.key]
-        shouldExpand = hasQuery OR isExpanded
-        totalChildren = SUM(chap.parents.children.length)
-        
-        <div className="tree-doc depth-2">
-          <button onClick={() => toggleChap(chap.key)}>
-            <ChevronIcon rotated={shouldExpand} />
-            <BookmarkIcon />
-            <Label>{chap.section}</Label>
-            <Count>{chap.parents.length} parent | {totalChildren} child</Count>
-          </button>
-          
-          IF shouldExpand:
-            <ParentList 
-              parents={chap.parents}
-              docKey={docKey}
-              section={chap.section}
-            />
-          END
-        </div>
-      END
-    </div>
-END
-```
-
-**Key Optimizations**: Memoized processing eliminates O(n²) operations, component separation reduces re-renders, pre-calculated statistics computed once per data change, efficient search matching dengan single string concatenation.
-
----
-
-### RelationDiagram Component  
-
-**File**: `frontend/src/components/admin/RelationDiagram.tsx`
-
-**Purpose**: Menampilkan diagram relasi Parent → Child dalam bentuk SVG responsive dan performant. Menggunakan pure functions untuk calculations dan component separation untuk maintainability.
-
-#### Pure Function Architecture
-```markdown
-FUNCTION calculateDiagramLayout(childCount) - PURE FUNCTION:
-  // Dynamic sizing based on content
-  config = {
-    width: MAX(400, childCount * 20 + 300),    // Scales with content
-    height: MAX(120, childCount * 28 + 40),    // Responsive height
-    rowHeight: 28,                             // Child spacing
-    padding: 20,                               // Canvas margins
-    parentBox: { width: 80, height: 32 }      // Parent dimensions
-  }
-  
-  // Parent box positioning (left side)
-  parentPos = {
-    x: config.padding,
-    y: (config.height / 2) - (config.parentBox.height / 2)
-  }
-  
-  // Children positioning (right side, vertically distributed)
-  childrenStartY = config.padding
-  childrenX = config.width - 140
-  
-  childrenPos = []
-  FOR i = 0 TO childCount - 1:
-    ADD {
-      x: childrenX,
-      y: childrenStartY + (i * config.rowHeight) + (config.rowHeight / 2),
-      child: null  // Assigned later
-    } TO childrenPos
-  END
-  
-  RETURN { config, parentPos, childrenPos }
-END
-```
-
-#### Component Architecture
-```markdown
-COMPONENT RelationDiagram({ parent }):
-  STATE isOpen = false
-  
-  IF NOT parent: RETURN null
-  
-  FUNCTION toggleOpen(): SET isOpen = !isOpen
-  
-  RENDER:
-    <button onClick={toggleOpen}>
-      <LayerIcon />
-      <Text>Lihat relasi Parent → Child</Text>
-      <ChevronIcon className={isOpen ? 'rotated' : ''} />
-    </button>
-    
-    <div className={`relation-body ${isOpen ? 'open' : ''}`}>
-      <DiagramContent parent={parent} />
-    </div>
-END
-
-COMPONENT DiagramContent({ parent }):
-  // Memoized layout calculation untuk performance
-  layout = MEMO calculateDiagramLayout(parent.children.length) DEPENDS ON [parent.children.length]
-  
-  // Calculate parent center point untuk connection lines
-  parentCenter = {
-    x: layout.parentPos.x + layout.config.parentBox.width,
-    y: layout.parentPos.y + (layout.config.parentBox.height / 2)
-  }
-  
-  RENDER:
-    <div className="relation-svg-wrap">
-      <svg
-        viewBox={`0 0 ${layout.config.width} ${layout.config.height}`}
-        preserveAspectRatio="xMidYMid meet"
-        style={{ minWidth: `${layout.config.width}px`, width: '100%', height: `${layout.config.height}px` }}
-      >
-        // Draw connection lines first (behind other elements)
-        FOR EACH child, index IN parent.children:
-          <ConnectionPath
-            key={child.id}
-            from={parentCenter}
-            to={{ x: layout.childrenPos[index].x, y: layout.childrenPos[index].y }}
-          />
-        END
-        
-        // Draw parent box
-        <ParentBox parent={parent} position={layout.parentPos} config={layout.config} />
-        
-        // Draw child nodes
-        FOR EACH child, index IN parent.children:
-          <ChildNode key={child.id} child={child} position={layout.childrenPos[index]} />
-        END
-      </svg>
-    </div>
-END
-
-COMPONENT ConnectionPath({ from, to }):
-  // Smooth curved connection using bezier curve
-  midX = (from.x + to.x) / 2
-  pathData = `M ${from.x} ${from.y} C ${midX} ${from.y} ${midX} ${to.y} ${to.x - 5} ${to.y}`
-  
-  RENDER:
-    <path d={pathData} stroke="var(--gray-200)" strokeWidth="1.5" fill="none" />
-END
-
-COMPONENT ParentBox({ parent, position, config }):
-  { x, y } = position
-  { width, height } = config.parentBox
-  
-  RENDER:
-    <g>
-      <rect x={x} y={y} width={width} height={height} rx="8"
-            fill="var(--purple-muda)" stroke="var(--purple-primary)" strokeWidth="1.2" />
-      <text x={x + width/2} y={y + 12} textAnchor="middle" fontSize="10" fill="#4C1D95" fontWeight="600">
-        {parent.parent_id}
-      </text>
-      <text x={x + width/2} y={y + 25} textAnchor="middle" fontSize="8" fill="#6D28D9">
-        {parent.children.length} children
-      </text>
-    </g>
-END
-
-COMPONENT ChildNode({ child, position }):
-  { x, y } = position
-  
-  RENDER:
-    <g>
-      <circle cx={x} cy={y} r="4" fill="var(--purple-primary)" />
-      <text x={x + 12} y={y + 1} fontSize="10" fontFamily="Inter, sans-serif">
-        <tspan fill="#374151" fontWeight="600">{child.id}</tspan>
-        <tspan fill="#6B7280" dx="6">{child.title}</tspan>
-      </text>
-    </g>
-END
-```
-
-**Key Optimizations**: Memoized calculations (layout computed only when childCount changes), pure functions (predictable, testable, cacheable), component separation (efficient re-rendering), responsive SVG design (scales naturally dengan container size).
-
-#### Benefits of Optimized Architecture
-- **60% Performance Improvement** (KnowledgeTreeColumn): Memoized processing eliminates redundant calculations
-- **Better Code Readability**: Clear component separation dan self-explanatory function names  
-- **Maintainability**: Modular hooks dan pure components
-- **Type Safety**: Strong TypeScript interfaces
-- **Scalability**: Efficient handling untuk large datasets
-- **Responsive Design**: SVG components scale naturally across screen sizes
-
----
