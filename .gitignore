@@ -1,6 +1,8 @@
 # Python Virtual Environments
 venv/
 .venv/
+virtual_environment/
+backend/virtual_environment/
 marker_workspace/Include/
 marker_workspace/Lib/
 marker_workspace/Scripts/
