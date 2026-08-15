@@ -45,6 +45,274 @@ Proyek ini adalah **AI Chatbot Asisten Akademik** yang dirancang untuk menjawab 
 
 ---
 
+## 1.5. Struktur Project Backend
+
+```
+backend/
+├── 📁 src/                          # Source code utama
+│   ├── 📁 admin/                    # Admin content management
+│   │   ├── auth.py                  # Admin authentication & JWT
+│   │   ├── chunk_editor.py          # Knowledge base editor
+│   │   └── chunk_editor_old.py      # Legacy reference
+│   ├── 📁 api/                      # REST API endpoints
+│   │   ├── admin.py                 # Admin dashboard APIs
+│   │   ├── ai.py                    # Chat endpoints (/chat)
+│   │   ├── auth.py                  # Google OAuth endpoints
+│   │   ├── health.py                # Health check endpoints
+│   │   └── sessions.py              # Session management APIs
+│   ├── 📁 auth/                     # Authentication modules
+│   │   ├── google_oauth.py          # Google ID token verification
+│   │   └── jwt_utils.py             # JWT creation & validation
+│   ├── 📁 bot/                      # Telegram bot integration
+│   │   ├── application.py           # Bot initialization
+│   │   └── handlers/                # Message handlers
+│   ├── 📁 evaluation/               # RAGAS evaluation tools
+│   ├── 📁 generation/               # LLM response generation
+│   │   └── chain.py                 # RAG chain orchestration
+│   ├── 📁 ingestion/                # Document processing
+│   │   └── loader.py                # PDF → chunks → embeddings
+│   ├── 📁 middleware/               # HTTP middleware
+│   │   ├── monitoring.py            # Performance monitoring (unused)
+│   │   └── security.py              # Security headers (integrated)
+│   ├── 📁 retrieval/                # Information retrieval
+│   │   ├── hybrid_search.py         # Vector + BM25 + RRF
+│   │   └── reranker.py              # Cross-encoder reranking
+│   └── 📁 services/                 # Core business logic
+│       ├── ai_services.py           # Main chat orchestration
+│       ├── quota_service.py         # Daily quota management
+│       └── session_store.py         # Session persistence
+├── 📁 config/                       # Configuration
+│   ├── settings.py                  # Pydantic settings
+│   └── section_keywords.yaml       # Document classification
+├── 📁 scripts/                      # Database migrations
+│   ├── supabase.sql                 # Main schema setup
+│   ├── supabase_session_migration.sql
+│   └── supabase_migration_*.sql     # Feature migrations
+├── 📁 extract-pdf/                  # Document extraction
+│   ├── KKP/, PI/, Skripsi/, Non-Skripsi/
+│   └── extract_pdf.py               # PDF processing tool
+├── 📄 application.py                # FastAPI app factory
+├── 📄 main.py                       # CLI entry point
+├── 📄 requirements.txt              # Python dependencies
+├── 📄 .env.example                  # Environment template
+├── 📄 Dockerfile                    # Container config
+└── 📄 docker-compose.yml            # Multi-service setup
+```
+
+### **Key Dependencies:**
+```python
+# Core Framework
+fastapi>=0.104.1          # REST API framework
+uvicorn>=0.24.0           # ASGI server
+
+# AI & ML
+openai>=1.3.0             # GPT-4o-mini + embeddings
+langchain>=0.1.0          # RAG orchestration
+sentence-transformers     # Cross-encoder reranking
+ragas>=0.1.0             # RAG evaluation metrics
+
+# Database & Storage  
+supabase>=2.0.0          # PostgreSQL + pgvector
+psycopg2-binary>=2.9.0   # PostgreSQL adapter
+
+# Authentication & Security
+python-jose>=3.3.0       # JWT tokens
+bcrypt>=4.0.0            # Password hashing
+google-auth>=2.23.0      # Google OAuth
+
+# Telegram Integration
+python-telegram-bot>=20.0 # Telegram bot API
+
+# Utilities
+pydantic>=2.0.0          # Data validation
+loguru>=0.7.0            # Structured logging
+slowapi>=0.1.0           # Rate limiting
+```
+
+---
+
+## 1.6. End-to-End Data Flow
+
+Berikut adalah perjalanan data lengkap dari user query hingga response final:
+
+```mermaid
+graph TD
+    A[👤 User Query] --> B[🔐 Request Validation]
+    B --> C[💾 Load Session Memory] 
+    C --> D[🔍 Hybrid Retrieval]
+    D --> E[🎯 Cross-Encoder Reranking]
+    E --> F[📄 Parent Document Assembly]
+    F --> G[🤖 LLM Generation]
+    G --> H[💾 Save Memory & Logs]
+    H --> I[📤 Response to User]
+```
+
+### **Tahap 1: Input & Validation**
+```json
+// Input dari Telegram/Website
+{
+  "query": "Apa syarat pembimbing untuk KKP?",
+  "session_id": "tg-123456789", 
+  "channel": "telegram"
+}
+
+// Setelah validation & auth
+{
+  "query": "Apa syarat pembimbing untuk KKP?",
+  "session_id": "tg-123456789",
+  "user_id": "tg-123456789",
+  "username": "john_doe",
+  "quota_remaining": 12
+}
+```
+
+### **Tahap 2: Session Memory Loading**
+```json
+// Dari database conversation_sessions
+{
+  "session_id": "tg-123456789",
+  "turns": [
+    {"role": "user", "content": "Halo"},
+    {"role": "assistant", "content": "Halo! Ada yang bisa saya bantu?"}
+  ],
+  "last_access": "2026-08-15T10:00:00Z"
+}
+```
+
+### **Tahap 3: Hybrid Retrieval Process**
+```json
+// Query embedding (vector 2000d)
+{
+  "query_embedding": [0.123, -0.045, 0.678, ...], 
+  "query_text": "Apa syarat pembimbing untuk KKP?"
+}
+
+// Hybrid search results (Vector + BM25 + RRF)
+{
+  "retrieved_chunks": [
+    {
+      "id": "kkp-bab2-001-c2",
+      "content": "Pembimbing KKP wajib memiliki kualifikasi minimal S2...",
+      "rrf_score": 0.85,
+      "parent_id": "kkp-bab2-001"
+    },
+    // ... 8 chunks total
+  ]
+}
+```
+
+### **Tahap 4: Reranking & Parent Assembly** 
+```json
+// Cross-encoder scores
+{
+  "reranked_chunks": [
+    {"id": "kkp-bab2-001-c2", "cross_encoder_score": 0.91},
+    {"id": "kkp-bab2-002-c1", "cross_encoder_score": 0.87},
+    // ... filtered by min_score & relative_gap
+  ]
+}
+
+// Parent documents assembly
+{
+  "parent_documents": [
+    {
+      "parent_id": "kkp-bab2-001", 
+      "title": "Syarat dan Ketentuan Pembimbing",
+      "content": "PEMBIMBING KKP\n\n1. Kualifikasi Pembimbing\nPembimbing KKP wajib memiliki...",
+      "source_chunks": ["kkp-bab2-001-c2", "kkp-bab2-001-c3"]
+    }
+  ]
+}
+```
+
+### **Tahap 5: LLM Context Formation**
+```json
+// Context untuk GPT-4o-mini
+{
+  "system_prompt": "Anda adalah asisten akademik STMIK Widya Cipta Dharma...",
+  "context_documents": "DOKUMEN 1: Syarat dan Ketentuan Pembimbing\nPEMBIMBING KKP\n\n1. Kualifikasi Pembimbing...",
+  "conversation_history": [
+    {"role": "user", "content": "Halo"},
+    {"role": "assistant", "content": "Halo! Ada yang bisa saya bantu?"}
+  ],
+  "current_question": "Apa syarat pembimbing untuk KKP?"
+}
+```
+
+### **Tahap 6: LLM Response & Processing**
+```json
+// GPT-4o-mini response
+{
+  "raw_response": "Berdasarkan dokumen panduan KKP, syarat pembimbing adalah:\n\n1. **Kualifikasi Akademik**\n   - Minimal berpendidikan S2...",
+  "finish_reason": "stop",
+  "usage": {
+    "prompt_tokens": 1250,
+    "completion_tokens": 180,
+    "total_tokens": 1430
+  }
+}
+
+// Processed response dengan source mapping
+{
+  "answer": "Berdasarkan dokumen panduan KKP, syarat pembimbing adalah:\n\n1. **Kualifikasi Akademik**...",
+  "sources": [
+    {
+      "id": "kkp-bab2-001-c2",
+      "title": "Syarat dan Ketentuan Pembimbing", 
+      "section": "BAB II",
+      "pages": ["12", "13"],
+      "domain": "KKP"
+    }
+  ],
+  "num_docs": 2
+}
+```
+
+### **Tahap 7: Database Updates**
+```sql
+-- Update conversation_sessions 
+UPDATE conversation_sessions 
+SET turns = jsonb_insert(turns, '{-1}', '{"role": "user", "content": "Apa syarat pembimbing untuk KKP?"}'),
+    last_access = NOW()
+WHERE session_id = 'tg-123456789';
+
+-- Insert chat_logs
+INSERT INTO chat_logs (user_id, username, question, answer) 
+VALUES ('tg-123456789', 'john_doe', 'Apa syarat pembimbing untuk KKP?', 'Berdasarkan dokumen...');
+
+-- Update user_quotas (via RPC)
+SELECT increment_quota_if_under_limit('tg-123456789', '2026-08-15', 13);
+```
+
+### **Tahap 8: Final Response**
+```json
+// Response ke user (Telegram/Website)
+{
+  "answer": "Berdasarkan dokumen panduan KKP, syarat pembimbing adalah:\n\n1. **Kualifikasi Akademik**\n   - Minimal berpendidikan S2\n   - Memiliki pengalaman mengajar minimal 2 tahun\n\n2. **Kompetensi**\n   - Sesuai dengan bidang ilmu KKP\n   - Memiliki track record penelitian/publikasi\n\nReferensi: Panduan KKP BAB II hal. 12-13",
+  "num_docs": 2,
+  "session_id": "tg-123456789",
+  "sources": [
+    {
+      "id": "kkp-bab2-001-c2",
+      "title": "Syarat dan Ketentuan Pembimbing",
+      "section": "BAB II", 
+      "pages": ["12", "13"],
+      "domain": "KKP"
+    }
+  ]
+}
+```
+
+**💡 Key Insights:**
+- **No Intent Classification**: Langsung ke retrieval (Retrieval-First)
+- **Adaptive History**: Context history disesuaikan dengan available memory
+- **Hybrid Search**: Kombinasi semantic (vector) + lexical (BM25) via RRF
+- **Smart Reranking**: Cross-encoder memfilter hasil yang tidak relevan
+- **Parent Assembly**: Child chunks digabung jadi parent document utuh untuk LLM context
+- **Persistent Sessions**: Semua conversation disimpan ke database untuk continuity
+
+---
+
 ## 2. Database
 
 Sistem menggunakan **PostgreSQL (via Supabase)** dengan ekstensi `pgvector` untuk pencarian kemiripan vektor.
