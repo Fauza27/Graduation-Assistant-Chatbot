@@ -12,6 +12,9 @@ from operator import itemgetter
 
 from config.settings import get_settings
 from src.retrieval.source_utils import detect_panduan_type
+from src.monitoring.context import set_field
+from src.monitoring.pricing import calculate_llm_cost
+from src.monitoring.openai_client import build_instrumented_http_client
 
 settings = get_settings()
 
@@ -147,6 +150,7 @@ def build_rag_chain(streaming: bool = False):
         temperature=0,
         max_tokens=1200,
         streaming=streaming,
+        http_client=build_instrumented_http_client(),
     )
 
     prompt = ChatPromptTemplate.from_messages([
@@ -177,6 +181,7 @@ class RAGChain:
             model=settings.llm_model,
             api_key=settings.open_api_key,
             temperature=0,
+            http_client=build_instrumented_http_client(),
         )
 
     def invoke_with_history(
@@ -235,19 +240,38 @@ class RAGChain:
 
         response = self._llm.invoke(messages)
         answer = _postprocess_answer(response.content)
-        
-        output_tokens = count_tokens(answer)
-        total_input_tokens = system_tokens + history_tokens + context_tokens + query_tokens
-        
+
+        # Token usage AKTUAL dari OpenAI (bukan estimasi tiktoken lagi).
+        # `usage_metadata` adalah field resmi langchain-openai berisi
+        # {"input_tokens": int, "output_tokens": int, "total_tokens": int}.
+        # Fallback ke estimasi tiktoken kalau field ini tidak tersedia
+        # (mis. versi langchain-openai lama, atau provider non-OpenAI).
+        usage = getattr(response, "usage_metadata", None)
+        if usage:
+            actual_input_tokens = usage.get("input_tokens")
+            actual_output_tokens = usage.get("output_tokens")
+        else:
+            logger.warning("response.usage_metadata tidak tersedia, fallback ke estimasi tiktoken.")
+            actual_input_tokens = system_tokens + history_tokens + context_tokens + query_tokens
+            actual_output_tokens = count_tokens(answer)
+
+        llm_cost = calculate_llm_cost(settings.llm_model, actual_input_tokens, actual_output_tokens)
+        set_field(
+            input_tokens=actual_input_tokens,
+            output_tokens=actual_output_tokens,
+            llm_cost_usd=llm_cost,
+        )
+
         profile_log = (
             f"\n========== PROMPT PROFILE ==========\n"
-            f"System Prompt     : {system_tokens} tokens\n"
-            f"History           : {history_tokens} tokens\n"
-            f"Retrieved Context : {context_tokens} tokens\n"
-            f"User Query        : {query_tokens} tokens\n"
+            f"System Prompt     : {system_tokens} tokens (estimasi)\n"
+            f"History           : {history_tokens} tokens (estimasi)\n"
+            f"Retrieved Context : {context_tokens} tokens (estimasi)\n"
+            f"User Query        : {query_tokens} tokens (estimasi)\n"
             f"------------------------------------\n"
-            f"Total Input       : {total_input_tokens} tokens (approx)\n"
-            f"Output            : {output_tokens} tokens\n"
+            f"Input Aktual (API): {actual_input_tokens} tokens\n"
+            f"Output Aktual (API): {actual_output_tokens} tokens\n"
+            f"Cost              : ${llm_cost:.6f}\n"
             f"===================================="
         )
         logger.info(profile_log)

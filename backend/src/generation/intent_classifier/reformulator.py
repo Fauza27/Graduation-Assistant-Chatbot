@@ -45,8 +45,10 @@ class QueryReformulator:
     def __init__(self, llm: ChatOpenAI = None):
         if llm is None:
             settings = get_settings()
+            from src.monitoring.openai_client import build_instrumented_http_client
             self._llm = ChatOpenAI(
                 model=settings.llm_model,
+                http_client=build_instrumented_http_client(),
                 temperature=0,
                 api_key=settings.open_api_key,  
                 max_tokens=100,
