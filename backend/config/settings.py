@@ -104,6 +104,9 @@ class Settings(BaseSettings):
     SESSION_CLEANUP_INTERVAL: int = Field(default=3600, ge=300, le=7200)  # seconds
     USE_DATABASE_SESSIONS: bool = Field(default=True, description="Use database-backed sessions instead of in-memory")
     MAX_HISTORY_TURNS: int = Field(default=3, ge=1, le=10, description="Maximum number of conversation turns sent to LLM")
+    
+    # Monitoring & Observability
+    ENABLE_REQUEST_METRICS: bool = Field(default=True, description="Aktifkan pencatatan request_metrics")
 
     @field_validator("bm25_weight", "dense_weight")
     @classmethod
