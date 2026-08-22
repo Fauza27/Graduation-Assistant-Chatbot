@@ -13,6 +13,8 @@ from src.bot import messages
 from src.retrieval.source_utils import detect_panduan_type
 from src.services.ai_services import chat
 from src.services.quota_service import check_and_update_quota
+from src.monitoring.context import new_collector, start_stage, end_stage
+from src.monitoring.writer import persist_quota_rejection
 
 
 async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -53,10 +55,22 @@ async def handle_text_chat(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     user_id = str(update.effective_user.id)
     settings = get_settings()
 
+    # G1/G4/G6: `question` (variabel `text`, sudah divalidasi non-kosong di
+    # baris sebelum blok ini) diisi di sini — titik paling awal yang mungkin.
+    collector = new_collector(session_id=user_id, channel="telegram", question=text)
+    start_stage("validation")
+    end_stage()
+
     # Cek limit harian sebelum memproses pertanyaan.
     # Supabase client adalah sync, jalankan di thread pool agar event loop tidak terblokir.
     has_quota = await asyncio.to_thread(check_and_update_quota, user_id)
     if not has_quota:
+        await asyncio.to_thread(
+            persist_quota_rejection,
+            session_id=user_id,
+            channel="telegram",
+            mahasiswa_id=None,
+        )
         await update.message.reply_text(
             messages.DAILY_LIMIT_REACHED.format(limit=settings.RATE_LIMIT_REQUESTS),
             parse_mode=ParseMode.HTML,

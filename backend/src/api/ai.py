@@ -9,6 +9,8 @@ from datetime import datetime
 from src.services.ai_services import chat as chat_service
 from src.services.quota_service import check_and_update_quota
 from src.auth.jwt_utils import verify_access_token
+from src.monitoring.context import new_collector, start_stage, end_stage
+from src.monitoring.writer import persist_quota_rejection
 from config.settings import get_settings
 
 router = APIRouter(prefix="/ai", tags=["AI Chatbot"])
@@ -110,6 +112,10 @@ class ChatResponse(BaseModel):
     description="Kirim pertanyaan ke chatbot RAG KKP/PI",
 )
 async def chat_endpoint(body: ChatRequest, request: Request):
+    # G1/G4/G6: `question` diisi di sini, TITIK PALING AWAL yang mungkin —
+    # supaya tetap tercatat walau request gagal di validasi/kuota/generation.
+    collector = new_collector(session_id=body.session_id, channel=body.channel, question=body.query)
+    start_stage("validation")
     try:
         mahasiswa_id = None
         username = "Unknown User"
@@ -139,6 +145,10 @@ async def chat_endpoint(body: ChatRequest, request: Request):
             if not mahasiswa_id:
                 raise HTTPException(status_code=401, detail="Token tidak valid: sub (mahasiswa_id) tidak ditemukan")
 
+        collector.mahasiswa_id = str(mahasiswa_id) if mahasiswa_id else None
+        collector.username = username  # G3: siapa yang mengalami error, kalau nanti gagal di bawah
+        end_stage()  # menutup "validation" — kuota & chat_service TIDAK dihitung sebagai validation
+
         # TAHAP 2: Cek Kuota
         if mahasiswa_id:
             quota_allowed = check_and_update_quota(
@@ -147,12 +157,20 @@ async def chat_endpoint(body: ChatRequest, request: Request):
             )
             
             if not quota_allowed:
+                persist_quota_rejection(
+                    session_id=body.session_id,
+                    channel=body.channel,
+                    mahasiswa_id=str(mahasiswa_id),
+                )
                 raise HTTPException(
                     status_code=429, 
                     detail=f"Batas harian mencapai batas. Maksimal {settings.RATE_LIMIT_REQUESTS} pertanyaan per hari."
                 )
 
         # TAHAP 3: Teruskan ke Chat Service
+        # (chat_service akan memakai collector yang sudah kita buat di atas
+        # via get_current() — lihat Fase 2 — dan yang akan mem-persist +
+        # menutup collector ini di akhir.)
         result = chat_service(
             query=body.query,
             session_id=body.session_id,
