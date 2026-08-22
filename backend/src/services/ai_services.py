@@ -7,6 +7,9 @@ from src.generation.memory import ConversationMemory
 from src.generation.intent_classifier.reformulator import normalize_query, needs_rewrite, reformulate_query
 from src.generation.chain import RAGChain
 from src.services.session_strategy import create_session_store, SessionStore
+from src.monitoring.context import new_collector, start_stage, end_stage, set_field, get_current
+from src.monitoring.writer import persist_metrics
+from src.monitoring.errors import ChatError, RetrievalError, classify_exception
 from config.settings import get_settings
 
 settings = get_settings()
@@ -20,15 +23,10 @@ _session_store_strategy: SessionStore = create_session_store()
 
 _rag_chain = RAGChain()
 
-
-class ChatError(Exception):
-    """Custom exception for chat-related errors"""
-    pass
-
-
-class RetrievalError(ChatError):
-    """Exception for retrieval-related errors"""
-    pass
+# NOTE: ChatError & RetrievalError sekarang didefinisikan di
+# src/monitoring/errors.py (diimpor di atas) supaya taksonomi error
+# konsisten dipakai di seluruh codebase, termasuk untuk klasifikasi
+# `error_source` di request_metrics.
 
 
 def get_or_create_memory(session_id: str, mahasiswa_id: Optional[str] = None) -> ConversationMemory:
@@ -69,35 +67,62 @@ def chat(query: str, session_id: str, username: str, channel: str = "telegram", 
     if not session_id:
         return {"answer": "Session ID diperlukan.", "num_docs": 0, "error": "missing_session_id"}
 
+    # Kalau titik masuk (ai.py / chat_handler.py, Fase 5) SUDAH membuat
+    # collector duluan untuk mengukur tahap "validation", pakai itu.
+    # Kalau belum ada (mis. dipanggil langsung dari script/test), buat baru
+    # di sini supaya fungsi ini tetap bisa dipakai standalone.
+    collector = get_current()
+    if collector is None:
+        collector = new_collector(
+            session_id=session_id, channel=channel, mahasiswa_id=mahasiswa_id,
+            question=query.strip(), username=username,
+        )
+    else:
+        collector.session_id = session_id
+        collector.mahasiswa_id = mahasiswa_id
+        collector.channel = channel
+        # G1/G3/G4/G6: pastikan question/username terisi walau collector-nya
+        # sudah dibuat lebih dulu di Fase 5 (ai.py/chat_handler.py) — di sana
+        # `username` final (hasil resolve JWT/profil Telegram) baru diketahui
+        # SETELAH collector dibuat, jadi di-set (ulang) di sini untuk jaga-jaga.
+        collector.question = collector.question or query.strip()
+        collector.username = username
+
     t_start = time.time()
     question = query.strip()
     logger.info(f"[session={session_id}] Question: {question}")
-    
+
     try:
         # 1. Normalization
         normalized_query = normalize_query(question)
-        
+
         # 2. Need Rewrite?
         rewrite_needed = needs_rewrite(normalized_query)
-        
+
         resolved_query = normalized_query
         rewrite_method = "None"
         memory = None
-        
+
         # SLOW PATH: Load memory early for query rewrite
         if rewrite_needed:
+            start_stage("session_load")
             memory = get_or_create_memory(session_id, mahasiswa_id=mahasiswa_id)
+            end_stage()
             memory.add_user_turn(question)
-            
+
+            start_stage("reformulation")
             t_rewrite_start = time.time()
             resolved_query, rewrite_method = reformulate_query(normalized_query, memory)
             t_rewrite_end = time.time()
+            end_stage()
             logger.info(f"[session={session_id}] [Rewrite] {rewrite_method}: '{normalized_query}' → '{resolved_query}' [⏱️ {t_rewrite_end - t_rewrite_start:.2f}s]")
-            
+
+        set_field(rewrite_method=rewrite_method)
+
         # 3. Cache Check
         cache_key = f"{KNOWLEDGE_VERSION}_{resolved_query}"
         cached_result = retrieval_cache.get(cache_key)
-        
+
         if cached_result is not None:
             logger.info(f"⚡ [Cache Hit] Retrieval skipped for: '{resolved_query}'")
             retrieval_docs = cached_result
@@ -108,13 +133,23 @@ def chat(query: str, session_id: str, username: str, channel: str = "telegram", 
             retrieval_docs = retrieval.parent_documents
             # Cache the results
             retrieval_cache[cache_key] = retrieval_docs
+            # NOTE: retrieval.* field tambahan (domain_detected, skor, dst)
+            # sudah otomatis ditulis ke collector oleh run_retrieval() itu
+            # sendiri di Fase 3 — tidak perlu diulang manual di sini.
+            # Kalau cache HIT, field-field itu TIDAK terisi untuk request
+            # ini (retrieval tidak benar-benar jalan) — ini trade-off yang
+            # disengaja, cache hit memang tidak merepresentasikan retrieval
+            # baru.
 
         # FAST PATH: Load memory here if not loaded yet
         if memory is None:
+            start_stage("session_load")
             memory = get_or_create_memory(session_id, mahasiswa_id=mahasiswa_id)
+            end_stage()
             memory.add_user_turn(question)
-            
+
         # 4. LLM Generation
+        start_stage("generation")
         t_gen_start = time.time()
         result = _rag_chain.invoke_with_history(
             question=question,
@@ -122,10 +157,11 @@ def chat(query: str, session_id: str, username: str, channel: str = "telegram", 
             conversation_history=memory.get_history_for_llm(),
         )
         t_gen_end = time.time()
+        end_stage()
         logger.info(f"[session={session_id}] Generation time [⏱️ {t_gen_end - t_gen_start:.2f}s]")
-        
+
         answer = result["answer"]
-        
+
         # Prepare sources metadata
         sources_list = [
             {
@@ -147,13 +183,14 @@ def chat(query: str, session_id: str, username: str, channel: str = "telegram", 
             )
         else:
             memory.add_assistant_turn(content=answer)
-            
+
+        start_stage("db_save")
         _save_memory_if_needed(session_id, memory, channel=channel, mahasiswa_id=mahasiswa_id)
-        
+
         t_total_end = time.time()
         logger.info(f"[session={session_id}] Total process time [⏱️ {t_total_end - t_start:.2f}s]")
-        
-        # 6. Catat chat log
+
+        # 6. Catat chat log (chat_logs, tabel lama — TIDAK diubah)
         try:
             # Use strategy untuk get database access jika menggunakan database sessions
             if hasattr(_session_store_strategy, '_store') and hasattr(_session_store_strategy._store, '_supabase'):
@@ -167,6 +204,10 @@ def chat(query: str, session_id: str, username: str, channel: str = "telegram", 
         except Exception as e:
             user_id_log = str(mahasiswa_id) if mahasiswa_id else str(session_id)
             logger.error(f"Gagal menyimpan log chat untuk user {user_id_log}: {e}")
+        end_stage()  # menutup db_save
+
+        collector.status = "success"
+        persist_metrics(collector)
 
         return {
             "answer": answer,
@@ -174,9 +215,16 @@ def chat(query: str, session_id: str, username: str, channel: str = "telegram", 
             "rewrite_method": rewrite_method,
             "sources": sources_list,
         }
-        
+
     except Exception as e:
         logger.error(f"[session={session_id}] Error processing query: {e}", exc_info=True)
+
+        error_source, error_type = classify_exception(e)
+        collector.status = "error"
+        collector.error_source = error_source
+        collector.error_type = error_type
+        persist_metrics(collector)
+
         return {
             "answer": (
                 "Maaf, terjadi kesalahan saat memproses pertanyaan Anda. "
