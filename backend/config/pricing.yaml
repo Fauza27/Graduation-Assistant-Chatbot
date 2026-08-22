@@ -1,0 +1,17 @@
+# Harga OpenAI API dalam USD per 1 JUTA token.
+# Sumber acuan: openai.com/pricing.
+# TERAKHIR DIVERIFIKASI: 2026-06-07 — WAJIB DICEK ULANG SEBELUM DIPAKAI
+# UNTUK KEPUTUSAN BISNIS, karena harga OpenAI bisa berubah sewaktu-waktu.
+llm:
+  gpt-4o-mini:
+    input_per_1m: 0.15
+    output_per_1m: 0.60
+  gpt-4o:
+    input_per_1m: 2.50
+    output_per_1m: 10.00
+
+embedding:
+  text-embedding-3-large:
+    input_per_1m: 0.13
+  text-embedding-3-small:
+    input_per_1m: 0.02
