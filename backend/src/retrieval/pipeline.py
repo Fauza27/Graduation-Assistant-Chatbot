@@ -19,6 +19,7 @@ import time
 from loguru import logger
 
 from config.settings import get_settings
+from src.monitoring.context import start_stage, end_stage, set_field
 
 
 @dataclass
@@ -46,6 +47,7 @@ def run_retrieval(query: str, rerank_query: str | None = None) -> RetrievalResul
     from src.retrieval.hybrid_search import HybridSearcher
     from src.retrieval.parent_child import ParentChildFetcher
     from src.retrieval.reranker import CrossEncoderReranker
+    from src.retrieval.source_utils import detect_panduan_type
 
     settings = get_settings()
     rerank_query = rerank_query or query
@@ -53,6 +55,17 @@ def run_retrieval(query: str, rerank_query: str | None = None) -> RetrievalResul
     t_start = time.time()
     parsed = extract_query_components(query)
     t_parse = time.time()
+
+    # C5: domain_detected dihitung dari hasil self-query classifier, BUKAN
+    # dari dokumen yang berhasil diambil — supaya tetap ada atribusi domain
+    # walaupun retrieval-nya gagal total (dibutuhkan untuk analisis "domain
+    # mana paling sering gagal retrieval").
+    domain_detected = (
+        detect_panduan_type({"source": parsed.detected_source})
+        if parsed.detected_source
+        else "UNKNOWN"
+    )
+    set_field(domain_detected=domain_detected)
 
     searcher = HybridSearcher()
     search_results = searcher.search(
@@ -63,14 +76,18 @@ def run_retrieval(query: str, rerank_query: str | None = None) -> RetrievalResul
 
     if not search_results:
         logger.info("⏭️ Zero documents found in Hybrid Search. Short-circuiting.")
+        set_field(is_no_relevant_doc=True, num_docs_after_rerank=0, retrieved_parent_ids=[])
         return RetrievalResult(parent_documents=[], is_empty=True)
 
+    start_stage("parent_assembly")
     fetcher = ParentChildFetcher()
     parent_results = fetcher.fetch_parents(search_results)
+    end_stage()
     t_fetch = time.time()
 
     if not parent_results:
         logger.info("⏭️ Zero parent documents fetched. Short-circuiting.")
+        set_field(is_no_relevant_doc=True, num_docs_after_rerank=0, retrieved_parent_ids=[])
         return RetrievalResult(parent_documents=[], is_empty=True)
 
     # Candidate Limiting: Ambil Top N parent sebelum di-rerank
@@ -92,8 +109,11 @@ def run_retrieval(query: str, rerank_query: str | None = None) -> RetrievalResul
                     f"Search: {t_search - t_parse:.2f}s | "
                     f"Fetch: {t_fetch - t_search:.2f}s | "
                     f"Rerank (Skipped): 0.00s")
+
+        _record_final_retrieval_metrics(final_results, all_scored_candidates=candidate_parents)
         return RetrievalResult(parent_documents=final_results, is_empty=False)
 
+    start_stage("reranking")
     try:
         reranker = CrossEncoderReranker()
         reranked = reranker.rerank(query=rerank_query, documents=candidate_parents)
@@ -121,7 +141,8 @@ def run_retrieval(query: str, rerank_query: str | None = None) -> RetrievalResul
         final_results = candidate_parents[: settings.rerank_top_n]
         reason = "Reranking Failed (Fallback)"
         top_score = final_results[0].get("best_child_score", 0.0) if final_results else 0.0
-        
+    end_stage()
+
     t_rerank = time.time()
     
     summary_log = (
@@ -141,4 +162,56 @@ def run_retrieval(query: str, rerank_query: str | None = None) -> RetrievalResul
                 f"Fetch: {t_fetch - t_search:.2f}s | "
                 f"Rerank: {t_rerank - t_fetch:.2f}s")
 
+    _record_final_retrieval_metrics(final_results, all_scored_candidates=(reranked if reranked else candidate_parents))
     return RetrievalResult(parent_documents=final_results, is_empty=(len(final_results) == 0))
+
+
+def _record_final_retrieval_metrics(
+    final_results: list[dict],
+    all_scored_candidates: list[dict] | None = None,
+) -> None:
+    """Kirim skor cross-encoder & daftar parent_id akhir ke metrics collector.
+    Dipanggil di kedua jalur (reranking penuh maupun adaptive-skip).
+
+    `all_scored_candidates` (G5, Fase 10): SEMUA kandidat yang sempat diberi
+    skor SEBELUM di-threshold — dipakai untuk retrieval_detail supaya admin
+    bisa lihat "kenapa dokumen X tidak lolos" (skornya berapa), bukan cuma
+    yang lolos akhir. Kalau tidak diisi, fallback pakai final_results saja.
+    """
+    accepted_ids = {p.get("parent_id", "") for p in final_results}
+    candidates_for_detail = all_scored_candidates if all_scored_candidates is not None else final_results
+
+    if not final_results:
+        set_field(
+            is_no_relevant_doc=True,
+            num_docs_after_rerank=0,
+            retrieved_parent_ids=[],
+            retrieval_detail=_build_retrieval_detail(candidates_for_detail, accepted_ids),
+        )
+        return
+
+    scores = [p.get("cross_encoder_score", 0.0) for p in final_results]
+    set_field(
+        is_no_relevant_doc=False,
+        num_docs_after_rerank=len(final_results),
+        top_cross_encoder_score=max(scores) if scores else None,
+        avg_cross_encoder_score=(sum(scores) / len(scores)) if scores else None,
+        retrieved_parent_ids=[p.get("parent_id", "") for p in final_results],
+        retrieval_detail=_build_retrieval_detail(candidates_for_detail, accepted_ids),
+    )
+
+
+def _build_retrieval_detail(candidates: list[dict], accepted_ids: set[str]) -> list[dict]:
+    """(G5, Fase 10) Bentuk struktur ringkas untuk kolom JSONB retrieval_detail —
+    dipakai fitur 'detail cross-encoder per pertanyaan' di admin panel.
+    Skor diambil dari cross_encoder_score kalau ada (jalur reranking penuh),
+    fallback ke best_child_score (jalur adaptive-skip, lihat catatan di atas)."""
+    return [
+        {
+            "parent_id": c.get("parent_id", ""),
+            "title": c.get("title") or c.get("section") or "",
+            "score": round(c.get("cross_encoder_score", c.get("best_child_score", 0.0)), 4),
+            "accepted": c.get("parent_id", "") in accepted_ids,
+        }
+        for c in candidates
+    ]

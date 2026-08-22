@@ -43,10 +43,12 @@ class HybridSearcher:
         self._supabase = supabase_client or create_client(
             settings.supabase_url, settings.supabase_service_key
         )
+        from src.monitoring.openai_client import build_instrumented_http_client
         self._embedder = OpenAIEmbeddings(
             model=settings.embedding_model,
             api_key=settings.open_api_key,
             dimensions=EMBEDDING_DIMENSIONS,
+            http_client=build_instrumented_http_client(),
         )
 
     def search(
@@ -82,10 +84,26 @@ class HybridSearcher:
 
         logger.info(f"Hybrid search: '{original_query}' | filters: {filters} | top_k: {k}")
 
+        from src.monitoring.context import start_stage, end_stage
+
+        start_stage("embedding")
         t0 = time.time()
         query_embedding = self._embedder.embed_query(query)
         t_embed = time.time() - t0
+        end_stage()
         logger.info(f"  [Profile] Query Embedding: {t_embed:.2f}s")
+
+        import tiktoken
+        from src.monitoring.pricing import calculate_embedding_cost
+
+        try:
+            _enc = tiktoken.encoding_for_model("text-embedding-3-large")
+        except Exception:
+            _enc = tiktoken.get_encoding("cl100k_base")
+        embed_tokens = len(_enc.encode(query))
+        embed_cost = calculate_embedding_cost(settings.embedding_model, embed_tokens)
+        from src.monitoring.context import set_field
+        set_field(embedding_tokens=embed_tokens, embedding_cost_usd=embed_cost)
 
         rpc_params: dict[str, Any] = {
             "query_embedding": query_embedding,
@@ -98,9 +116,11 @@ class HybridSearcher:
             "filter_source": filters.get("source"),
         }
 
+        start_stage("retrieval")
         t1 = time.time()
         response = self._supabase.rpc("hybrid_search", rpc_params).execute()
         t_rpc = time.time() - t1
+        end_stage()
         logger.info(f"  [Profile] Supabase Hybrid RPC: {t_rpc:.2f}s")
         
         db_results = response.data or []
@@ -162,4 +182,6 @@ class HybridSearcher:
                 f"  Top: {results[0].child_id} | hybrid={results[0].hybrid_score:.4f}"
             )
 
+        from src.monitoring.context import set_field
+        set_field(num_docs_retrieved=len(results))
         return results
