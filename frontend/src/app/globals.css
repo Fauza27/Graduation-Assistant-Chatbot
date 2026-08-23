@@ -32,6 +32,9 @@
   --status-danger-text:#B91C1C;
   --status-danger-dot:#EF4444;
 
+  --chart-purple:#6D28D9; --chart-blue:#3B82F6; --chart-amber:#F59E0B; --chart-coral:#FB7185;
+  --trend-up:#059669; --trend-up-bg:#ECFDF5; --trend-down:#DC2626; --trend-down-bg:#FEF2F2;
+
   --radius-sm:8px;
   --radius-md:12px;
   --radius-lg:16px;

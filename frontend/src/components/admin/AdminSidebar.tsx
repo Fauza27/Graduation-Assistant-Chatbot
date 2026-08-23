@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { Database, LogOut, ChevronUp, X } from 'lucide-react';
+import { Database, LogOut, ChevronUp, X, Activity } from 'lucide-react';
 import { adminLogout, getAdminInfo } from '@/lib/adminAuth';
 
 interface AdminSidebarProps {
@@ -46,7 +46,7 @@ export default function AdminSidebar({ onCloseMobile }: AdminSidebarProps) {
 
       <nav className="sidebar-nav">
         <button
-          className={`nav-item ${pathname?.includes('/admin/dashboard') ? 'active' : ''}`}
+          className={`nav-item ${!pathname?.includes('/admin/dashboard/monitoring') && pathname?.includes('/admin/dashboard') ? 'active' : ''}`}
           type="button"
           onClick={() => {
             router.push('/admin/dashboard');
@@ -55,6 +55,17 @@ export default function AdminSidebar({ onCloseMobile }: AdminSidebarProps) {
         >
           <Database className="icon" />
           <span>Kelola Knowledge Base</span>
+        </button>
+        <button
+          className={`nav-item ${pathname?.includes('/admin/dashboard/monitoring') ? 'active' : ''}`}
+          type="button"
+          onClick={() => {
+            router.push('/admin/dashboard/monitoring');
+            if (onCloseMobile) onCloseMobile();
+          }}
+        >
+          <Activity className="icon" />
+          <span>Monitoring</span>
         </button>
       </nav>
 

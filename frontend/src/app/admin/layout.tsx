@@ -2,7 +2,7 @@
 
 import './admin.css';
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { getAdminToken } from '@/lib/adminAuth';
 import { useAdminStore } from '@/lib/adminStore';
 import AdminSidebar from '@/components/admin/AdminSidebar';
@@ -10,9 +10,15 @@ import MobileKnowledgeShell from '@/components/admin/MobileKnowledgeShell';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { tree, fetchTree } = useAdminStore();
   const [isMobileViewport, setIsMobileViewport] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+
+  // Shell drill-down 3-kolom khusus itu didesain untuk Kelola Knowledge Base.
+  // Rute lain (mis. Monitoring) sudah responsive sendiri lewat CSS masing-masing,
+  // jadi harus tetap render `children` biasa, bukan shell KB.
+  const isKnowledgeBaseRoute = !pathname?.includes('/admin/dashboard/monitoring');
 
   useEffect(() => {
     const token = getAdminToken();
@@ -42,7 +48,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <AdminSidebar onCloseMobile={() => setIsMobileOpen(false)} />
         </aside>
 
-        {isMobileViewport ? (
+        {isMobileViewport && isKnowledgeBaseRoute ? (
           <MobileKnowledgeShell />
         ) : (
           <main className="main-panel" id="mainPanel">
