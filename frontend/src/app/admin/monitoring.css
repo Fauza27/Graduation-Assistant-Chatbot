@@ -1,0 +1,283 @@
+/* ============================================================
+   MONITORING — melengkapi admin.css, tidak menduplikasi apa yang
+   sudah ada (status-badge, empty-state, modal-overlay/card dasar
+   sudah dipakai dari admin.css; file ini isinya elemen yang
+   spesifik untuk dashboard Monitoring & Analitik).
+   ============================================================ */
+
+/* ---- Layout tab & header halaman ---- */
+.mon-page-header {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 14px; margin-bottom: 18px; flex-wrap: wrap;
+}
+.mon-page-header h1 { font-size: 20px; font-weight: 700; color: var(--gray-700); }
+.mon-page-header p { font-size: 13px; color: var(--gray-500); margin-top: 3px; }
+
+.mon-tabs {
+  display: flex; gap: 4px; overflow-x: auto; padding-bottom: 2px;
+  margin-bottom: 20px; border-bottom: 1px solid var(--gray-200);
+}
+.mon-tab-btn {
+  display: flex; align-items: center; gap: 7px; white-space: nowrap;
+  padding: 9px 14px; font-size: 13.5px; font-weight: 600; color: var(--gray-500);
+  border-radius: 10px 10px 0 0; background: none; border: none; cursor: pointer;
+  transition: color .15s ease, background .15s ease;
+}
+.mon-tab-btn svg { width: 15px; height: 15px; }
+.mon-tab-btn:hover { color: var(--gray-700); background: var(--gray-50); }
+.mon-tab-btn.active { color: var(--purple-primary); background: var(--purple-soft); }
+
+/* ---- Status banner ---- */
+.status-banner {
+  display: flex; align-items: flex-start; gap: 12px;
+  border-radius: 14px; padding: 14px 16px; margin-bottom: 18px;
+}
+.status-banner .sb-title { font-size: 14px; font-weight: 700; }
+.status-banner .sb-note { font-size: 12.5px; margin-top: 2px; opacity: .85; }
+.status-banner-ok { background: var(--status-success-bg); color: var(--status-success-text); }
+.status-banner-warn { background: var(--status-warning-bg); color: var(--status-warning-text); }
+.status-banner-crit { background: var(--status-danger-bg); color: var(--status-danger-text); }
+
+/* ---- Stat card grid ---- */
+.astat-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(165px, 1fr));
+  gap: 14px; margin-bottom: 22px;
+}
+.astat-card {
+  display: flex; gap: 12px; align-items: flex-start;
+  background: var(--white); border: 1px solid var(--gray-200); border-radius: 14px;
+  padding: 15px; max-width: 280px;
+}
+.astat-card.clickable { cursor: pointer; transition: border-color .15s ease, box-shadow .15s ease; }
+.astat-card.clickable:hover { border-color: var(--purple-primary); box-shadow: var(--shadow-sm); }
+.astat-icon {
+  width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.astat-purple .astat-icon { background: var(--purple-soft); color: var(--purple-primary); }
+.astat-blue .astat-icon { background: #DBEAFE; color: var(--chart-blue); }
+.astat-amber .astat-icon { background: #FEF3C7; color: var(--chart-amber); }
+.astat-coral .astat-icon { background: #FFE4E6; color: var(--chart-coral); }
+.astat-teal .astat-icon { background: #CCFBF1; color: #0D9488; }
+.astat-indigo .astat-icon { background: #E0E7FF; color: #4F46E5; }
+.astat-emerald .astat-icon { background: #D1FAE5; color: #059669; }
+.astat-gray .astat-icon { background: var(--gray-100); color: var(--gray-500); }
+.astat-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.astat-label { font-size: 12px; color: var(--gray-500); font-weight: 500; }
+.astat-value { font-size: 19px; font-weight: 700; color: var(--gray-700); line-height: 1.25; }
+.astat-note { font-size: 11.5px; color: var(--gray-400); }
+
+/* Severity dinamis — kartu bereaksi ke nilai, bukan cuma warna dekoratif tetap */
+.astat-sev-warn { border-color: var(--status-warning-text); background: var(--status-warning-bg); }
+.astat-sev-warn .astat-icon { background: var(--white); color: var(--status-warning-text); }
+.astat-sev-warn .astat-value { color: var(--status-warning-text); }
+.astat-sev-crit { border-color: var(--status-danger-text); background: var(--status-danger-bg); }
+.astat-sev-crit .astat-icon { background: var(--white); color: var(--status-danger-text); }
+.astat-sev-crit .astat-value { color: var(--status-danger-text); }
+
+/* ---- Panel & grid layout ---- */
+.apanel-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 18px; }
+.apanel {
+  background: var(--white); border: 1px solid var(--gray-200); border-radius: 16px;
+  padding: 18px; display: flex; flex-direction: column;
+}
+.apanel-full { grid-column: 1 / -1; }
+.apanel h3 { font-size: 14.5px; font-weight: 700; color: var(--gray-700); margin-bottom: 3px; }
+.apanel .apanel-desc { font-size: 12px; color: var(--gray-400); margin-bottom: 14px; }
+
+/* ---- HBar list (breakdown pipeline, top documents) ---- */
+.hbar-list { display: flex; flex-direction: column; gap: 12px; }
+.hbar-row { display: flex; flex-direction: column; gap: 5px; }
+.hbar-row.clickable { cursor: pointer; border-radius: 8px; padding: 6px 8px; margin: -6px -8px; transition: background .15s ease; }
+.hbar-row.clickable:hover { background: var(--gray-50); }
+.hbar-row-top { display: flex; align-items: center; justify-content: space-between; font-size: 12.5px; }
+.hb-label { display: flex; align-items: center; gap: 8px; color: var(--gray-600); font-weight: 500; }
+.hb-step-num {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px; border-radius: 50%; background: var(--purple-soft);
+  color: var(--purple-primary); font-size: 10.5px; font-weight: 700; flex-shrink: 0;
+}
+.hb-value { color: var(--gray-700); font-weight: 600; font-variant-numeric: tabular-nums; }
+.hbar-track { height: 8px; background: var(--gray-100); border-radius: 999px; overflow: hidden; }
+.hbar-fill { height: 100%; border-radius: 999px; background: var(--purple-primary); transition: width .3s ease; }
+
+/* ---- Line & bar chart wrapper + tooltip ---- */
+.linechart-wrap { position: relative; width: 100%; }
+.chart-tooltip {
+  position: absolute; transform: translate(-50%, -115%);
+  background: var(--gray-700); color: var(--white); border-radius: 9px;
+  padding: 8px 11px; font-size: 11.5px; line-height: 1.5; white-space: nowrap;
+  pointer-events: none; z-index: 5; box-shadow: var(--shadow-md);
+  opacity: 0; transition: opacity .1s ease;
+}
+.chart-tooltip.show { opacity: 1; }
+.chart-tooltip .tt-date { font-weight: 700; margin-bottom: 2px; }
+.chart-tooltip .tt-val strong { font-variant-numeric: tabular-nums; }
+
+/* ---- Donut chart ---- */
+.donut-wrap { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; justify-content: center; }
+.donut-svg-box { position: relative; flex-shrink: 0; }
+.donut-center {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; text-align: center; pointer-events: none;
+}
+.donut-center b { font-size: 17px; font-weight: 700; color: var(--gray-700); }
+.donut-center span { font-size: 10px; color: var(--gray-400); line-height: 1.3; max-width: 80px; }
+.donut-legend { display: flex; flex-direction: column; gap: 8px; min-width: 140px; }
+.donut-legend-item { display: flex; align-items: center; gap: 7px; font-size: 12.5px; }
+.donut-legend-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.dl-label { color: var(--gray-600); flex: 1; }
+.dl-pct { color: var(--gray-700); font-weight: 700; }
+.dl-val { color: var(--gray-400); font-size: 11px; }
+
+/* ---- Table (histori, error log, dsb) ---- */
+.atable-scroll { overflow-x: auto; margin: 0 -4px; }
+.atable { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.atable th {
+  text-align: left; padding: 8px 10px; font-size: 11px; font-weight: 600;
+  color: var(--gray-400); text-transform: uppercase; letter-spacing: .3px;
+  border-bottom: 1px solid var(--gray-200); white-space: nowrap;
+}
+.atable td { padding: 10px; border-bottom: 1px solid var(--gray-100); vertical-align: top; }
+.atable tr:last-child td { border-bottom: none; }
+.atable-row-clickable { cursor: pointer; transition: background .12s ease; }
+.atable-row-clickable:hover { background: var(--gray-50); }
+.atable-mono { font-variant-numeric: tabular-nums; color: var(--gray-500); white-space: nowrap; }
+.atable-user { font-weight: 600; color: var(--gray-700); }
+.atable-sub { font-size: 11px; color: var(--gray-400); }
+.atable-question {
+  max-width: 260px; overflow: hidden; text-overflow: ellipsis;
+  white-space: nowrap; color: var(--gray-600);
+}
+.atable-empty { text-align: center; color: var(--gray-400); padding: 30px !important; }
+.atable-compact td, .atable-compact th { padding: 7px 10px; }
+.status-neutral { background: var(--gray-100); color: var(--gray-500); }
+
+.atable-more-link {
+  display: inline-flex; align-items: center; gap: 5px; margin-top: 12px;
+  font-size: 12.5px; font-weight: 600; color: var(--purple-primary);
+  background: none; border: none; cursor: pointer; align-self: flex-start;
+}
+.atable-more-link:hover { text-decoration: underline; }
+
+/* ---- Modal drill-down: ukuran besar + toolbar + pagination ---- */
+.modal-card-lg { max-width: 760px; padding: 0; display: flex; flex-direction: column; max-height: 85vh; }
+.modal-header {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  padding: 20px 22px 14px; border-bottom: 1px solid var(--gray-100); flex-shrink: 0;
+}
+.modal-header h3 { font-size: 16px; font-weight: 700; color: var(--gray-700); }
+.modal-subtitle { font-size: 12px; color: var(--gray-400); margin-top: 3px; }
+.modal-close {
+  width: 30px; height: 30px; border-radius: 50%; border: none; background: var(--gray-100);
+  color: var(--gray-500); display: flex; align-items: center; justify-content: center;
+  cursor: pointer; flex-shrink: 0; transition: background .15s ease;
+}
+.modal-close:hover { background: var(--gray-200); }
+.modal-toolbar {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 14px 22px; flex-shrink: 0;
+}
+.search-input-wrap {
+  display: flex; align-items: center; gap: 8px; flex: 1; max-width: 340px;
+  background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: 10px; padding: 8px 12px;
+  color: var(--gray-400);
+}
+.search-input-wrap input {
+  border: none; background: none; outline: none; font-size: 13px; color: var(--gray-700); flex: 1;
+}
+.modal-count { font-size: 12px; color: var(--gray-400); white-space: nowrap; }
+.modal-body-scroll { overflow-y: auto; padding: 0 22px 22px; flex: 1; }
+.modal-card-lg .atable-scroll { padding: 0 22px; }
+.modal-pagination {
+  display: flex; align-items: center; justify-content: center; gap: 14px;
+  padding: 14px; border-top: 1px solid var(--gray-100); flex-shrink: 0; font-size: 12.5px; color: var(--gray-500);
+}
+.modal-pagination button {
+  width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--gray-200); background: var(--white);
+  display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--gray-600);
+}
+.modal-pagination button:disabled { opacity: .4; cursor: not-allowed; }
+.modal-pagination button:not(:disabled):hover { background: var(--gray-50); }
+.modal-loading, .modal-error { padding: 40px 20px; text-align: center; color: var(--gray-400); font-size: 13px; }
+.modal-error { color: var(--status-danger-text); }
+
+/* ---- Query detail modal specifics ---- */
+.detail-question-block {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+  background: var(--gray-50); border-radius: 12px; padding: 14px 16px; margin-bottom: 16px;
+}
+.detail-question-text { font-size: 13.5px; color: var(--gray-700); font-style: italic; line-height: 1.5; }
+.detail-info-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px; margin-bottom: 18px;
+}
+.info-field { display: flex; flex-direction: column; gap: 3px; }
+.info-label { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--gray-400); font-weight: 600; text-transform: uppercase; letter-spacing: .3px; }
+.info-value { font-size: 13px; color: var(--gray-700); font-weight: 600; word-break: break-word; }
+.detail-error-box {
+  background: var(--status-danger-bg); border-radius: 12px; padding: 14px 16px; margin-bottom: 18px;
+}
+.deb-title { font-size: 13px; font-weight: 700; color: var(--status-danger-text); }
+.deb-detail { font-size: 12.5px; color: var(--status-danger-text); margin-top: 4px; opacity: .9; line-height: 1.5; }
+.deb-retry { font-size: 11.5px; color: var(--status-danger-text); margin-top: 6px; opacity: .75; }
+.detail-section { margin-bottom: 20px; }
+.detail-section h4 {
+  display: flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 700;
+  color: var(--gray-600); margin-bottom: 12px;
+}
+
+/* ---- Health tab: gauge & component list ---- */
+.gauge-wrap { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.gauge-value { font-size: 24px; font-weight: 700; color: var(--gray-700); }
+.gauge-track { width: 100%; height: 10px; background: var(--gray-100); border-radius: 999px; overflow: hidden; }
+.gauge-fill { height: 100%; border-radius: 999px; transition: width .3s ease; }
+.health-comp-list { display: flex; flex-direction: column; gap: 10px; }
+.health-comp-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 11px 13px; border-radius: 10px; background: var(--gray-50);
+}
+.health-comp-left { display: flex; align-items: center; gap: 10px; }
+.health-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.health-dot.ok { background: var(--status-success-dot); }
+.health-dot.warn { background: var(--status-warning-dot); }
+.health-dot.down { background: var(--status-danger-dot); }
+.health-comp-name { font-size: 13px; font-weight: 600; color: var(--gray-700); }
+.health-comp-note { font-size: 11.5px; color: var(--gray-400); }
+
+/* ---- Toolbar: date range / refresh ---- */
+.mon-toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.mon-days-select {
+  border: 1px solid var(--gray-200); border-radius: 10px; padding: 8px 12px;
+  font-size: 12.5px; font-weight: 600; color: var(--gray-600); background: var(--white); cursor: pointer;
+}
+.mon-refresh-btn {
+  display: flex; align-items: center; gap: 6px; border: 1px solid var(--gray-200); border-radius: 10px;
+  padding: 8px 14px; font-size: 12.5px; font-weight: 600; color: var(--gray-600); background: var(--white);
+  cursor: pointer; transition: background .15s ease;
+}
+.mon-refresh-btn:hover { background: var(--gray-50); }
+.mon-refresh-btn svg { width: 14px; height: 14px; }
+.mon-refresh-btn.loading svg { animation: mon-spin .7s linear infinite; }
+@keyframes mon-spin { to { transform: rotate(360deg); } }
+
+/* ---- Skeleton loading ---- */
+.mon-skel { background: linear-gradient(90deg, var(--gray-100) 25%, var(--gray-50) 37%, var(--gray-100) 63%); background-size: 400% 100%; animation: mon-skel 1.4s ease infinite; border-radius: 8px; }
+@keyframes mon-skel { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
+.mon-skel-card { height: 78px; border-radius: 14px; }
+
+/* ---- Responsive ---- */
+@media (max-width: 900px) {
+  .apanel-row { grid-template-columns: 1fr; }
+  .astat-grid { grid-template-columns: 1fr 1fr; }
+  .astat-card { max-width: none; }
+  .modal-card-lg { max-width: 96vw; }
+}
+@media (max-width: 560px) {
+  .astat-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .astat-card { padding: 12px; }
+  .astat-value { font-size: 16px; }
+  .donut-wrap { flex-direction: column; }
+  .modal-toolbar { flex-direction: column; align-items: stretch; }
+  .search-input-wrap { max-width: none; }
+}
