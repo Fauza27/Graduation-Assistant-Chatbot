@@ -56,7 +56,12 @@ DAFTAR VIEWS DAN FUNGSINYA:
 9. v_cost_daily (D2, D3)
    - Granularitas: per HARI
    - Metrics: total_llm_cost_usd, total_embedding_cost_usd, total_cost_usd,
-             total_requests, cost_per_request_usd
+             total_requests, cost_per_request_usd,
+             total_input_tokens (SUM input_tokens),
+             total_output_tokens (SUM output_tokens)
+   - CATATAN: total_input_tokens dan total_output_tokens ditambahkan agar
+     dashboard Biaya & Token (CostTab) bisa menampilkan tren token usage
+     harian tanpa perlu endpoint terpisah.
 
 10. v_cost_per_user (D3)
     - Digroup per mahasiswa_id

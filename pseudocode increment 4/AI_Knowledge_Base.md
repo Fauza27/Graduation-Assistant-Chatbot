@@ -1184,6 +1184,9 @@ Backend mengimplementasikan arsitektur modular dengan clear separation of concer
 - `GET /api/admin/metrics/usage/followup-rate` - Follow-up/repeat question rate
 - `GET /api/admin/metrics/admin-activity` - Aktivitas admin (chunk edit + re-embed)
 - `GET /api/admin/metrics/system/overview` - Dashboard overview dengan key metrics
+- `GET /api/admin/metrics/system` - F1: active session count vs MAX_ACTIVE_SESSIONS (utilization %)
+- `GET /api/admin/metrics/query-log` - Investigasi: daftar mentah request untuk drill-down (filter days + limit)
+- `GET /api/admin/metrics/request/{request_id}` - Investigasi: detail lengkap satu request (semua kolom + retrieval_detail)
 
 **Health APIs (tanpa prefix /api):**
 - `GET /health/` - Basic health check dengan uptime
@@ -3014,7 +3017,7 @@ Setiap response HTTP 429/5xx menambah `openai_retry_count` di collector aktif.
 | `v_retrieval_quality_daily` | C1, C3, C4 | No-doc rate, avg score |
 | `v_top_retrieved_documents` | C2 | Dokumen paling sering diambil |
 | `v_domain_stats_daily` | C5 | Query per domain |
-| `v_cost_daily` | D2, D3 | Cost harian |
+| `v_cost_daily` | D2, D3 | Cost harian + `total_input_tokens` & `total_output_tokens` (ditambah increment 4) |
 | `v_cost_per_user` | D3 | Cost per mahasiswa |
 | `v_active_users_daily/monthly` | E1, E3 | Active users |
 | `v_new_vs_returning_daily` | E2 | Sesi baru vs lanjutan |
@@ -3039,6 +3042,22 @@ embedding:
   text-embedding-3-large:
     input_per_1m: 0.13
 ```
+
+### Endpoint Investigasi & Drill-down (NEW — Increment 4)
+
+Selain endpoint agregasi berbasis view, ditambahkan tiga endpoint baru untuk keperluan investigasi lebih dalam dari dashboard frontend:
+
+| Endpoint | Fungsi |
+|----------|--------|
+| `GET /api/admin/metrics/system` | F1: active session count vs `MAX_ACTIVE_SESSIONS`, utilization % |
+| `GET /api/admin/metrics/query-log` | Daftar mentah baris `request_metrics` (filter `days` + `limit`). Dipakai frontend untuk semua variasi drill-down: klik tahap pipeline, klik error, klik domain, dsb. |
+| `GET /api/admin/metrics/request/{request_id}` | Detail lengkap satu request — semua kolom termasuk `retrieval_detail` (skor cross-encoder per dokumen kandidat). |
+
+**Desain keputusan**: satu endpoint list mentah (`/query-log`) dipakai untuk semua variasi filter/urut/paginasi di sisi frontend, alih-alih banyak endpoint spesifik. Ini mengikuti pola "query log terpadu" yang diimplementasikan di `monitoringApi.ts` → `getQueryLog()`.
+
+### Navigasi Sidebar Admin (NEW — Increment 4)
+
+Menu **Monitoring** ditambahkan di `AdminSidebar.tsx` sebagai item navigasi kedua setelah "Kelola Knowledge Base". Rute `/admin/dashboard/monitoring` dikecualikan dari shell 3-kolom Knowledge Base di `layout.tsx` agar halaman monitoring render layout sendiri.
 
 ### Migration Steps
 

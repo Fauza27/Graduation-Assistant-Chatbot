@@ -94,23 +94,64 @@ dari SQL views. Semua endpoint butuh autentikasi admin (Bearer token).
    - Kembalikan: {"data": {period_days, total_requests, success_rate_pct,
                            avg_latency_ms, total_cost_usd, active_users}}
 
+   GET /system
+   - Tanpa query parameter
+   - F1: active session count vs MAX_ACTIVE_SESSIONS
+   - Import get_session_stats() dari ai_services untuk membaca sesi aktif di
+     memory/database session store saat ini.
+   - Kembalikan:
+     {
+       "session_stats": <hasil get_session_stats()>,
+       "max_active_sessions": settings.MAX_ACTIVE_SESSIONS,
+       "utilization_pct": round(100.0 * active / max, 2) atau null
+     }
+
+   GET /query-log
+   - Query: days (default 7, max 90), limit (default 500, max 2000)
+   - Investigasi / drill-down: daftar mentah baris request_metrics untuk
+     semua variasi filter/sort/paginasi di sisi frontend.
+   - SELECT kolom-kolom berikut dari request_metrics (bukan dari view):
+       request_id, created_at, session_id, mahasiswa_id, username, channel,
+       question, domain_detected, status, error_source, error_type, total_ms,
+       stage_validation_ms, stage_session_load_ms, stage_reformulation_ms,
+       stage_embedding_ms, stage_retrieval_ms, stage_reranking_ms,
+       stage_parent_assembly_ms, stage_generation_ms, stage_db_save_ms,
+       num_docs_retrieved, num_docs_after_rerank, top_cross_encoder_score,
+       avg_cross_encoder_score, is_no_relevant_doc
+   - Filter: created_at >= since (dihitung dari days)
+   - Order: created_at DESC
+   - Limit: sesuai parameter limit
+   - Kembalikan: {"data": [...]}
+
+   GET /request/{request_id}
+   - Path parameter: request_id (UUID string)
+   - Investigasi: detail lengkap satu request — semua kolom request_metrics
+     termasuk input_tokens, output_tokens, llm_cost_usd, embedding_cost_usd,
+     openai_retry_count, retrieved_parent_ids, retrieval_detail, dsb.
+   - SELECT * FROM request_metrics WHERE request_id = {request_id} LIMIT 1
+   - Jika tidak ditemukan: raise HTTPException(404, "request_id tidak ditemukan")
+   - Kembalikan: {"data": <row dict lengkap>}
+
 3. TRACEABILITY KE REQUIREMENTS:
-   | Endpoint              | Requirement |
-   |-----------------------|-------------|
-   | /latency              | A1, A3      |
-   | /stage-breakdown      | A2          |
-   | /errors               | B1, B4      |
-   | /errors/breakdown     | B2          |
-   | /openai-retry         | B3          |
-   | /retrieval-quality    | C1, C3, C4  |
-   | /top-documents        | C2          |
-   | /domain-stats         | C5          |
-   | /cost                 | D2, D3      |
-   | /cost/per-user        | D3          |
-   | /usage/active-users   | E1, E3      |
-   | /usage/new-vs-returning| E2         |
-   | /usage/turns-per-session| E2        |
-   | /usage/followup-rate  | E5          |
-   | /admin-activity       | F3          |
-   | /system/overview      | Dashboard   |
+   | Endpoint              | Requirement            |
+   |-----------------------|------------------------|
+   | /latency              | A1, A3                 |
+   | /stage-breakdown      | A2                     |
+   | /errors               | B1, B4                 |
+   | /errors/breakdown     | B2                     |
+   | /openai-retry         | B3                     |
+   | /retrieval-quality    | C1, C3, C4             |
+   | /top-documents        | C2                     |
+   | /domain-stats         | C5                     |
+   | /cost                 | D2, D3                 |
+   | /cost/per-user        | D3                     |
+   | /usage/active-users   | E1, E3                 |
+   | /usage/new-vs-returning| E2                    |
+   | /usage/turns-per-session| E2                   |
+   | /usage/followup-rate  | E5                     |
+   | /admin-activity       | F3                     |
+   | /system               | F1 (session capacity)  |
+   | /system/overview      | Dashboard              |
+   | /query-log            | Investigasi drill-down |
+   | /request/{id}         | Investigasi drill-down |
 ```
