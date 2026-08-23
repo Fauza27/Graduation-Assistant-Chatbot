@@ -117,7 +117,9 @@ SELECT
     round(sum(embedding_cost_usd), 6)                                    AS total_embedding_cost_usd,
     round(sum(coalesce(llm_cost_usd, 0) + coalesce(embedding_cost_usd, 0)), 6) AS total_cost_usd,
     count(*)                                                              AS total_requests,
-    round(sum(coalesce(llm_cost_usd, 0) + coalesce(embedding_cost_usd, 0)) / NULLIF(count(*), 0), 6) AS cost_per_request_usd
+    round(sum(coalesce(llm_cost_usd, 0) + coalesce(embedding_cost_usd, 0)) / NULLIF(count(*), 0), 6) AS cost_per_request_usd,
+    sum(input_tokens)                                                     AS total_input_tokens,
+    sum(output_tokens)                                                    AS total_output_tokens
 FROM request_metrics
 WHERE status = 'success'
 GROUP BY 1

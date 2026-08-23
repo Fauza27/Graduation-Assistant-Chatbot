@@ -9,7 +9,7 @@ from datetime import datetime, timedelta, timezone
 from functools import lru_cache
 from typing import Any
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from supabase import Client, create_client
 
 from config.settings import get_settings
@@ -116,6 +116,21 @@ async def get_followup_rate(days: int = Query(default=30, ge=1, le=180), admin: 
     return {"data": _select_view("v_followup_rate_daily", days)}
 
 
+@router.get("/system", summary="F1: active session count vs MAX_ACTIVE_SESSIONS")
+async def get_system_health(admin: dict = Depends(get_current_admin)):
+    from src.services.ai_services import get_session_stats
+
+    settings = get_settings()
+    stats = get_session_stats()
+    active = stats.get("active_sessions") or stats.get("total_sessions") or 0
+    max_sessions = settings.MAX_ACTIVE_SESSIONS
+    return {
+        "session_stats": stats,
+        "max_active_sessions": max_sessions,
+        "utilization_pct": round(100.0 * active / max_sessions, 2) if max_sessions else None,
+    }
+
+
 @router.get("/admin-activity", summary="F3: aktivitas admin (chunk edit + re-embed)")
 async def get_admin_activity(days: int = Query(default=30, ge=1, le=180), admin: dict = Depends(get_current_admin)):
     return {"data": _select_view("v_admin_activity_daily", days)}
@@ -174,3 +189,55 @@ async def get_system_overview(days: int = Query(default=7, ge=1, le=30), admin: 
         }
     except Exception as e:
         return {"error": f"Failed to fetch overview: {str(e)}", "data": None}
+
+
+# ============================================================
+# Investigasi & drill-down — dipakai oleh dashboard Monitoring
+# untuk fitur "klik lebih dalam": ranking latency per tahap,
+# detail 1 request, histori lengkap, list error dengan user,
+# list pertanyaan per domain/no-relevant-doc, detail cross-encoder.
+#
+# Desain: SATU endpoint list mentah (`/query-log`) dipakai untuk semua
+# variasi filter/urut/paginasi di sisi frontend (mengikuti pola query log
+# terpadu di mockup), plus SATU endpoint detail (`/request/{id}`) yang juga
+# menyertakan `retrieval_detail` (skor cross-encoder per dokumen kandidat).
+# ============================================================
+
+_QUERY_LOG_FIELDS = (
+    "request_id,created_at,session_id,mahasiswa_id,username,channel,question,"
+    "domain_detected,status,error_source,error_type,total_ms,"
+    "stage_validation_ms,stage_session_load_ms,stage_reformulation_ms,"
+    "stage_embedding_ms,stage_retrieval_ms,stage_reranking_ms,"
+    "stage_parent_assembly_ms,stage_generation_ms,stage_db_save_ms,"
+    "num_docs_retrieved,num_docs_after_rerank,top_cross_encoder_score,"
+    "avg_cross_encoder_score,is_no_relevant_doc"
+)
+
+
+@router.get("/query-log", summary="Investigasi: daftar mentah request untuk drill-down (klik tahap/error/domain/dsb)")
+async def get_query_log(
+    days: int = Query(default=7, ge=1, le=90),
+    limit: int = Query(default=500, ge=1, le=2000),
+    admin: dict = Depends(get_current_admin),
+):
+    since = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+    client = _get_supabase_client()
+    response = (
+        client.table("request_metrics")
+        .select(_QUERY_LOG_FIELDS)
+        .gte("created_at", since)
+        .order("created_at", desc=True)
+        .limit(limit)
+        .execute()
+    )
+    return {"data": response.data or []}
+
+
+@router.get("/request/{request_id}", summary="Investigasi: detail lengkap satu request (semua tahap, token, cost, retrieval_detail)")
+async def get_request_detail(request_id: str, admin: dict = Depends(get_current_admin)):
+    client = _get_supabase_client()
+    response = client.table("request_metrics").select("*").eq("request_id", request_id).limit(1).execute()
+    rows = response.data or []
+    if not rows:
+        raise HTTPException(status_code=404, detail="request_id tidak ditemukan")
+    return {"data": rows[0]}
