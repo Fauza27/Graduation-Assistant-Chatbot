@@ -27,7 +27,15 @@ def verify_google_id_token(token_string: str) -> Dict[str, Any]:
             settings.GOOGLE_CLIENT_ID
         )
 
+        # Verify email is confirmed by Google (security best practice)
+        email_verified = idinfo.get("email_verified", False)
+        if not email_verified:
+            raise ValueError(
+                "Email not verified by Google. "
+                "User must verify their email address before using the system."
+            )
+
         return idinfo
     except ValueError as e:
-        # Invalid token
+        # Invalid token or email verification failed
         raise ValueError(f"Google token invalid: {e}")

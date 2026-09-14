@@ -1,11 +1,17 @@
 from typing import List, Optional
 from datetime import datetime
-from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
-from pydantic import BaseModel, Field
+from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks, Request
+from pydantic import BaseModel, Field, field_validator
 from supabase import Client
 
 from src.admin.auth import get_current_admin, authenticate_admin, issue_admin_token, ResourceNotFoundError
 from src.admin import chunk_editor
+from src.admin.chunk_editor import ChunkConflictError
+from src.services.admin_quota_service import (
+    check_admin_login_allowed, 
+    record_admin_login_attempt,
+    get_admin_rate_limiter_stats
+)
 from config.settings import get_settings
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
@@ -20,9 +26,41 @@ class AdminLoginResponse(BaseModel):
     admin: dict
 
 class ChunkSaveRequest(BaseModel):
-    title: Optional[str] = None
-    pages: Optional[str] = None  # Frontend sends as string e.g. "12-13"; backend converts to ["12-13"]
-    content: Optional[str] = None
+    title: Optional[str] = Field(None, max_length=500, description="Judul chunk (maksimal 500 karakter)")
+    pages: Optional[str] = Field(None, max_length=200, description="Halaman dalam format string, contoh: '1,2,3' atau '12-13'")
+    content: Optional[str] = Field(None, max_length=50000, description="Konten chunk (maksimal 50000 karakter untuk kompatibilitas embedding model)")
+
+    @field_validator("title")
+    @classmethod
+    def validate_title(cls, v: str) -> str:
+        if v is not None and len(v.strip()) == 0:
+            raise ValueError("Title tidak boleh kosong jika diisi")
+        return v.strip() if v else v
+
+    @field_validator("pages")
+    @classmethod
+    def validate_pages(cls, v: str) -> str:
+        if v is not None and len(v.strip()) == 0:
+            raise ValueError("Pages tidak boleh kosong jika diisi")
+        return v.strip() if v else v
+
+    @field_validator("content")
+    @classmethod
+    def validate_content(cls, v: str) -> str:
+        if v is not None:
+            if len(v.strip()) == 0:
+                raise ValueError("Content tidak boleh kosong jika diisi")
+            
+            # Check token count estimate (rough approximation: 1 token ≈ 4 characters)
+            estimated_tokens = len(v) / 4
+            if estimated_tokens > 8000:  # Conservative limit for most embedding models
+                raise ValueError(
+                    f"Content terlalu panjang (~{int(estimated_tokens)} tokens estimasi). "
+                    "Maksimal ~8000 tokens untuk kompatibilitas dengan embedding model. "
+                    "Pertimbangkan untuk memecah content menjadi beberapa chunk."
+                )
+        
+        return v.strip() if v else v
 
 class ChunkSaveResponse(BaseModel):
     child_id: str
@@ -72,9 +110,25 @@ def get_supabase() -> Client:
 
 # Endpoints
 @router.post("/login", response_model=AdminLoginResponse)
-def login_admin(req: AdminLoginRequest, supabase: Client = Depends(get_supabase)):
+def login_admin(req: AdminLoginRequest, request: Request, supabase: Client = Depends(get_supabase)):
+    # Check rate limiting
+    allowed, reason = check_admin_login_allowed(req.username, request)
+    if not allowed:
+        # Record the blocked attempt
+        record_admin_login_attempt(req.username, request, success=False)
+        raise HTTPException(
+            status_code=429, 
+            detail=f"Rate limit exceeded: {reason}"
+        )
+    
+    # Attempt authentication
     admin = authenticate_admin(req.username, req.password, supabase)
-    if not admin:
+    
+    # Record attempt result
+    success = admin is not None
+    record_admin_login_attempt(req.username, request, success=success)
+    
+    if not success:
         raise HTTPException(status_code=401, detail="Invalid username or password")
         
     token = issue_admin_token(admin)
@@ -105,6 +159,12 @@ def save_chunk(child_id: str, req: ChunkSaveRequest, admin: dict = Depends(get_c
     try:
         result = chunk_editor.save_chunk(child_id, admin["sub"], supabase, req.title, req.pages, req.content)
         return result
+    except ChunkConflictError as ce:
+        # Race condition errors - chunk is being processed or concurrent access
+        raise HTTPException(status_code=409, detail=str(ce))
+    except ValueError as ve:
+        # Input validation errors - bad request
+        raise HTTPException(status_code=400, detail=str(ve))
     except ResourceNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
@@ -112,17 +172,13 @@ def save_chunk(child_id: str, req: ChunkSaveRequest, admin: dict = Depends(get_c
 def trigger_reembed_chunk(child_id: str, background_tasks: BackgroundTasks, admin: dict = Depends(get_current_admin), supabase: Client = Depends(get_supabase)):
     try:
         result = chunk_editor.trigger_reembed(child_id, admin["sub"], supabase)
-        settings = get_settings()
         
         background_tasks.add_task(
             chunk_editor.process_chunk_reembed,
             result["log_id"],
             child_id,
-            result["parent_id"],
-            result["old_content"],
             result["new_content"],
             supabase,
-            settings
         )
         
         return ReembedTriggerResponse(
@@ -131,6 +187,9 @@ def trigger_reembed_chunk(child_id: str, background_tasks: BackgroundTasks, admi
             status="processing",
             message="Proses re-embed berjalan. Cek progres via GET /chunks/{child_id}/edit-status."
         )
+    except ChunkConflictError as ce:
+        # Handle idempotency errors and other concurrent access conflicts
+        raise HTTPException(status_code=409, detail=str(ce))
     except ResourceNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
@@ -144,6 +203,8 @@ def delete_chunk_endpoint(child_id: str, admin: dict = Depends(get_current_admin
             msg += " Parent chunk ini ikut terhapus otomatis karena sudah tidak punya child lagi."
             
         return DeleteResponse(parent_deleted=parent_deleted, message=msg)
+    except ChunkConflictError as exc:
+        raise HTTPException(status_code=409, detail=str(exc))
     except ResourceNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
@@ -154,3 +215,11 @@ def get_chunk_edit_status(child_id: str, admin: dict = Depends(get_current_admin
         raise HTTPException(status_code=404, detail="No edit history found for this chunk")
         
     return status_dict
+
+@router.get("/rate-limiter-stats")
+def get_rate_limiter_stats(admin: dict = Depends(get_current_admin)):
+    """Get admin rate limiter statistics (admin-only endpoint for monitoring)."""
+    return {
+        "rate_limiter": get_admin_rate_limiter_stats(),
+        "message": "Current admin authentication rate limiter status"
+    }

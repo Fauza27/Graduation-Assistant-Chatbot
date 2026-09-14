@@ -1,29 +1,41 @@
 from contextlib import asynccontextmanager
 import hmac
-import hashlib
-
+ 
 from loguru import logger
-
-from slowapi import Limiter
+ 
+from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
-
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
+ 
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from slowapi import _rate_limit_exceeded_handler
-from slowapi.errors import RateLimitExceeded
-from slowapi.middleware import SlowAPIMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from telegram import Update
-
+ 
 from config.settings import get_settings
 from src.bot.application import create_bot, post_init
+from src.services.session_strategy import SessionAccessError
 from src.api import ai
 from src.api import health as health_router
 from src.api import auth
 from src.api import sessions
 from src.api import admin
 from src.api import admin_metrics
+
+API_PREFIX = "/api"
+DEFAULT_RATE_LIMIT = "100/minute"
+ 
+ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:3001",
+]
+# More restrictive regex - should be customized for actual project preview URLs
+# TODO: Replace with actual project-specific preview URL pattern
+ALLOWED_ORIGIN_REGEX = r"https://rag-chatbot-.*\.vercel\.app"  # Example: project-specific prefix
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     """Add security headers to responses"""
@@ -44,36 +56,10 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         
         return response
 
-
-def verify_telegram_webhook_secure(request_body: bytes, signature: str, secret: str) -> bool:
-    """Verify Telegram webhook signature using secure HMAC comparison"""
-    if not secret:
-        logger.warning("Telegram webhook secret not configured")
-        return True  # Allow in development
-    
-    if not signature:
-        return False
-    
-    # Remove 'sha256=' prefix if present
-    if signature.startswith('sha256='):
-        signature = signature[7:]
-    
-    # Calculate expected signature
-    expected_signature = hmac.new(
-        secret.encode(),
-        request_body,
-        hashlib.sha256
-    ).hexdigest()
-    
-    # Secure constant-time comparison
-    return hmac.compare_digest(signature, expected_signature)
-
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     settings = get_settings()
 
-    # Pre-warm AI models in the background (or synchronously during startup)
     from src.services.ai_services import preload_models
     preload_models()
 
@@ -103,87 +89,105 @@ async def lifespan(app: FastAPI):
             logger.exception("Error shutting down Telegram bot")
 
 def create_app() -> FastAPI:
+    """Buat dan konfigurasikan instance FastAPI."""
     settings = get_settings()
-
+ 
     app = FastAPI(
         title=settings.APP_NAME,
         version=settings.VERSION,
-        description="chatbot assistan yang mampu menjawab pertanyaan terkai kkp/pi",
+        description="Chatbot asisten yang mampu menjawab pertanyaan terkait KKP/PI/Skripsi dan non skripsi",
         docs_url="/docs" if settings.ENVIRONMENT != "production" else None,
         redoc_url="/redoc" if settings.ENVIRONMENT != "production" else None,
         lifespan=lifespan,
     )
-
-    limiter = Limiter(key_func=get_remote_address, default_limits=["100/minute"])
-    
-    app.state.limiter = limiter
-
-    _register_middleware(app, settings)
+ 
+    app.state.limiter = Limiter(key_func=get_remote_address, default_limits=[DEFAULT_RATE_LIMIT])
+ 
+    _register_middleware(app)
     _register_routers(app)
-
+ 
     return app
 
-def _register_middleware(app: FastAPI, settings):
-    # Add security headers
+def _register_middleware(app: FastAPI) -> None:
+    """Daftarkan middleware: security headers, rate limiting, dan CORS."""
     app.add_middleware(SecurityHeadersMiddleware)
-    
-    # Add rate limiting
+
+    app.add_exception_handler(SessionAccessError, _session_access_error_handler)
     app.add_middleware(SlowAPIMiddleware)
-    
-    # Add CORS
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+ 
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["http://localhost:3000", "http://localhost:3001", "http://127.0.0.1:3000", "http://127.0.0.1:3001"],
-        allow_origin_regex=r"https://.*\.vercel\.app",
+        allow_origins=ALLOWED_ORIGINS,
+        allow_origin_regex=ALLOWED_ORIGIN_REGEX,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
     )
 
-def _register_routers(app: FastAPI):
-    API_PREFIX = "/api"
-
+def _register_routers(app: FastAPI) -> None:
+    """Daftarkan semua router API beserta endpoint webhook Telegram dan root."""
     app.include_router(ai.router, prefix=API_PREFIX)
     app.include_router(auth.router, prefix=API_PREFIX)
     app.include_router(sessions.router, prefix=API_PREFIX)
     app.include_router(admin.router, prefix=API_PREFIX)
     app.include_router(admin_metrics.router, prefix=API_PREFIX)
     app.include_router(health_router.router)
-
-
-    @app.post(
+ 
+    app.add_api_route(
         "/api/telegram/webhook",
+        _telegram_webhook,
+        methods=["POST"],
         tags=["Telegram"],
         summary="Telegram webhook receiver",
         include_in_schema=False,
     )
-    async def telegram_webhook(request: Request):
-        settings = get_settings()
+    app.add_api_route("/", _root, methods=["GET"])
+ 
+ 
+async def _telegram_webhook(request: Request):
+    """Terima update dari Telegram; verifikasi secret token sebelum diproses."""
+    settings = get_settings()
+ 
+    # Fail-closed: Require secret token to be configured
+    if not settings.TELEGRAM_WEBHOOK_SECRET:
+        logger.critical("TELEGRAM_WEBHOOK_SECRET not configured - rejecting all webhook requests")
+        raise HTTPException(status_code=503, detail="Webhook secret not configured")
+    
+    incoming_token = request.headers.get("X-Telegram-Bot-Api-Secret-Token", "")
+    if not hmac.compare_digest(incoming_token, settings.TELEGRAM_WEBHOOK_SECRET):
+        raise HTTPException(status_code=403, detail="Invalid secret token")
+ 
+    if not hasattr(request.app.state, "bot_app"):
+        raise HTTPException(status_code=503, detail="Bot not initialized")
+ 
+    data = await request.json()
+    bot_app = request.app.state.bot_app
+    update = Update.de_json(data=data, bot=bot_app.bot)
+    await bot_app.process_update(update)
+ 
+    return JSONResponse(content={"ok": True})
+ 
+ 
+async def _root():
+    """Endpoint root sederhana untuk info aplikasi."""
+    settings = get_settings()
+    return {
+        "message": f"Welcome to {settings.APP_NAME}",
+        "version": settings.VERSION,
+        "docs": "/docs",
+    }
 
-        # Secure webhook validation using HMAC
-        if settings.TELEGRAM_WEBHOOK_SECRET:
-            incoming_token = request.headers.get("X-Telegram-Bot-Api-Secret-Token", "")
-            
-            # Use secure constant-time comparison instead of != 
-            if not hmac.compare_digest(incoming_token, settings.TELEGRAM_WEBHOOK_SECRET):
-                raise HTTPException(status_code=403, detail="Invalid secret token")
 
-        if not hasattr(request.app.state, "bot_app"):
-            raise HTTPException(status_code=503, detail="Bot not initialized")
-
-        data = await request.json()
-        bot_app = request.app.state.bot_app
-        update = Update.de_json(data=data, bot=bot_app.bot)
-        await bot_app.process_update(update)
-
-        return JSONResponse(content={"ok": True})
-
-
-    @app.get("/")
-    async def root():
-        settings = get_settings()
-        return {
-            "message": f"Welcome to {settings.APP_NAME}",
-            "version": settings.VERSION,
-            "docs": "/docs"
-        }
+async def _session_access_error_handler(
+    request: Request,
+    exc: SessionAccessError,
+) -> JSONResponse:
+    """Terjemahkan SessionAccessError ke HTTP 403."""
+    logger.warning(str(exc))
+    return JSONResponse(
+        status_code=403,
+        content={
+            "detail": "Akses ditolak: Anda tidak memiliki akses ke sesi ini."
+        },
+    )

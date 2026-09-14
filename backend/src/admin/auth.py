@@ -63,13 +63,22 @@ def get_current_admin(authorization: str = Header(None)) -> dict:
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Invalid or missing authorization header")
         
-    token = authorization.split(" ")[1]
+    # Safe token extraction to prevent IndexError
+    token = authorization[len("Bearer "):].strip()
+    if not token:
+        raise HTTPException(status_code=401, detail="Empty token")
+        
     payload = verify_access_token(token)
     
     if not payload:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
         
-    if payload.get("role") != "admin":
-        raise HTTPException(status_code=403, detail="Insufficient permissions")
+    # Consistent role validation with detailed error message  
+    actual_role = payload.get("role")
+    if actual_role != "admin":
+        raise HTTPException(
+            status_code=403, 
+            detail=f"Insufficient permissions: admin role required, got {actual_role}"
+        )
         
     return payload

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request, Depends, HTTPException, status
+from fastapi import APIRouter, HTTPException, Request, status
 from pydantic import BaseModel
 from typing import Dict, Any, Optional
 from loguru import logger
@@ -14,6 +14,26 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 
 # Reusable Supabase client
 supabase: Client = create_client(settings.supabase_url, settings.supabase_service_key)
+
+
+def validate_user_role(payload: dict, required_role: str) -> None:
+    """
+    Validate that the JWT payload contains the required role.
+    
+    Args:
+        payload: JWT payload from verify_access_token
+        required_role: Required role (e.g., "mahasiswa", "admin")
+        
+    Raises:
+        HTTPException: If role is missing or incorrect
+    """
+    actual_role = payload.get("role")
+    if actual_role != required_role:
+        raise HTTPException(
+            status_code=403,
+            detail=f"Forbidden: {required_role} role required, got {actual_role}"
+        )
+
 
 class GoogleAuthRequest(BaseModel):
     id_token: str
@@ -72,11 +92,24 @@ async def verify_google_auth(request: GoogleAuthRequest):
         }
 
     except ValueError as ve:
-        logger.warning(f"Google Token Verification Failed: {ve}")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid Google token",
-        )
+        error_message = str(ve)
+        
+        # Provide specific error messages for email verification
+        if "Email not verified" in error_message:
+            logger.warning(f"Google OAuth failed - email not verified: {ve}")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Email address must be verified by Google before accessing the system. Please check your email and verify your Google account.",
+            )
+        else:
+            logger.warning(f"Google Token Verification Failed: {ve}")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid Google token",
+            )
+    except HTTPException:
+        # Re-raise HTTPException tanpa wrapping untuk preserve status codes
+        raise
     except Exception as e:
         logger.error(f"Error during Google authentication: {e}")
         raise HTTPException(
@@ -96,10 +129,19 @@ async def get_current_user(request: Request):
             detail="Missing or invalid Authorization header",
         )
     
-    token = auth_header.split(" ")[1]
+    # Safe token extraction to prevent IndexError
+    token = auth_header[len("Bearer "):].strip()
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Empty token"
+        )
     
     # This will raise HTTPException if invalid
     payload = verify_access_token(token)
+    
+    # Use centralized role validation
+    validate_user_role(payload, "mahasiswa")
     
     mahasiswa_id = payload.get("sub")
     if not mahasiswa_id:

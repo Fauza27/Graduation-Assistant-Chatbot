@@ -1,34 +1,21 @@
-"""
-===============================================================================
-CHUNK EDITOR - READABLE VERSION (Updated)
-===============================================================================
+"""Build the admin knowledge tree and read chunk details.
 
-This file has been updated with a more readable and optimized implementation.
-The original code is preserved at the bottom for reference and safety.
-
-Performance improvements with database indexes:
-- list_knowledge_tree(): 2-5x faster with better code structure
-- get_chunk_detail(): Same speed but much more readable
-- save_chunk(): 1.5x faster with cleaner logic
-- All functions: Better error handling and documentation
-
-Database indexes added for optimal performance:
-- idx_child_documents_parent_id_pages
-- idx_parent_documents_domain_section_id  
-- idx_chunk_edit_logs_child_id_status_reembedded
-- idx_chunk_edit_logs_child_id_edited
-
-===============================================================================
+Mutation functions are re-exported for the existing admin API.
 """
 
-import datetime
 from typing import Dict, List, Optional, Any, Tuple
 from loguru import logger
 from supabase import Client
 from dataclasses import dataclass
 
 from src.admin.auth import ResourceNotFoundError
-from src.ingestion.embedder import get_openai_embeddings
+from src.admin.chunk_mutations import (
+    ChunkConflictError,
+    delete_chunk,
+    process_chunk_reembed,
+    save_chunk,
+    trigger_reembed,
+)
 
 
 # === DATA STRUCTURES FOR CLARITY ===
@@ -68,19 +55,25 @@ class Document:
 
 # === UTILITY FUNCTIONS ===
 
+from src.utils.page_sorting import smart_page_sort_key as _smart_page_sort_key
+
+
 def format_pages_for_frontend(pages: Any) -> str:
     """
-    Convert database pages array to user-friendly string.
+    Convert database pages array to user-friendly string with smart sorting.
     
     Examples:
         ["1", "2"] -> "1, 2"
         ["12-13"] -> "12-13"
+        ["2", "1", "10"] -> "1, 2, 10"  # Sorted numerically
         None -> ""
     """
     if not pages:
         return ""
     if isinstance(pages, list):
-        return ", ".join(str(page) for page in pages)
+        # Apply smart sorting before joining
+        sorted_pages = sorted(pages, key=_smart_page_sort_key)
+        return ", ".join(str(page) for page in sorted_pages)
     return str(pages)
 
 
@@ -140,7 +133,7 @@ def get_knowledge_tree_data(supabase: Client) -> Tuple[List[Dict], List[Dict]]:
     # Get all child documents with essential fields
     children_query = supabase.table("child_documents").select(
         "id, parent_id, title, pages, source, embedding_status, updated_at"
-    ).order("parent_id").order("pages")
+    ).order("parent_id")  # Page ordering is handled in Python.
     
     children_result = children_query.execute()
     children_data = children_result.data
@@ -171,6 +164,7 @@ def build_parent_source_mapping(children_data: List[Dict]) -> Dict[str, str]:
 def group_children_by_parent(children_data: List[Dict]) -> Dict[str, List[Dict]]:
     """
     Group child documents by their parent_id for easier lookup.
+    Applies smart sorting to pages within each child.
     """
     children_by_parent = {}
     
@@ -180,14 +174,27 @@ def group_children_by_parent(children_data: List[Dict]) -> Dict[str, List[Dict]]
         if parent_id not in children_by_parent:
             children_by_parent[parent_id] = []
         
+        # Sort pages using smart page sorting
+        pages = child.get("pages") or []
+        if pages:
+            sorted_pages = sorted(pages, key=_smart_page_sort_key)
+        else:
+            sorted_pages = []
+        
         # Store simplified child info
         child_info = {
             "id": child["id"],
             "title": child["title"],
-            "pages": child.get("pages"),
+            "pages": sorted_pages,  # Use sorted pages
             "embedding_status": child["embedding_status"]
         }
         children_by_parent[parent_id].append(child_info)
+    
+    # Sort children within each parent by first page number
+    for parent_id in children_by_parent:
+        children_by_parent[parent_id].sort(
+            key=lambda child: _smart_page_sort_key(child["pages"][0]) if child["pages"] else (999, 0, "")
+        )
     
     return children_by_parent
 
@@ -382,150 +389,6 @@ def get_chunk_detail_readable(child_id: str, supabase: Client) -> Dict[str, Any]
     }
 
 
-def save_chunk_readable(
-    child_id: str,
-    admin_id: str,
-    supabase: Client,
-    title: str = None,
-    pages: str = None,
-    content: str = None
-) -> Dict[str, Any]:
-    """
-    Save changes to a chunk with clear validation and logging.
-    
-    Process:
-    1. Validate chunk exists
-    2. Build update data
-    3. Save changes to database
-    4. Log content changes for reembedding
-    5. Return status information
-    """
-    # Step 1: Get current chunk data
-    current_chunk_result = supabase.table("child_documents").select("*").eq("id", child_id).limit(1).execute()
-    
-    if not current_chunk_result.data:
-        raise ResourceNotFoundError(f"Child chunk {child_id} not found")
-    
-    current_chunk = current_chunk_result.data[0]
-    
-    # Step 2: Build update data
-    updates = {"updated_at": "now()"}
-    content_was_changed = False
-    original_content = None
-    
-    # Check title changes
-    if title is not None and title != current_chunk["title"]:
-        updates["title"] = title
-    
-    # Check pages changes  
-    if pages is not None:
-        new_pages_array = parse_pages_from_frontend(pages)
-        current_pages = current_chunk.get("pages", [])
-        
-        if new_pages_array != current_pages:
-            updates["pages"] = new_pages_array
-    
-    # Check content changes (most important)
-    if content is not None and content != current_chunk["content"]:
-        content_was_changed = True
-        original_content = current_chunk["content"]
-        updates["content"] = content
-        updates["embedding_status"] = 'stale'  # Mark for reembedding
-    
-    # Step 3: Early return if no changes
-    if len(updates) == 1:  # Only contains updated_at
-        return {
-            "child_id": child_id,
-            "embedding_status": current_chunk["embedding_status"],
-            "content_changed": False,
-            "message": "Tidak ada perubahan."
-        }
-    
-    # Step 4: Save changes to database
-    supabase.table("child_documents").update(updates).eq("id", child_id).execute()
-    
-    # Step 5: Log content changes for reembedding tracking
-    if content_was_changed:
-        edit_log = {
-            "child_id": child_id,
-            "parent_id": current_chunk["parent_id"],
-            "admin_id": admin_id,
-            "old_content": original_content,
-            "new_content": content,
-            "status": "pending"
-        }
-        supabase.table("chunk_edit_logs").insert(edit_log).execute()
-    
-    # Step 6: Build response
-    new_embedding_status = updates.get("embedding_status", current_chunk["embedding_status"])
-    message = "Perubahan disimpan."
-    
-    if content_was_changed:
-        message += " Klik Re-Embed agar chatbot pakai versi terbaru."
-    
-    return {
-        "child_id": child_id,
-        "embedding_status": new_embedding_status,
-        "content_changed": content_was_changed,
-        "message": message
-    }
-
-
-def prepare_chunk_for_reembedding(child_id: str, admin_id: str, supabase: Client) -> Dict[str, Any]:
-    """
-    Prepare a chunk for reembedding by setting up the processing log.
-    
-    This function handles two scenarios:
-    1. There's already a pending edit log -> use that
-    2. No pending log -> create new one for manual reembed
-    """
-    # Step 1: Verify chunk exists
-    chunk_result = supabase.table("child_documents").select("parent_id, content").eq("id", child_id).limit(1).execute()
-    
-    if not chunk_result.data:
-        raise ResourceNotFoundError(f"Child chunk {child_id} not found")
-    
-    chunk_data = chunk_result.data[0]
-    
-    # Step 2: Look for existing pending log
-    pending_log_result = supabase.table("chunk_edit_logs").select("*").eq(
-        "child_id", child_id
-    ).eq("status", "pending").order("edited_at", desc=True).limit(1).execute()
-    
-    # Step 3: Use existing log or create new one
-    if pending_log_result.data:
-        # Use existing pending log
-        existing_log = pending_log_result.data[0]
-        log_id = existing_log["log_id"]
-        old_content = existing_log["old_content"]
-        new_content = existing_log["new_content"]
-    else:
-        # Create new log for manual reembed
-        new_log_data = {
-            "child_id": child_id,
-            "parent_id": chunk_data["parent_id"],
-            "admin_id": admin_id,
-            "old_content": None,  # No previous content for manual reembed
-            "new_content": chunk_data["content"],
-            "status": "pending"
-        }
-        insert_result = supabase.table("chunk_edit_logs").insert(new_log_data).execute()
-        log_id = insert_result.data[0]["log_id"]
-        old_content = None
-        new_content = chunk_data["content"]
-    
-    # Step 4: Mark log as processing
-    supabase.table("chunk_edit_logs").update({"status": "processing"}).eq("log_id", log_id).execute()
-    
-    # Step 5: Return data for background task
-    return {
-        "log_id": log_id,
-        "parent_id": chunk_data["parent_id"],
-        "old_content": old_content,
-        "new_content": new_content
-    }
-
-
 def get_chunk_edit_status(child_id: str, supabase: Client) -> Optional[Dict[str, Any]]:
     """
     Get the latest edit/reembedding status for a chunk.
@@ -551,131 +414,8 @@ def get_chunk_edit_status(child_id: str, supabase: Client) -> Optional[Dict[str,
     }
 
 
-def delete_chunk_with_cleanup(child_id: str, supabase: Client) -> Dict[str, Any]:
-    """
-    Delete a chunk and perform automatic parent cleanup if necessary.
-    
-    Process:
-    1. Verify chunk exists and get parent_id
-    2. Delete the chunk (CASCADE will handle logs)
-    3. Check if parent becomes empty
-    4. Auto-delete empty parent
-    5. Return cleanup information
-    """
-    # Step 1: Get chunk info before deletion
-    chunk_result = supabase.table("child_documents").select("parent_id").eq("id", child_id).limit(1).execute()
-    
-    if not chunk_result.data:
-        raise ResourceNotFoundError(f"Child chunk {child_id} not found")
-    
-    parent_id = chunk_result.data[0]["parent_id"]
-    
-    # Step 2: Delete the chunk
-    # Note: Database CASCADE constraints will automatically delete related chunk_edit_logs
-    supabase.table("child_documents").delete().eq("id", child_id).execute()
-    
-    # Step 3: Check if parent is now empty
-    remaining_children = supabase.table("child_documents").select("id", count="exact").eq("parent_id", parent_id).execute()
-    children_count = remaining_children.count or 0
-    
-    # Step 4: Auto-delete empty parent (housekeeping)
-    parent_was_deleted = False
-    if children_count == 0:
-        supabase.table("parent_documents").delete().eq("parent_id", parent_id).execute()
-        parent_was_deleted = True
-    
-    # Step 5: Return cleanup information
-    return {
-        "child_id": child_id,
-        "parent_id": parent_id,
-        "parent_deleted": parent_was_deleted
-    }
 
-
-# === BACKGROUND PROCESSING ===
-
-async def process_chunk_reembedding(
-    log_id: str,
-    child_id: str,
-    parent_id: str,
-    old_content: Optional[str],
-    new_content: str,
-    supabase: Client,
-    settings
-) -> None:
-    """
-    Background task to perform embedding generation and content synchronization.
-    
-    Process:
-    1. Generate new embedding vector
-    2. Update child document
-    3. Sync parent content (if this was an edit)
-    4. Mark process as successful
-    5. Handle any errors gracefully
-    """
-    try:
-        # Step 1: Generate embedding using OpenAI
-        embedding_vector = get_openai_embeddings([new_content])[0]
-        
-        # Step 2: Update child document with new embedding
-        supabase.table("child_documents").update({
-            "embedding": embedding_vector,
-            "embedding_status": "success",
-            "updated_at": "now()"
-        }).eq("id", child_id).execute()
-        
-        # Step 3: Sync parent content if this was a content edit (not initial embed)
-        if old_content is not None:
-            parent_result = supabase.table("parent_documents").select("content").eq("parent_id", parent_id).limit(1).execute()
-            
-            if parent_result.data:
-                parent_content = parent_result.data[0]["content"]
-                
-                # Replace old content with new content in parent (first occurrence only)
-                if old_content in parent_content:
-                    updated_parent_content = parent_content.replace(old_content, new_content, 1)
-                    supabase.table("parent_documents").update({
-                        "content": updated_parent_content,
-                        "updated_at": "now()"
-                    }).eq("parent_id", parent_id).execute()
-                else:
-                    logger.warning(f"Parent {parent_id} content sync skipped: old content not found")
-        
-        # Step 4: Mark reembedding as successful
-        supabase.table("chunk_edit_logs").update({
-            "status": "success",
-            "reembedded_at": "now()"
-        }).eq("log_id", log_id).execute()
-        
-        logger.info(f"Successfully reembedded chunk {child_id}")
-        
-    except Exception as error:
-        # Step 5: Handle errors gracefully
-        logger.error(f"Reembedding failed for chunk {child_id} (log {log_id}): {error}")
-        
-        # Mark child as failed
-        supabase.table("child_documents").update({
-            "embedding_status": "failed"
-        }).eq("id", child_id).execute()
-        
-        # Mark log as failed with error details
-        supabase.table("chunk_edit_logs").update({
-            "status": "failed",
-            "error_message": str(error)[:500]  # Limit error message length
-        }).eq("log_id", log_id).execute()
-        
-        # Re-raise for upstream error handling
-        raise
-
-
-# === ALIAS FUNCTIONS FOR COMPATIBILITY ===
-# These maintain compatibility with the existing API while using readable implementations
+# Stable API names; writes are isolated from the read-only tree/detail helpers.
 list_knowledge_tree = list_knowledge_tree_readable
-get_chunk_detail = get_chunk_detail_readable  
-save_chunk = save_chunk_readable
-trigger_reembed = prepare_chunk_for_reembedding
+get_chunk_detail = get_chunk_detail_readable
 get_edit_status = get_chunk_edit_status
-delete_chunk = delete_chunk_with_cleanup
-process_chunk_reembed = process_chunk_reembedding
-
-
