@@ -10,6 +10,7 @@ from typing import Any, Dict, Optional
 
 from loguru import logger
 
+from config.settings import get_settings
 from src.generation.chain import get_rag_generator
 from src.generation.memory import ConversationMemory
 from src.generation.summarizer import get_conversation_summarizer
@@ -122,6 +123,33 @@ def _prepare_query_plan_and_memory(
     finally:
         end_stage()
     set_field(rewrite_method=plan.rewrite_method.value)
+    settings = get_settings()
+    set_field(
+        query_plan={
+            "original_query": plan.original_query,
+            "normalized_query": plan.normalized_query,
+            "resolved_query": plan.resolved_query,
+            "search_queries": list(plan.search_queries),
+            "rerank_query": plan.rerank_query,
+            "rewrite_method": plan.rewrite_method.value,
+            "complexity": plan.complexity.value,
+            "is_decomposed": plan.is_decomposed,
+        },
+        pipeline_snapshot={
+            "app_version": settings.VERSION,
+            "llm_model": settings.llm_model,
+            "embedding_model": settings.embedding_model,
+            "cross_encoder_model": settings.cross_encoder_model,
+            "retrieval_top_k": settings.retrieval_top_k,
+            "max_parent_for_rerank": settings.max_parent_for_rerank,
+            "rerank_top_n": settings.rerank_top_n,
+            "rerank_min_top_score": settings.rerank_min_top_score,
+            "rerank_relative_gap": settings.rerank_relative_gap,
+            "bm25_weight": settings.bm25_weight,
+            "dense_weight": settings.dense_weight,
+            "max_context_tokens": settings.MAX_CONTEXT_TOKENS,
+        },
+    )
 
     if plan.rewrite_method.value != "None":
         logger.info(
@@ -195,6 +223,10 @@ def _get_retrieval_documents(
             collector, "retrieved_parent_ids", []
         ),
         "retrieval_detail": getattr(collector, "retrieval_detail", []),
+        "self_query_results": getattr(collector, "self_query_results", []),
+        "search_candidates": getattr(collector, "search_candidates", []),
+        "parent_candidates": getattr(collector, "parent_candidates", []),
+        "reranked_candidates": getattr(collector, "reranked_candidates", []),
     }
 
     retrieval_cache.store_if_current(
@@ -417,9 +449,11 @@ def chat(
         )
 
         collector.status = "success"
+        collector.answer = answer
         persist_metrics(collector)
 
         return {
+            "request_id": collector.request_id,
             "answer": answer,
             "num_docs": len(retrieval_docs),
             "rewrite_method": query_plan.rewrite_method.value,
@@ -451,6 +485,7 @@ def chat(
         persist_metrics(collector)
 
         return {
+            "request_id": collector.request_id,
             "answer": (
                 "Maaf, terjadi kesalahan saat memproses pertanyaan Anda. "
                 "Silakan coba lagi atau hubungi administrator jika masalah berlanjut."

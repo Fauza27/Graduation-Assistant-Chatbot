@@ -129,6 +129,17 @@ class RequestMetricsCollector:
     username: Optional[str] = None
     retrieval_detail: Optional[list[dict[str, Any]]] = None
 
+    # Reproducible pipeline trace. These fields are persisted separately from
+    # request_metrics so the existing monitoring table remains compact.
+    query_plan: Optional[dict[str, Any]] = None
+    self_query_results: Optional[list[dict[str, Any]]] = None
+    search_candidates: Optional[list[dict[str, Any]]] = None
+    parent_candidates: Optional[list[dict[str, Any]]] = None
+    reranked_candidates: Optional[list[dict[str, Any]]] = None
+    final_context: Optional[dict[str, Any]] = None
+    answer: Optional[str] = None
+    pipeline_snapshot: Optional[dict[str, Any]] = None
+
     # Internal timing state
     _stage_ms: dict[str, float] = field(default_factory=dict, repr=False)
     _stage_name: Optional[str] = field(default=None, repr=False)
@@ -141,6 +152,7 @@ class RequestMetricsCollector:
     # ContextVar token untuk restore context sebelumnya.
     _context_token: Any = field(default=None, repr=False)
     _persisted: bool = field(default=False, repr=False)
+    _trace_persisted: bool = field(default=False, repr=False)
 
     def start_stage(self, name: str) -> None:
         """
@@ -239,6 +251,20 @@ class RequestMetricsCollector:
             row[f"stage_{stage}_ms"] = self._stage_ms.get(stage)
 
         return row
+
+    def to_trace_row(self) -> dict[str, Any]:
+        """Return the detailed execution trace stored outside request_metrics."""
+        return {
+            "request_id": self.request_id,
+            "query_plan": self.query_plan or {},
+            "self_query_results": self.self_query_results or [],
+            "search_candidates": self.search_candidates or [],
+            "parent_candidates": self.parent_candidates or [],
+            "reranked_candidates": self.reranked_candidates or [],
+            "final_context": self.final_context or {},
+            "answer": self.answer,
+            "pipeline_snapshot": self.pipeline_snapshot or {},
+        }
 
 
 # ---------------------------------------------------------------------------

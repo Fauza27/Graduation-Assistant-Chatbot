@@ -381,6 +381,16 @@ class RAGGenerator:
             history = history[-2:]
 
         context = format_context(context_documents)
+        set_field(
+            final_context={
+                "text": context,
+                "document_ids": [
+                    str(_extract_document(document)[1].get("parent_id", ""))
+                    for document in context_documents
+                ] if not isinstance(context_documents, str) else [],
+                "token_count": count_tokens(context),
+            }
+        )
         suspicious = contains_suspicious_instruction(question) or contains_suspicious_instruction(context)
         if suspicious:
             set_field(prompt_injection_detected=True)
@@ -404,6 +414,7 @@ class RAGGenerator:
             response = get_llm().invoke(messages)
             answer = postprocess_answer(response.content)
             answer = ensure_source_attribution(answer, context_documents)
+            set_field(answer=answer)
         except Exception as e:
             logger.error(
                 "LLM generation failed for question '{}': {}",

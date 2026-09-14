@@ -78,6 +78,17 @@ class Settings(BaseSettings):
     # Evaluation Configuration
     ragas_sample_size: int = Field(default=50, ge=10, le=500)
     ragas_timeout: int = Field(default=300, ge=60, le=600)
+    EVALUATION_MODEL: Optional[str] = Field(
+        default=None,
+        description="Model evaluator; uses LLM_MODEL when unset",
+    )
+    EVALUATION_DOCUMENT_MANIFEST: str = Field(
+        default="config/evaluation_documents.yaml"
+    )
+    EVALUATION_PAGE_WINDOW: int = Field(default=3, ge=1, le=10)
+    EVALUATION_QUESTION_BATCH_SIZE: int = Field(default=10, ge=1, le=25)
+    EVALUATION_MAX_EVIDENCE_PER_CASE: int = Field(default=5, ge=1, le=20)
+    EVALUATION_AGENT_ENABLED: bool = Field(default=False)
 
     # Cross-Encoder Configuration
     cross_encoder_model: str = Field(default="cross-encoder/ms-marco-MiniLM-L-6-v2")

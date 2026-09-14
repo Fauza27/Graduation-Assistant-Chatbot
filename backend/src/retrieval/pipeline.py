@@ -35,6 +35,7 @@ MULTI_QUERY_RRF_K = 60
 # Result model
 # ============================================================================
 
+
 @dataclass
 class RetrievalResult:
     """Final retrieval result ready for the answer generator."""
@@ -52,6 +53,7 @@ class RetrievalResult:
 # ============================================================================
 # Main pipeline
 # ============================================================================
+
 
 def run_retrieval(
     query: str,
@@ -118,6 +120,19 @@ def run_retrieval(
         parsed_queries,
         detect_panduan_type,
     )
+    set_field(
+        self_query_results=[
+            {
+                "original_query": parsed.original_query,
+                "semantic_query": parsed.semantic_query,
+                "filters": dict(parsed.filters),
+                "detected_source": parsed.detected_source,
+                "detected_section": parsed.detected_section,
+                "confidence": parsed.confidence,
+            }
+            for parsed in parsed_queries
+        ]
+    )
 
     # ------------------------------------------------------------------
     # Stage 2: Hybrid search
@@ -126,17 +141,21 @@ def run_retrieval(
     started_at = time.time()
 
     search_batches: list[list[HybridSearchResult]] = []
+    matched_queries: dict[str, set[str]] = {}
     search_errors: list[Exception] = []
     searcher = _get_hybrid_searcher()
 
     for parsed in parsed_queries:
         try:
-            search_batches.append(
-                searcher.search(
-                    query=parsed.semantic_query,
-                    filters=parsed.filters,
-                )
+            batch = searcher.search(
+                query=parsed.semantic_query,
+                filters=parsed.filters,
             )
+            search_batches.append(batch)
+            for candidate in batch:
+                matched_queries.setdefault(candidate.child_id, set()).add(
+                    parsed.semantic_query
+                )
         except Exception as exc:
             logger.error(
                 "Error in HybridSearcher.search for '{}': {}",
@@ -151,15 +170,17 @@ def run_retrieval(
         ) from search_errors[-1]
 
     search_results = _merge_search_results(search_batches)
-    set_field(num_docs_retrieved=len(search_results))
+    set_field(
+        num_docs_retrieved=len(search_results),
+        search_candidates=_serialize_search_candidates(
+            search_results, matched_queries=matched_queries
+        ),
+    )
 
     search_time = time.time() - started_at
 
     if not search_results:
-        logger.info(
-            "Zero documents found in Hybrid Search. "
-            "Short-circuiting."
-        )
+        logger.info("Zero documents found in Hybrid Search. " "Short-circuiting.")
 
         _record_empty_retrieval_metrics()
 
@@ -176,9 +197,7 @@ def run_retrieval(
     started_at = time.time()
 
     try:
-        parent_results = _get_parent_child_fetcher().fetch_parents(
-            search_results
-        )
+        parent_results = _get_parent_child_fetcher().fetch_parents(search_results)
     except Exception as exc:
         logger.error(
             "Error in ParentChildFetcher.fetch_parents: {}",
@@ -190,10 +209,7 @@ def run_retrieval(
     end_stage()
 
     if not parent_results:
-        logger.info(
-            "Zero parent documents fetched. "
-            "Short-circuiting."
-        )
+        logger.info("Zero parent documents fetched. " "Short-circuiting.")
 
         _record_empty_retrieval_metrics()
 
@@ -206,9 +222,8 @@ def run_retrieval(
     # Stage 4: Limit candidates before reranking
     # ------------------------------------------------------------------
 
-    candidate_parents = parent_results[
-        : settings.max_parent_for_rerank
-    ]
+    candidate_parents = parent_results[: settings.max_parent_for_rerank]
+    set_field(parent_candidates=_serialize_parent_candidates(parent_results))
 
     logger.debug(
         "Reranking candidates: {} → {}",
@@ -244,6 +259,7 @@ def run_retrieval(
             final_results,
             all_scored_candidates=candidate_parents,
         )
+        set_field(reranked_candidates=_serialize_parent_candidates(final_results))
 
         return RetrievalResult(
             parent_documents=final_results,
@@ -286,10 +302,7 @@ def run_retrieval(
                 final_results = []
                 reason = "Minimum Evidence Triggered"
             else:
-                min_accepted_score = (
-                    top_score
-                    - settings.rerank_relative_gap
-                )
+                min_accepted_score = top_score - settings.rerank_relative_gap
 
                 final_results = [
                     document
@@ -297,7 +310,8 @@ def run_retrieval(
                     if document.get(
                         "cross_encoder_score",
                         0.0,
-                    ) >= min_accepted_score
+                    )
+                    >= min_accepted_score
                 ][: settings.rerank_top_n]
 
                 reason = "Adaptive Relative Gap"
@@ -309,16 +323,11 @@ def run_retrieval(
         )
 
         final_results = [
-            dict(document)
-            for document in candidate_parents[
-                : settings.rerank_top_n
-            ]
+            dict(document) for document in candidate_parents[: settings.rerank_top_n]
         ]
 
         for document in final_results:
-            document[
-                "cross_encoder_score"
-            ] = document.get(
+            document["cross_encoder_score"] = document.get(
                 "best_child_score",
                 0.0,
             )
@@ -357,11 +366,13 @@ def run_retrieval(
 
     _record_final_retrieval_metrics(
         final_results,
-        all_scored_candidates=(
-            reranked
-            if reranked
-            else candidate_parents
-        ),
+        all_scored_candidates=(reranked if reranked else candidate_parents),
+    )
+    set_field(
+        reranked_candidates=_serialize_parent_candidates(
+            reranked if reranked else final_results,
+            accepted_ids={str(item.get("parent_id", "")) for item in final_results},
+        )
     )
 
     return RetrievalResult(
@@ -373,6 +384,59 @@ def run_retrieval(
 # ============================================================================
 # Small helpers
 # ============================================================================
+
+
+def _serialize_search_candidates(
+    candidates: list[HybridSearchResult],
+    matched_queries: dict[str, set[str]] | None = None,
+) -> list[dict]:
+    """Keep identifiers, rank, score, and provenance for evaluator replay."""
+    matched_queries = matched_queries or {}
+    return [
+        {
+            "rank": rank,
+            "child_id": candidate.child_id,
+            "parent_id": candidate.parent_id,
+            "score": round(float(candidate.hybrid_score), 8),
+            "score_source": candidate.score_source,
+            "title": candidate.document.metadata.get("title", ""),
+            "section": candidate.document.metadata.get("section", ""),
+            "pages": candidate.document.metadata.get("pages", []),
+            "source": candidate.document.metadata.get("source", ""),
+            "matched_queries": sorted(matched_queries.get(candidate.child_id, set())),
+        }
+        for rank, candidate in enumerate(candidates, start=1)
+    ]
+
+
+def _serialize_parent_candidates(
+    candidates: list[dict],
+    accepted_ids: set[str] | None = None,
+) -> list[dict]:
+    """Serialize parent candidates without duplicating full document content."""
+    accepted_ids = accepted_ids or set()
+    return [
+        {
+            "rank": rank,
+            "parent_id": str(candidate.get("parent_id", "")),
+            "title": candidate.get("title", ""),
+            "section": candidate.get("section", ""),
+            "domain": candidate.get("domain", ""),
+            "matched_children": candidate.get("matched_children", []),
+            "matched_pages": candidate.get("matched_pages", []),
+            "search_score": candidate.get("best_child_score"),
+            "rerank_score": candidate.get("cross_encoder_score"),
+            "score_source": candidate.get("score_source", ""),
+            "rerank_method": candidate.get("rerank_method", ""),
+            "accepted": (
+                str(candidate.get("parent_id", "")) in accepted_ids
+                if accepted_ids
+                else True
+            ),
+        }
+        for rank, candidate in enumerate(candidates, start=1)
+    ]
+
 
 def _record_detected_domains(
     parsed_queries: list[object],
@@ -493,15 +557,10 @@ def _skip_reranking(
         len(candidate_parents),
     )
 
-    final_results = [
-        dict(document)
-        for document in candidate_parents[:top_n]
-    ]
+    final_results = [dict(document) for document in candidate_parents[:top_n]]
 
     for document in final_results:
-        document[
-            "cross_encoder_score"
-        ] = document.get(
+        document["cross_encoder_score"] = document.get(
             "best_child_score",
             0.0,
         )
@@ -528,11 +587,7 @@ def _log_pipeline_summary(
 
     total_time = time.time() - pipeline_start
 
-    mode = (
-        "RAG"
-        if final_results
-        else "Conversation (Empty Context)"
-    )
+    mode = "RAG" if final_results else "Conversation (Empty Context)"
 
     logger.info(
         "\n"
@@ -569,6 +624,7 @@ def _log_pipeline_summary(
 # Metrics
 # ============================================================================
 
+
 def _record_empty_retrieval_metrics() -> None:
     """Record metrics for an empty retrieval."""
 
@@ -600,9 +656,7 @@ def _record_final_retrieval_metrics(
     }
 
     candidates = (
-        all_scored_candidates
-        if all_scored_candidates is not None
-        else final_results
+        all_scored_candidates if all_scored_candidates is not None else final_results
     )
 
     if not final_results:
@@ -630,16 +684,8 @@ def _record_final_retrieval_metrics(
     set_field(
         is_no_relevant_doc=False,
         num_docs_after_rerank=len(final_results),
-        top_cross_encoder_score=(
-            max(scores)
-            if scores
-            else None
-        ),
-        avg_cross_encoder_score=(
-            sum(scores) / len(scores)
-            if scores
-            else None
-        ),
+        top_cross_encoder_score=(max(scores) if scores else None),
+        avg_cross_encoder_score=(sum(scores) / len(scores) if scores else None),
         retrieved_parent_ids=[
             document.get(
                 "parent_id",
@@ -666,11 +712,7 @@ def _build_retrieval_detail(
                 "parent_id",
                 "",
             ),
-            "title": (
-                candidate.get("title")
-                or candidate.get("section")
-                or ""
-            ),
+            "title": (candidate.get("title") or candidate.get("section") or ""),
             "score": round(
                 float(
                     candidate.get(

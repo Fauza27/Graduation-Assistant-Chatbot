@@ -74,10 +74,33 @@ def persist_metrics(collector: RequestMetricsCollector) -> None:
             .execute()
         )
         collector._persisted = True
+        persist_execution_trace(collector)
 
     except Exception as exc:
         logger.error(
             "[metrics] Gagal menyimpan request_metrics "
+            f"request_id={collector.request_id}: {exc}"
+        )
+
+
+def persist_execution_trace(collector: RequestMetricsCollector) -> None:
+    """Persist detailed trace without ever interrupting the chat request."""
+    if not get_settings().EVALUATION_AGENT_ENABLED:
+        return
+    if getattr(collector, "_trace_persisted", False):
+        return
+
+    try:
+        (
+            _get_supabase_client()
+            .table("rag_execution_traces")
+            .upsert(collector.to_trace_row(), on_conflict="request_id")
+            .execute()
+        )
+        collector._trace_persisted = True
+    except Exception as exc:
+        logger.error(
+            "[metrics] Gagal menyimpan rag_execution_traces "
             f"request_id={collector.request_id}: {exc}"
         )
 
