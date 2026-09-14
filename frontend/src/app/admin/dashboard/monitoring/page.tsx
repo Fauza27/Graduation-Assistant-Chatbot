@@ -100,7 +100,7 @@ export default function MonitoringPage() {
           setDetailRequestId(id);
         }}
       />
-      <QueryDetailModal requestId={detailRequestId} onClose={() => setDetailRequestId(null)} />
+      <QueryDetailModal key={detailRequestId} requestId={detailRequestId} onClose={() => setDetailRequestId(null)} />
     </div>
   );
 }

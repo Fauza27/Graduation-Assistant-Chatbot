@@ -18,7 +18,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   // Shell drill-down 3-kolom khusus itu didesain untuk Kelola Knowledge Base.
   // Rute lain (mis. Monitoring) sudah responsive sendiri lewat CSS masing-masing,
   // jadi harus tetap render `children` biasa, bukan shell KB.
-  const isKnowledgeBaseRoute = !pathname?.includes('/admin/dashboard/monitoring');
+  const isKnowledgeBaseRoute = !pathname?.includes('/admin/dashboard/monitoring')
+    && !pathname?.includes('/admin/dashboard/evaluations');
 
   useEffect(() => {
     const initialize = async () => {

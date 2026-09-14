@@ -1,8 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { X, User, Clock, Layers, Coins, FileSearch } from 'lucide-react';
+import { X, User, Clock, Layers, Coins, FileSearch, ClipboardCheck } from 'lucide-react';
 import { getRequestDetail } from '@/lib/monitoringApi';
+import { createEvaluationCase, getEvaluationCaseByRequest } from '@/lib/evaluationApi';
+import type { ReviewStatus } from '@/lib/evaluationTypes';
 import type { RequestDetail } from '@/lib/monitoringTypes';
 import { PIPELINE_STAGE_KEYS, STAGE_LABELS } from '@/lib/monitoringTypes';
 import {
@@ -13,6 +15,12 @@ import HBarList from './charts/HBarList';
 
 export default function QueryDetailModal({ requestId, onClose }: { requestId: string | null; onClose: () => void }) {
   const [result, setResult] = useState<{ id: string; data: RequestDetail | null; error: string | null } | null>(null);
+  const [reviewStatus, setReviewStatus] = useState<ReviewStatus>('incorrect');
+  const [expectedAnswer, setExpectedAnswer] = useState('');
+  const [expectedEvidence, setExpectedEvidence] = useState('');
+  const [reviewNotes, setReviewNotes] = useState('');
+  const [reviewState, setReviewState] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const [reviewError, setReviewError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!requestId) return;
@@ -26,10 +34,39 @@ export default function QueryDetailModal({ requestId, onClose }: { requestId: st
           setResult({ id: requestId, data: null, error: err instanceof Error ? err.message : 'Gagal memuat detail request.' });
         }
       });
+    getEvaluationCaseByRequest(requestId)
+      .then((response) => {
+        if (cancelled || !response.data) return;
+        setReviewStatus(response.data.review_status);
+        setExpectedAnswer(response.data.expected_answer || '');
+        setExpectedEvidence(String(response.data.expected_evidence?.notes || ''));
+        setReviewNotes(response.data.review_notes || '');
+        setReviewState('saved');
+      })
+      .catch(() => { /* Penilaian belum ada atau fitur belum diaktifkan. */ });
     return () => {
       cancelled = true;
     };
   }, [requestId]);
+
+  const saveReview = async () => {
+    if (!requestId) return;
+    setReviewState('saving');
+    setReviewError(null);
+    try {
+      await createEvaluationCase({
+        request_id: requestId,
+        review_status: reviewStatus,
+        expected_answer: expectedAnswer.trim() || undefined,
+        expected_evidence: expectedEvidence.trim() ? { notes: expectedEvidence.trim() } : undefined,
+        review_notes: reviewNotes.trim() || undefined,
+      });
+      setReviewState('saved');
+    } catch (saveError) {
+      setReviewState('idle');
+      setReviewError(saveError instanceof Error ? saveError.message : 'Gagal menyimpan penilaian.');
+    }
+  };
 
   if (!requestId) return null;
 
@@ -92,6 +129,58 @@ export default function QueryDetailModal({ requestId, onClose }: { requestId: st
                   <span className="info-label">Total Latency</span>
                   <span className="info-value">{fmtMs(data.total_ms)}</span>
                 </div>
+              </div>
+
+              <div className="detail-section">
+                <h4><ClipboardCheck style={{ width: 14, height: 14 }} /> Penilaian untuk Evaluasi RAG</h4>
+                <p style={{ margin: '0 0 12px', color: '#6b6572', fontSize: 13 }}>
+                  Tandai kualitas jawaban ini. Jawaban harapan bersifat opsional dan membantu evaluator saat memeriksa dokumen asli.
+                </p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
+                  {([
+                    ['correct', 'Benar'], ['incorrect', 'Salah'], ['incomplete', 'Tidak lengkap'], ['uncertain', 'Belum pasti'],
+                  ] as const).map(([value, label]) => (
+                    <button
+                      key={value}
+                      type="button"
+                      className={`status-badge ${reviewStatus === value ? 'status-success' : 'status-neutral'}`}
+                      style={{ border: '1px solid #ded6e5', cursor: 'pointer', padding: '7px 10px' }}
+                      onClick={() => { setReviewStatus(value); setReviewState('idle'); }}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                <textarea
+                  value={expectedAnswer}
+                  onChange={(event) => { setExpectedAnswer(event.target.value); setReviewState('idle'); }}
+                  placeholder="Jawaban yang diharapkan (opsional)"
+                  rows={3}
+                  style={{ width: '100%', resize: 'vertical', padding: 10, border: '1px solid #ded6e5', borderRadius: 8, marginBottom: 8 }}
+                />
+                <textarea
+                  value={expectedEvidence}
+                  onChange={(event) => { setExpectedEvidence(event.target.value); setReviewState('idle'); }}
+                  placeholder="Bukti yang diharapkan, misalnya nama dokumen dan halaman (opsional)"
+                  rows={2}
+                  style={{ width: '100%', resize: 'vertical', padding: 10, border: '1px solid #ded6e5', borderRadius: 8, marginBottom: 8 }}
+                />
+                <textarea
+                  value={reviewNotes}
+                  onChange={(event) => { setReviewNotes(event.target.value); setReviewState('idle'); }}
+                  placeholder="Catatan admin, misalnya bagian jawaban yang salah (opsional)"
+                  rows={2}
+                  style={{ width: '100%', resize: 'vertical', padding: 10, border: '1px solid #ded6e5', borderRadius: 8, marginBottom: 8 }}
+                />
+                {reviewError && <div className="modal-error" style={{ marginBottom: 8 }}>{reviewError}</div>}
+                <button
+                  type="button"
+                  className="mon-refresh-btn"
+                  onClick={() => void saveReview()}
+                  disabled={reviewState === 'saving'}
+                >
+                  {reviewState === 'saving' ? 'Menyimpan…' : reviewState === 'saved' ? 'Penilaian tersimpan' : 'Simpan penilaian'}
+                </button>
               </div>
 
               {/* Error detail kalau ada */}

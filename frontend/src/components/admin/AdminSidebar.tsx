@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { Database, LogOut, ChevronUp, X, Activity } from 'lucide-react';
+import { Database, LogOut, ChevronUp, X, Activity, BrainCircuit } from 'lucide-react';
 import { adminLogout, getAdminInfo } from '@/lib/adminAuth';
 
 interface AdminSidebarProps {
@@ -46,7 +46,7 @@ export default function AdminSidebar({ onCloseMobile }: AdminSidebarProps) {
 
       <nav className="sidebar-nav">
         <button
-          className={`nav-item ${!pathname?.includes('/admin/dashboard/monitoring') && pathname?.includes('/admin/dashboard') ? 'active' : ''}`}
+          className={`nav-item ${!pathname?.includes('/admin/dashboard/monitoring') && !pathname?.includes('/admin/dashboard/evaluations') && pathname?.includes('/admin/dashboard') ? 'active' : ''}`}
           type="button"
           onClick={() => {
             router.push('/admin/dashboard');
@@ -66,6 +66,17 @@ export default function AdminSidebar({ onCloseMobile }: AdminSidebarProps) {
         >
           <Activity className="icon" />
           <span>Monitoring</span>
+        </button>
+        <button
+          className={`nav-item ${pathname?.includes('/admin/dashboard/evaluations') ? 'active' : ''}`}
+          type="button"
+          onClick={() => {
+            router.push('/admin/dashboard/evaluations');
+            if (onCloseMobile) onCloseMobile();
+          }}
+        >
+          <BrainCircuit className="icon" />
+          <span>Evaluasi RAG</span>
         </button>
       </nav>
 
