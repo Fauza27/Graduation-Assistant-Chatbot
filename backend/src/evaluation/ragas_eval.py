@@ -982,6 +982,7 @@ def run_evaluation(
         OpenAIEmbeddings(
             model=settings.embedding_model,
             api_key=settings.open_api_key,
+            dimensions=2000,
         )
     )
 

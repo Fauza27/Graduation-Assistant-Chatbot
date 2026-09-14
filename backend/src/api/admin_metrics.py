@@ -10,6 +10,7 @@ from functools import lru_cache
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from loguru import logger
 from supabase import Client, create_client
 
 from config.settings import get_settings
@@ -24,22 +25,51 @@ def _get_supabase_client() -> Client:
     return create_client(settings.supabase_url, settings.supabase_service_key)
 
 
-def _select_view(view_name: str, days: int, order_col: str = "day") -> list[dict[str, Any]]:
+def _select_view(view_name: str, days: int, order_col: str = "day") -> dict[str, Any]:
+    """
+    Select data from view with date filtering.
+    
+    Returns dict with data and metadata about filtering success.
+    """
     since = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
     client = _get_supabase_client()
-    # Semua view punya kolom "day" atau "bucket" sebagai penanda waktu.
     query = client.table(view_name).select("*")
+    
+    date_filter_applied = True
+    filter_error = None
+    
     try:
         query = query.gte(order_col, since)
-    except Exception:
-        pass
+    except Exception as exc:
+        date_filter_applied = False
+        filter_error = str(exc)
+        logger.warning(
+            f"Failed to apply date filter on view '{view_name}' "
+            f"with column '{order_col}': {exc}. "
+            f"Returning unfiltered data (may be large dataset)"
+        )
+    
     response = query.execute()
-    return response.data or []
+    
+    return {
+        "data": response.data or [],
+        "metadata": {
+            "date_filter_applied": date_filter_applied,
+            "filter_error": filter_error,
+            "requested_days": days,
+            "total_records": len(response.data or [])
+        }
+    }
 
 
 @router.get("/latency", summary="A1/A3: latency percentile & throughput per jam")
 async def get_latency_stats(days: int = Query(default=7, ge=1, le=90), admin: dict = Depends(get_current_admin)):
-    return {"data": _select_view("v_latency_stats_hourly", days, order_col="bucket")}
+    result = _select_view("v_latency_stats_hourly", days, order_col="bucket")
+    return {
+        "data": result["data"],
+        "date_filter_applied": result["metadata"]["date_filter_applied"],
+        "total_records": result["metadata"]["total_records"]
+    }
 
 
 @router.get("/stage-breakdown", summary="A2: rata-rata durasi tiap tahap pipeline per hari")
@@ -69,9 +99,20 @@ async def get_retrieval_quality(days: int = Query(default=30, ge=1, le=180), adm
 
 @router.get("/top-documents", summary="C2: dokumen paling sering diambil")
 async def get_top_documents(limit: int = Query(default=20, ge=1, le=100), admin: dict = Depends(get_current_admin)):
-    client = _get_supabase_client()
-    response = client.table("v_top_retrieved_documents").select("*").limit(limit).execute()
-    return {"data": response.data or []}
+    try:
+        client = _get_supabase_client()
+        response = client.table("v_top_retrieved_documents").select("*").limit(limit).execute()
+        return {"data": response.data or []}
+    except Exception as exc:
+        logger.error(f"Failed to fetch top documents (limit={limit}): {exc}")
+        return {
+            "error": f"Failed to fetch top documents: {str(exc)}",
+            "data": [],
+            "troubleshooting": {
+                "check_view_exists": "v_top_retrieved_documents",
+                "requested_limit": limit
+            }
+        }
 
 
 @router.get("/domain-stats", summary="C5: breakdown query per domain")
@@ -86,9 +127,20 @@ async def get_cost_stats(days: int = Query(default=30, ge=1, le=180), admin: dic
 
 @router.get("/cost/per-user", summary="D3: cost per user")
 async def get_cost_per_user(limit: int = Query(default=50, ge=1, le=500), admin: dict = Depends(get_current_admin)):
-    client = _get_supabase_client()
-    response = client.table("v_cost_per_user").select("*").limit(limit).execute()
-    return {"data": response.data or []}
+    try:
+        client = _get_supabase_client()
+        response = client.table("v_cost_per_user").select("*").limit(limit).execute()
+        return {"data": response.data or []}
+    except Exception as exc:
+        logger.error(f"Failed to fetch cost per user (limit={limit}): {exc}")
+        return {
+            "error": f"Failed to fetch cost per user: {str(exc)}",
+            "data": [],
+            "troubleshooting": {
+                "check_view_exists": "v_cost_per_user",
+                "requested_limit": limit
+            }
+        }
 
 
 @router.get("/usage/active-users", summary="E1: active users harian/bulanan per channel")
@@ -118,17 +170,26 @@ async def get_followup_rate(days: int = Query(default=30, ge=1, le=180), admin: 
 
 @router.get("/system", summary="F1: active session count vs MAX_ACTIVE_SESSIONS")
 async def get_system_health(admin: dict = Depends(get_current_admin)):
-    from src.services.ai_services import get_session_stats
+    try:
+        from src.services.ai_services import get_session_stats
 
-    settings = get_settings()
-    stats = get_session_stats()
-    active = stats.get("active_sessions") or stats.get("total_sessions") or 0
-    max_sessions = settings.MAX_ACTIVE_SESSIONS
-    return {
-        "session_stats": stats,
-        "max_active_sessions": max_sessions,
-        "utilization_pct": round(100.0 * active / max_sessions, 2) if max_sessions else None,
-    }
+        settings = get_settings()
+        stats = get_session_stats()
+        active = stats.get("active_sessions") or stats.get("total_sessions") or 0
+        max_sessions = settings.MAX_ACTIVE_SESSIONS
+        return {
+            "session_stats": stats,
+            "max_active_sessions": max_sessions,
+            "utilization_pct": round(100.0 * active / max_sessions, 2) if max_sessions else None,
+        }
+    except Exception as exc:
+        logger.error(f"Failed to fetch system health metrics: {exc}")
+        return {
+            "error": f"Failed to fetch system health: {str(exc)}",
+            "session_stats": {},
+            "max_active_sessions": None,
+            "utilization_pct": None,
+        }
 
 
 @router.get("/admin-activity", summary="F3: aktivitas admin (chunk edit + re-embed)")
@@ -188,7 +249,18 @@ async def get_system_overview(days: int = Query(default=7, ge=1, le=30), admin: 
             }
         }
     except Exception as e:
-        return {"error": f"Failed to fetch overview: {str(e)}", "data": None}
+        # Log the actual error for debugging instead of generic message
+        logger.error(f"Failed to fetch system overview metrics for {days} days: {str(e)}")
+        return {
+            "error": f"Failed to fetch overview: {str(e)}", 
+            "data": None,
+            "troubleshooting": {
+                "check_database_connection": True,
+                "verify_request_metrics_table": True,
+                "period_days_requested": days,
+                "since_timestamp": since
+            }
+        }
 
 
 # ============================================================

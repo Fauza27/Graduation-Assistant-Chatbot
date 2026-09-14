@@ -359,6 +359,7 @@ def evaluate_rag_no_ground_truth(
         OpenAIEmbeddings(
             model=settings.embedding_model,
             api_key=settings.open_api_key,
+            dimensions=2000,
         )
     )
 
