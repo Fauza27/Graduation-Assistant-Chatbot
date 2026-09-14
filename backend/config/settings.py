@@ -1,6 +1,6 @@
 from functools import lru_cache
 from pathlib import Path
-from pydantic import Field, field_validator, ConfigDict
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import ValidationInfo
 from typing import Optional, Literal
@@ -111,8 +111,24 @@ class Settings(BaseSettings):
     MAX_ACTIVE_SESSIONS: int = Field(default=1000, ge=100, le=10000)
     SESSION_CLEANUP_INTERVAL: int = Field(default=3600, ge=300, le=7200)  # seconds
     USE_DATABASE_SESSIONS: bool = Field(default=True, description="Use database-backed sessions instead of in-memory")
-    MAX_HISTORY_TURNS: int = Field(default=3, ge=1, le=10, description="Maximum number of conversation turns sent to LLM")
-    MAX_TURNS: int = Field(default=5, ge=2, le=10)
+    MEMORY_MAX_HISTORY_TOKENS: int = Field(
+        default=2500,
+        ge=500,
+        le=16000,
+        description="Token budget for conversation summary and recent messages",
+    )
+    MEMORY_MIN_RECENT_TURNS: int = Field(
+        default=2,
+        ge=1,
+        le=10,
+        description="Minimum complete recent Q&A pairs retained after summarization",
+    )
+    MEMORY_SUMMARY_MAX_TOKENS: int = Field(
+        default=500,
+        ge=100,
+        le=4000,
+        description="Maximum output tokens for conversation summarization",
+    )
 
     # Monitoring & Observability
     ENABLE_REQUEST_METRICS: bool = Field(default=True, description="Aktifkan pencatatan request_metrics")
@@ -126,6 +142,15 @@ class Settings(BaseSettings):
             if abs(v + bm25_weight - 1.0) > 0.001:
                 raise ValueError(f"bm25_weight + dense_weight must equal 1.0, got {bm25_weight + v}")
         return v
+
+    @model_validator(mode="after")
+    def validate_memory_token_limits(self) -> "Settings":
+        if self.MEMORY_SUMMARY_MAX_TOKENS >= self.MEMORY_MAX_HISTORY_TOKENS:
+            raise ValueError(
+                "MEMORY_SUMMARY_MAX_TOKENS harus lebih kecil dari "
+                "MEMORY_MAX_HISTORY_TOKENS"
+            )
+        return self
 
     @field_validator("TELEGRAM_WEBHOOK_SECRET", mode='after')
     @classmethod

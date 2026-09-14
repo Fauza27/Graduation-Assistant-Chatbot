@@ -25,7 +25,7 @@ class TestAIServices:
         memory = get_or_create_memory(session_id)
 
         assert isinstance(memory, ConversationMemory)
-        assert memory.max_turns == 5
+        assert memory.max_history_tokens == 2500
         assert len(memory.turns) == 0
 
     def test_get_or_create_memory_existing_session(self):

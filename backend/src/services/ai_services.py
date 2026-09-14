@@ -17,6 +17,7 @@ from src.generation.intent_classifier.reformulator import (
     reformulate_query,
 )
 from src.generation.memory import ConversationMemory
+from src.generation.summarizer import get_conversation_summarizer
 from src.monitoring.context import (
     clear_current,
     end_stage,
@@ -225,6 +226,7 @@ def _generate_answer(
         question=question,
         context_documents=retrieval_docs,
         conversation_history=memory.get_history_for_llm(),
+        conversation_summary=memory.summary,
     )
     t_gen_end = time.time()
     end_stage()
@@ -234,6 +236,32 @@ def _generate_answer(
         t_gen_end - t_gen_start,
     )
     return result.get("answer", "")
+
+
+def _compact_memory_if_needed(memory: ConversationMemory) -> None:
+    """Pindahkan complete exchanges lama ke summary secara fail-safe."""
+    if not memory.needs_compaction:
+        return
+
+    turns_to_summarize = memory.get_turns_to_summarize()
+    try:
+        summary = get_conversation_summarizer().summarize(
+            existing_summary=memory.summary,
+            turns=turns_to_summarize,
+        )
+        if not summary:
+            logger.warning("Memory summarization menghasilkan teks kosong")
+            return
+
+        memory.apply_summary(summary, turns_to_summarize)
+        logger.info(
+            "Compacted {} old message(s); {} recent turn(s) retained",
+            len(turns_to_summarize),
+            memory.turn_count,
+        )
+    except Exception as exc:
+        # Jangan membuang turn lama ketika layanan summarization gagal.
+        logger.warning("Memory summarization gagal; recent turns dipertahankan: {}", exc)
 
 
 def _persist_conversation(
@@ -258,6 +286,8 @@ def _persist_conversation(
         )
     else:
         memory.add_assistant_turn(content=answer)
+
+    _compact_memory_if_needed(memory)
 
     start_stage("db_save")
     _save_memory_if_needed(

@@ -5,7 +5,6 @@ from functools import lru_cache
 from operator import itemgetter
 from typing import Any
 
-import tiktoken
 from langchain_core.documents import Document
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from langchain_core.output_parsers import StrOutputParser
@@ -14,6 +13,7 @@ from langchain_openai import ChatOpenAI
 from loguru import logger
 
 from config.settings import get_settings
+from src.generation.token_utils import count_tokens
 from src.monitoring.context import set_field
 from src.monitoring.openai_client import build_instrumented_http_client
 from src.monitoring.pricing import calculate_llm_cost
@@ -44,6 +44,9 @@ ATURAN MENJAWAB:
 
 
 USER_PROMPT = """
+RINGKASAN PERCAKAPAN LAMA:
+{conversation_summary}
+
 KONTEKS DOKUMEN:
 {context}
 
@@ -73,14 +76,6 @@ def get_llm() -> ChatOpenAI:
         http_client=build_instrumented_http_client(),
     )
 
-
-@lru_cache(maxsize=1)
-def get_token_encoder():
-    """Create and cache the tokenizer used for profiling."""
-    try:
-        return tiktoken.encoding_for_model(settings.llm_model)
-    except KeyError:
-        return tiktoken.encoding_for_model("gpt-4o")
 
 def format_context(
     documents: list[Document] | list[dict[str, Any]] | str,
@@ -210,15 +205,11 @@ def build_sources(
 
     return sources
 
-def count_tokens(text: str) -> int:
-    """Return the estimated token count for the given text."""
-    return len(get_token_encoder().encode(text))
-
-
 def estimate_prompt_tokens(
     question: str,
     context: str,
     history: list[dict[str, Any]],
+    conversation_summary: str = "",
 ) -> dict[str, int]:
     """Estimate token usage before the LLM call."""
     return {
@@ -226,7 +217,7 @@ def estimate_prompt_tokens(
         "history": sum(
             count_tokens(str(message.get("content", "")))
             for message in history
-        ),
+        ) + count_tokens(conversation_summary),
         "context": count_tokens(context),
         "query": count_tokens(question),
     }
@@ -294,6 +285,7 @@ def build_messages(
     question: str,
     context: str,
     history: list[dict[str, Any]],
+    conversation_summary: str = "",
 ) -> list[Any]:
     """Build LangChain messages from system prompt and chat history."""
     messages = [SystemMessage(content=SYSTEM_PROMPT)]
@@ -310,6 +302,7 @@ def build_messages(
     human_prompt = ChatPromptTemplate.from_template(
         USER_PROMPT
     ).format(
+        conversation_summary=conversation_summary or "-",
         context=context,
         question=question,
     )
@@ -328,6 +321,7 @@ class RAGGenerator:
         | list[dict[str, Any]]
         | str,
         conversation_history: list[dict[str, Any]] | None = None,
+        conversation_summary: str = "",
         return_sources: bool = True,
     ) -> dict[str, Any]:
         history = conversation_history or []
@@ -348,12 +342,14 @@ class RAGGenerator:
             question=question,
             context=context,
             history=history,
+            conversation_summary=conversation_summary,
         )
 
         messages = build_messages(
             question=question,
             context=context,
             history=history,
+            conversation_summary=conversation_summary,
         )
 
         try:

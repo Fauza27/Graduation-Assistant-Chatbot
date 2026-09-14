@@ -9,7 +9,11 @@ from supabase import Client, create_client
 
 from config.settings import get_settings
 from src.services.session_strategy import SessionAccessError, verify_session_owner
-from src.generation.memory import ConversationMemory
+from src.generation.memory import (
+    ConversationMemory,
+    create_conversation_memory,
+    get_memory_config,
+)
 
 
 settings = get_settings()
@@ -118,7 +122,6 @@ class SessionCache:
         with self._lock:
             for session_id in idle_session_ids:
                 self._items.pop(session_id, None)
-
 
 class DatabaseSessionStore:
     """
@@ -272,7 +275,6 @@ class DatabaseSessionStore:
         ttl_seconds: Optional[int] = None,
     ) -> int:
         """Hapus session yang sudah idle terlalu lama."""
-
         ttl_seconds = (
             ttl_seconds
             if ttl_seconds is not None
@@ -288,29 +290,12 @@ class DatabaseSessionStore:
                 )
                 .execute()
             )
-
             cleaned_count = result.data or 0
-
             if cleaned_count:
-                logger.info(
-                    f"Cleaned up {cleaned_count} idle session(s)"
-                )
-
-            # TODO: RPC saat ini hanya mengembalikan jumlah baris yang
-            # dihapus (INTEGER), bukan daftar session_id-nya. Akibatnya,
-            # SessionCache.remove_idle() tidak bisa dipanggil di sini
-            # karena kita tidak tahu ID mana yang dihapus.
-            # Solusi: ubah signature RPC menjadi RETURNS TABLE(session_id TEXT)
-            # lalu panggil self._cache.remove_idle(deleted_ids) setelahnya.
-            # Sampai saat itu, cache akan dibersihkan secara alami oleh
-            # mekanisme LRU eviction dan verifikasi DB pada cache miss.
-
+                logger.info("Cleaned up {} idle session(s)", cleaned_count)
             return cleaned_count
-
         except Exception as exc:
-            logger.error(
-                f"Failed to cleanup idle sessions: {exc}"
-            )
+            logger.error("Failed to cleanup idle sessions: {}", exc)
             return 0
 
     def get_session_stats(self) -> Dict[str, Any]:
@@ -390,7 +375,7 @@ class DatabaseSessionStore:
 
             sessions = []
             for row in result.data or []:
-                turns = row.get("turns") or []
+                turns = ConversationMemory.serialized_turns(row.get("turns"))
                 title = "Sesi Tanpa Judul"
                 
                 # Extract title from first user message
@@ -437,7 +422,9 @@ class DatabaseSessionStore:
             if not result.data:
                 return None
 
-            turns = result.data[0].get("turns") or []
+            turns = ConversationMemory.serialized_turns(
+                result.data[0].get("turns")
+            )
             messages = []
             
             for turn in turns:
@@ -568,7 +555,7 @@ class DatabaseSessionStore:
                     "creating new memory"
                 )
                 return (
-                    ConversationMemory(max_turns=settings.MAX_TURNS),
+                    create_conversation_memory(),
                     mahasiswa_id,
                 )
 
@@ -581,7 +568,7 @@ class DatabaseSessionStore:
 
         if not data:
             return (
-                ConversationMemory(max_turns=settings.MAX_TURNS),
+                create_conversation_memory(),
                 mahasiswa_id,
             )
 
@@ -596,13 +583,13 @@ class DatabaseSessionStore:
 
         if not turns:
             return (
-                ConversationMemory(max_turns=settings.MAX_TURNS),
+                create_conversation_memory(),
                 owner_id,
             )
 
         memory = ConversationMemory.from_dict(
             turns,
-            max_turns=settings.MAX_TURNS,
+            **get_memory_config(),
         )
 
         return memory, owner_id

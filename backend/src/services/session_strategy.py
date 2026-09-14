@@ -22,7 +22,7 @@ from typing import TYPE_CHECKING, Any, Optional
 from loguru import logger
 
 from config.settings import get_settings
-from src.generation.memory import ConversationMemory
+from src.generation.memory import ConversationMemory, create_conversation_memory
 from src.monitoring.errors import SessionAccessError
 
 if TYPE_CHECKING:
@@ -245,12 +245,10 @@ class InMemorySessionStrategy(SessionStore):
         self,
         max_sessions: int,
         ttl_seconds: int,
-        max_turns: int,
     ):
         self._sessions: dict[str, SessionEntry] = {}
         self._max_sessions = max(1, max_sessions)
         self._ttl_seconds = max(1, ttl_seconds)
-        self._max_turns = max(1, max_turns)
         self._lock = Lock()
 
         logger.info(
@@ -287,9 +285,7 @@ class InMemorySessionStrategy(SessionStore):
 
                 return entry.memory
 
-            memory = ConversationMemory(
-                max_turns=self._max_turns
-            )
+            memory = create_conversation_memory()
 
             self._sessions[session_id] = SessionEntry(
                 memory=memory,
@@ -492,7 +488,6 @@ def create_session_store() -> SessionStore:
         return InMemorySessionStrategy(
             max_sessions=settings.MAX_ACTIVE_SESSIONS,
             ttl_seconds=settings.SESSION_CLEANUP_INTERVAL,
-            max_turns=settings.MAX_TURNS,
         )
 
     try:
