@@ -1,0 +1,509 @@
+"""Supabase persistence boundary for evaluation jobs and artifacts."""
+
+from __future__ import annotations
+
+from collections import defaultdict
+from datetime import datetime, timezone
+from functools import lru_cache
+from typing import Any
+
+from supabase import Client, create_client
+
+from config.settings import get_settings
+from src.evaluation_agent.document_reader import (
+    PROJECT_ROOT,
+    OriginalDocumentReader,
+    sha256_file,
+)
+from src.evaluation_agent.models import (
+    ChunkAudit,
+    DiagnosisReview,
+    DocumentSpec,
+    EvaluationCase,
+    EvidenceCandidate,
+    RegisteredDocument,
+)
+
+
+def _now() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+class EvaluationRepository:
+    def __init__(self, client: Client) -> None:
+        self.client = client
+
+    def register_document(self, spec: DocumentSpec) -> RegisteredDocument:
+        checksum = sha256_file(spec.path)
+        document_result = (
+            self.client.table("source_documents")
+            .upsert(
+                {
+                    "slug": spec.slug,
+                    "title": spec.title,
+                    "domain": spec.domain,
+                    "chunk_source": spec.chunk_source,
+                    "is_active": True,
+                    "updated_at": _now(),
+                },
+                on_conflict="slug",
+            )
+            .execute()
+        )
+        document_id = str(document_result.data[0]["document_id"])
+        page_count = len(OriginalDocumentReader().read_pages(spec.path))
+        version_result = (
+            self.client.table("source_document_versions")
+            .upsert(
+                {
+                    "document_id": document_id,
+                    "version_label": spec.version,
+                    "checksum_sha256": checksum,
+                    "storage_path": spec.path.relative_to(PROJECT_ROOT).as_posix(),
+                    "page_count": page_count,
+                    "extraction_status": "ready",
+                    "extraction_error": None,
+                },
+                on_conflict="document_id,checksum_sha256",
+            )
+            .execute()
+        )
+        version_id = str(version_result.data[0]["version_id"])
+        child_result = (
+            self.client.table("child_documents")
+            .select("parent_id")
+            .eq("source", spec.chunk_source)
+            .execute()
+        )
+        parent_ids = list(
+            dict.fromkeys(
+                str(row["parent_id"])
+                for row in child_result.data or []
+                if row.get("parent_id")
+            )
+        )
+        (
+            self.client.table("child_documents")
+            .update({"source_document_version_id": version_id})
+            .eq("source", spec.chunk_source)
+            .execute()
+        )
+        if parent_ids:
+            (
+                self.client.table("parent_documents")
+                .update({"source_document_version_id": version_id})
+                .in_("parent_id", parent_ids)
+                .execute()
+            )
+        return RegisteredDocument(
+            document_id=document_id,
+            version_id=version_id,
+            spec=spec,
+            checksum_sha256=checksum,
+            page_count=page_count,
+        )
+
+    def list_cases(self, statuses: list[str]) -> list[EvaluationCase]:
+        result = (
+            self.client.table("evaluation_cases")
+            .select("*")
+            .in_("review_status", statuses)
+            .order("created_at")
+            .execute()
+        )
+        return [EvaluationCase.model_validate(row) for row in result.data or []]
+
+    def get_cases(self, case_ids: list[str]) -> list[EvaluationCase]:
+        if not case_ids:
+            return []
+        result = (
+            self.client.table("evaluation_cases")
+            .select("*")
+            .in_("case_id", case_ids)
+            .execute()
+        )
+        rows = {str(row["case_id"]): row for row in result.data or []}
+        return [
+            EvaluationCase.model_validate(rows[case_id])
+            for case_id in case_ids
+            if case_id in rows
+        ]
+
+    def create_case_from_request(
+        self,
+        request_id: str,
+        *,
+        review_status: str,
+        expected_answer: str | None,
+        expected_evidence: dict | None,
+        review_notes: str | None,
+        created_by: str,
+    ) -> dict:
+        metric_result = (
+            self.client.table("request_metrics")
+            .select("request_id,question")
+            .eq("request_id", request_id)
+            .limit(1)
+            .execute()
+        )
+        if not metric_result.data:
+            raise LookupError("request_id tidak ditemukan")
+        trace = self.load_trace(request_id)
+        metric = metric_result.data[0]
+        result = (
+            self.client.table("evaluation_cases")
+            .upsert(
+                {
+                    "request_id": request_id,
+                    "question": metric.get("question") or "",
+                    "actual_answer": trace.get("answer"),
+                    "review_status": review_status,
+                    "expected_answer": expected_answer,
+                    "expected_evidence": expected_evidence,
+                    "review_notes": review_notes,
+                    "created_by": created_by,
+                    "updated_at": _now(),
+                },
+                on_conflict="request_id",
+            )
+            .execute()
+        )
+        return dict(result.data[0])
+
+    def get_case_by_request(self, request_id: str) -> dict | None:
+        result = (
+            self.client.table("evaluation_cases")
+            .select("*")
+            .eq("request_id", request_id)
+            .limit(1)
+            .execute()
+        )
+        return dict(result.data[0]) if result.data else None
+
+    def update_case(self, case_id: str, fields: dict) -> dict:
+        fields = {**fields, "updated_at": _now()}
+        result = (
+            self.client.table("evaluation_cases")
+            .update(fields)
+            .eq("case_id", case_id)
+            .execute()
+        )
+        if not result.data:
+            raise LookupError("evaluation case tidak ditemukan")
+        return dict(result.data[0])
+
+    def list_runs(self, limit: int = 50) -> list[dict]:
+        result = (
+            self.client.table("evaluation_runs")
+            .select("*")
+            .order("created_at", desc=True)
+            .limit(limit)
+            .execute()
+        )
+        return list(result.data or [])
+
+    def get_run_report(self, run_id: str) -> dict:
+        run = (
+            self.client.table("evaluation_runs")
+            .select("*")
+            .eq("run_id", run_id)
+            .limit(1)
+            .execute()
+        )
+        if not run.data:
+            raise LookupError("evaluation run tidak ditemukan")
+        findings = (
+            self.client.table("evaluation_findings")
+            .select("*")
+            .eq("run_id", run_id)
+            .execute()
+        )
+        finding_rows = list(findings.data or [])
+        case_links = (
+            self.client.table("evaluation_run_cases")
+            .select("case_id,status,error_message")
+            .eq("run_id", run_id)
+            .execute()
+        )
+        case_ids = [str(row["case_id"]) for row in case_links.data or []]
+        cases = self.get_cases(case_ids)
+        evidence_result = (
+            self.client.table("evaluation_evidence")
+            .select("*")
+            .eq("run_id", run_id)
+            .order("confidence", desc=True)
+            .execute()
+        )
+        finding_ids = [row["finding_id"] for row in finding_rows]
+        recommendations: list[dict] = []
+        if finding_ids:
+            recommendation_result = (
+                self.client.table("evaluation_recommendations")
+                .select("*")
+                .in_("finding_id", finding_ids)
+                .execute()
+            )
+            recommendations = list(recommendation_result.data or [])
+        return {
+            "run": run.data[0],
+            "cases": [case.model_dump(mode="json") for case in cases],
+            "case_statuses": list(case_links.data or []),
+            "evidence": list(evidence_result.data or []),
+            "findings": finding_rows,
+            "recommendations": recommendations,
+        }
+
+    def review_recommendation(
+        self, recommendation_id: str, status: str, reviewed_by: str
+    ) -> dict:
+        result = (
+            self.client.table("evaluation_recommendations")
+            .update(
+                {
+                    "status": status,
+                    "reviewed_by": reviewed_by,
+                    "reviewed_at": _now(),
+                }
+            )
+            .eq("recommendation_id", recommendation_id)
+            .execute()
+        )
+        if not result.data:
+            raise LookupError("rekomendasi tidak ditemukan")
+        return dict(result.data[0])
+
+    def load_regression_inputs(self, run_id: str) -> list[dict]:
+        links = (
+            self.client.table("evaluation_run_cases")
+            .select("case_id")
+            .eq("run_id", run_id)
+            .execute()
+        )
+        case_ids = [row["case_id"] for row in links.data or []]
+        if not case_ids:
+            return []
+        cases = (
+            self.client.table("evaluation_cases")
+            .select("*")
+            .in_("case_id", case_ids)
+            .execute()
+        )
+        evidence = (
+            self.client.table("evaluation_evidence")
+            .select("case_id,evidence_text")
+            .eq("run_id", run_id)
+            .eq("is_verified", True)
+            .execute()
+        )
+        findings = (
+            self.client.table("evaluation_findings")
+            .select("case_id,affected_chunk_ids")
+            .eq("run_id", run_id)
+            .execute()
+        )
+        evidence_parts: dict[str, list[str]] = defaultdict(list)
+        for row in evidence.data or []:
+            evidence_text = str(row.get("evidence_text", "")).strip()
+            if evidence_text:
+                evidence_parts[str(row["case_id"])].append(evidence_text)
+        evidence_by_case = {
+            case_id: "\n\n".join(parts) for case_id, parts in evidence_parts.items()
+        }
+        chunks_by_case = {
+            str(row["case_id"]): row.get("affected_chunk_ids", [])
+            for row in findings.data or []
+        }
+        return [
+            {
+                "case": EvaluationCase.model_validate(row),
+                "evidence_text": evidence_by_case.get(str(row["case_id"]), ""),
+                "affected_chunk_ids": chunks_by_case.get(str(row["case_id"]), []),
+            }
+            for row in cases.data or []
+        ]
+
+    def save_regression_result(self, row: dict) -> None:
+        self.client.table("regression_results").insert(row).execute()
+
+    def create_run(self, model: str, case_ids: list[str], config: dict) -> str:
+        result = (
+            self.client.table("evaluation_runs")
+            .insert(
+                {
+                    "status": "pending",
+                    "evaluator_model": model,
+                    "configuration": config,
+                    "total_cases": len(case_ids),
+                }
+            )
+            .execute()
+        )
+        run_id = str(result.data[0]["run_id"])
+        if case_ids:
+            self.client.table("evaluation_run_cases").insert(
+                [{"run_id": run_id, "case_id": case_id} for case_id in case_ids]
+            ).execute()
+        return run_id
+
+    def get_run_case_ids(self, run_id: str) -> list[str]:
+        result = (
+            self.client.table("evaluation_run_cases")
+            .select("case_id")
+            .eq("run_id", run_id)
+            .order("case_id")
+            .execute()
+        )
+        return [str(row["case_id"]) for row in result.data or []]
+
+    def get_run(self, run_id: str) -> dict:
+        result = (
+            self.client.table("evaluation_runs")
+            .select("*")
+            .eq("run_id", run_id)
+            .limit(1)
+            .execute()
+        )
+        if not result.data:
+            raise LookupError("evaluation run tidak ditemukan")
+        return dict(result.data[0])
+
+    def update_run(self, run_id: str, **fields: Any) -> None:
+        self.client.table("evaluation_runs").update(fields).eq(
+            "run_id", run_id
+        ).execute()
+
+    def claim_run(self, run_id: str) -> bool:
+        """Atomically claim a pending or failed run for one worker."""
+        result = (
+            self.client.table("evaluation_runs")
+            .update(
+                {
+                    "status": "running",
+                    "processed_cases": 0,
+                    "started_at": _now(),
+                    "completed_at": None,
+                    "error_message": None,
+                }
+            )
+            .eq("run_id", run_id)
+            .in_("status", ["pending", "failed"])
+            .execute()
+        )
+        return bool(result.data)
+
+    def update_run_case(self, run_id: str, case_id: str, **fields: Any) -> None:
+        (
+            self.client.table("evaluation_run_cases")
+            .update(fields)
+            .eq("run_id", run_id)
+            .eq("case_id", case_id)
+            .execute()
+        )
+
+    def clear_case_results(self, run_id: str, case_id: str) -> None:
+        """Remove partial artifacts before safely retrying one case."""
+        (
+            self.client.table("evaluation_evidence")
+            .delete()
+            .eq("run_id", run_id)
+            .eq("case_id", case_id)
+            .execute()
+        )
+        # Recommendations are removed through the finding's ON DELETE CASCADE.
+        (
+            self.client.table("evaluation_findings")
+            .delete()
+            .eq("run_id", run_id)
+            .eq("case_id", case_id)
+            .execute()
+        )
+
+    def load_trace(self, request_id: str | None) -> dict:
+        if not request_id:
+            return {}
+        result = (
+            self.client.table("rag_execution_traces")
+            .select("*")
+            .eq("request_id", request_id)
+            .limit(1)
+            .execute()
+        )
+        return dict(result.data[0]) if result.data else {}
+
+    def load_chunks(self, document: RegisteredDocument) -> list[dict]:
+        result = (
+            self.client.table("child_documents")
+            .select("id,parent_id,title,content,section,pages,source,domain")
+            .eq("source_document_version_id", document.version_id)
+            .execute()
+        )
+        if result.data:
+            return list(result.data)
+        fallback = (
+            self.client.table("child_documents")
+            .select("id,parent_id,title,content,section,pages,source,domain")
+            .eq("source", document.spec.chunk_source)
+            .execute()
+        )
+        return list(fallback.data or [])
+
+    def save_evidence(self, run_id: str, evidence: EvidenceCandidate) -> None:
+        self.client.table("evaluation_evidence").insert(
+            {
+                "run_id": run_id,
+                "case_id": evidence.case_id,
+                "version_id": evidence.version_id,
+                "page_start": evidence.page_start,
+                "page_end": evidence.page_end,
+                "evidence_text": evidence.evidence_text,
+                "explanation": evidence.explanation,
+                "confidence": evidence.confidence,
+                "is_verified": evidence.is_verified,
+            }
+        ).execute()
+
+    def save_finding(
+        self,
+        run_id: str,
+        case_id: str,
+        answer_available: bool,
+        audit: ChunkAudit,
+        review: DiagnosisReview,
+    ) -> str:
+        result = (
+            self.client.table("evaluation_findings")
+            .upsert(
+                {
+                    "run_id": run_id,
+                    "case_id": case_id,
+                    "answer_available": answer_available,
+                    "failed_stage": review.failed_stage.value,
+                    "root_cause": review.root_cause,
+                    "confidence": review.confidence,
+                    "affected_chunk_ids": audit.affected_chunk_ids,
+                    "diagnostics": audit.diagnostics,
+                },
+                on_conflict="run_id,case_id",
+            )
+            .execute()
+        )
+        finding_id = str(result.data[0]["finding_id"])
+        if review.recommendations:
+            self.client.table("evaluation_recommendations").insert(
+                [
+                    {
+                        "finding_id": finding_id,
+                        **recommendation.model_dump(mode="json"),
+                    }
+                    for recommendation in review.recommendations
+                ]
+            ).execute()
+        return finding_id
+
+
+@lru_cache(maxsize=1)
+def get_evaluation_repository() -> EvaluationRepository:
+    settings = get_settings()
+    return EvaluationRepository(
+        create_client(settings.supabase_url, settings.supabase_service_key)
+    )

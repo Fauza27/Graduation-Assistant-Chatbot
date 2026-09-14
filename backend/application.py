@@ -23,6 +23,7 @@ from src.api import auth
 from src.api import sessions
 from src.api import admin
 from src.api import admin_metrics
+from src.api import admin_evaluations
 
 API_PREFIX = "/api"
 DEFAULT_RATE_LIMIT = "100/minute"
@@ -131,6 +132,7 @@ def _register_routers(app: FastAPI) -> None:
     app.include_router(sessions.router, prefix=API_PREFIX)
     app.include_router(admin.router, prefix=API_PREFIX)
     app.include_router(admin_metrics.router, prefix=API_PREFIX)
+    app.include_router(admin_evaluations.router, prefix=API_PREFIX)
     app.include_router(health_router.router)
  
     app.add_api_route(

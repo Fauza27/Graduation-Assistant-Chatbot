@@ -1,0 +1,25 @@
+documents:
+  - slug: panduan-pi
+    title: Panduan Penyusunan Penulisan Ilmiah (PI)
+    domain: PI
+    version: current
+    path: extract-pdf/PI/Panduan Penyusunan Penulisan Imliah (PI) Cetak.pdf
+    chunk_source: Panduan Penyusunan Penulisan Imliah (PI) Cetak
+  - slug: panduan-kkp
+    title: Panduan Penyusunan Kuliah Kerja Praktik (KKP)
+    domain: KKP
+    version: current
+    path: extract-pdf/KKP/Panduan Penyusunan Kuliah Kerja Praktik (KKP) Cetak.pdf
+    chunk_source: Panduan Penyusunan Kuliah Kerja Praktik (KKP) Cetak
+  - slug: panduan-skripsi-2024
+    title: Panduan Tugas Akhir Skripsi 2024
+    domain: SKRIPSI
+    version: "2024"
+    path: extract-pdf/Skripsi/Panduan-Tugas-Akhir-Skripsi-2024.pdf
+    chunk_source: Panduan Penulisan Tugas Akhir Skripsi - STMIK Widya Cipta Dharma (2024)
+  - slug: panduan-non-skripsi-2024
+    title: Panduan Tugas Akhir Non-Skripsi 2024
+    domain: NON_SKRIPSI
+    version: "2024"
+    path: extract-pdf/Non-Skripsi/Panduan-Tugas-Akhir-Non-Skripsi-2024.pdf
+    chunk_source: Panduan Penulisan Tugas Akhir Non Skripsi - STMIK Widya Cipta Dharma (2024)
