@@ -13,10 +13,12 @@ prompt, dan kode tetap memerlukan keputusan manusia.
 
 ## Alur penggunaan
 
-1. Admin membuka detail request pada halaman Monitoring.
-2. Admin menilai jawaban sebagai benar, salah, tidak lengkap, atau belum pasti.
+1. Sistem otomatis memasukkan request tanpa dokumen relevan, seluruh kandidat
+   yang ditolak, dan error retrieval sebagai kandidat `unreviewed`.
+2. Admin juga dapat membuka detail request pada halaman Monitoring dan menilai
+   jawaban sebagai benar, salah, tidak lengkap, atau belum pasti.
    Expected answer dan catatan bersifat opsional.
-3. Kasus salah, tidak lengkap, dan belum pasti muncul di halaman Evaluasi RAG.
+3. Kandidat otomatis dan kasus yang ditandai admin muncul di halaman Evaluasi RAG.
 4. Admin memilih kasus dan membuat batch. API hanya membuat antrean dengan status
    `pending`, sehingga proses panjang tidak berjalan di dalam web server.
 5. Worker dijalankan dari terminal menggunakan `run_id` yang ditampilkan dashboard.

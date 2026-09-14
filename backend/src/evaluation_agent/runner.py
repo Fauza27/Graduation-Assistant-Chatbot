@@ -23,6 +23,7 @@ from src.evaluation_agent.model_client import (
 )
 from src.evaluation_agent.models import (
     ChunkAudit,
+    EVALUATION_QUEUE_STATUSES,
     EvaluationCase,
     EvidenceCandidate,
     PageWindow,
@@ -70,7 +71,7 @@ class EvaluationRunner:
         return [self.repository.register_document(spec) for spec in specs]
 
     def run(self, case_ids: set[str] | None = None) -> tuple[str, Path]:
-        cases = self.repository.list_cases(["incorrect", "incomplete", "uncertain"])
+        cases = self.repository.list_cases(list(EVALUATION_QUEUE_STATUSES))
         if case_ids is not None:
             cases = [case for case in cases if case.case_id in case_ids]
         if not cases:

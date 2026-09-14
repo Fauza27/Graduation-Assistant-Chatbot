@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field
 from config.settings import get_settings
 from src.admin.auth import get_current_admin
 from src.evaluation_agent.repository import get_evaluation_repository
+from src.evaluation_agent.models import EVALUATION_QUEUE_STATUSES
 
 
 router = APIRouter(prefix="/admin/evaluations", tags=["Admin Evaluations"])
@@ -48,9 +49,7 @@ def _admin_identity(admin: dict) -> str:
 
 @router.get("/cases")
 def list_evaluation_cases(
-    status: list[ReviewStatusValue] = Query(
-        default=["incorrect", "incomplete", "uncertain"]
-    ),
+    status: list[ReviewStatusValue] = Query(default=list(EVALUATION_QUEUE_STATUSES)),
     admin: dict = Depends(get_current_admin),
 ):
     del admin
@@ -135,7 +134,7 @@ def start_evaluation_run(
             detail="Evaluation agent belum diaktifkan pada konfigurasi backend",
         )
     repository = get_evaluation_repository()
-    cases = repository.list_cases(["incorrect", "incomplete", "uncertain"])
+    cases = repository.list_cases(list(EVALUATION_QUEUE_STATUSES))
     if body.case_ids is not None:
         requested = set(body.case_ids)
         cases = [case for case in cases if case.case_id in requested]

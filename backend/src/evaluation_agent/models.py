@@ -17,6 +17,14 @@ class ReviewStatus(str, Enum):
     UNCERTAIN = "uncertain"
 
 
+EVALUATION_QUEUE_STATUSES = (
+    ReviewStatus.UNREVIEWED.value,
+    ReviewStatus.INCORRECT.value,
+    ReviewStatus.INCOMPLETE.value,
+    ReviewStatus.UNCERTAIN.value,
+)
+
+
 class FailureStage(str, Enum):
     INFORMATION_UNAVAILABLE = "information_unavailable"
     EXTRACTION = "extraction"
@@ -73,6 +81,7 @@ class EvaluationCase(BaseModel):
     expected_answer: str | None = None
     expected_evidence: dict[str, Any] | None = None
     review_notes: str | None = None
+    created_by: str | None = None
 
 
 class EvidenceCandidateLLM(BaseModel):

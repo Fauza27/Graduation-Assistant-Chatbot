@@ -9,7 +9,7 @@ class QueueRepository:
         self.created = None
 
     def list_cases(self, statuses):
-        assert statuses == ["incorrect", "incomplete", "uncertain"]
+        assert statuses == ["unreviewed", "incorrect", "incomplete", "uncertain"]
         return [
             EvaluationCase(
                 case_id="case-1",

@@ -23,6 +23,10 @@ const STAGE_LABEL: Record<string, string> = {
   context_assembly: 'Penyusunan konteks', generation: 'Pembuatan jawaban',
   ambiguous: 'Belum pasti', unknown: 'Tidak diketahui',
 };
+const REVIEW_LABEL: Record<string, string> = {
+  unreviewed: 'Kandidat otomatis', correct: 'Benar', incorrect: 'Salah',
+  incomplete: 'Tidak lengkap', uncertain: 'Belum pasti',
+};
 const errorText = (error: unknown) => error instanceof Error ? error.message : 'Terjadi kesalahan.';
 
 export default function EvaluationsPage() {
@@ -112,17 +116,17 @@ export default function EvaluationsPage() {
 
       <section className={styles.panel}>
         <div className={styles.panelHeader}>
-          <div><h2>Kasus yang perlu dianalisis</h2><p>{cases.length} kasus berstatus salah, tidak lengkap, atau belum pasti.</p></div>
+          <div><h2>Antrean kasus evaluasi</h2><p>{cases.length} kandidat otomatis dan kasus yang ditandai admin.</p></div>
           <button className={styles.primaryButton} onClick={() => void queueRun()} disabled={working || cases.length === 0}><Play aria-hidden="true" />{selectedCount ? `Jadwalkan ${selectedCount} kasus` : 'Jadwalkan semua'}</button>
         </div>
         <div className={styles.tableWrap}>
-          <table><thead><tr><th><input type="checkbox" checked={allSelected} onChange={toggleAll} aria-label="Pilih semua kasus" /></th><th>Pertanyaan</th><th>Penilaian admin</th><th>Catatan</th></tr></thead>
+          <table><thead><tr><th><input type="checkbox" checked={allSelected} onChange={toggleAll} aria-label="Pilih semua kasus" /></th><th>Pertanyaan</th><th>Status</th><th>Sumber</th><th>Catatan</th></tr></thead>
             <tbody>
               {cases.map((item) => <tr key={item.case_id}>
                 <td><input type="checkbox" checked={selectedCases.has(item.case_id)} onChange={() => setSelectedCases((current) => { const next = new Set(current); if (next.has(item.case_id)) next.delete(item.case_id); else next.add(item.case_id); return next; })} aria-label={`Pilih ${item.question}`} /></td>
-                <td>{item.question}</td><td><span className={styles.badge}>{item.review_status}</span></td><td>{item.review_notes || '—'}</td>
+                <td>{item.question}</td><td><span className={styles.badge}>{REVIEW_LABEL[item.review_status] || item.review_status}</span></td><td>{item.created_by?.startsWith('system:auto:') ? 'Sistem' : 'Admin'}</td><td>{item.review_notes || '—'}</td>
               </tr>)}
-              {!loading && cases.length === 0 && <tr><td colSpan={4} className={styles.empty}>Belum ada kasus gagal yang ditandai.</td></tr>}
+              {!loading && cases.length === 0 && <tr><td colSpan={5} className={styles.empty}>Belum ada kandidat evaluasi.</td></tr>}
             </tbody>
           </table>
         </div>

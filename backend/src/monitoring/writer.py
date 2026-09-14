@@ -23,6 +23,7 @@ from src.monitoring.context import RequestMetricsCollector, get_current
 # Supabase client
 # ---------------------------------------------------------------------------
 
+
 @lru_cache(maxsize=1)
 def _get_supabase_client() -> Client:
     """Return cached Supabase client."""
@@ -38,16 +39,16 @@ def _get_supabase_client() -> Client:
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _metrics_enabled(settings: Settings) -> bool:
     """Return apakah request metrics diaktifkan."""
-    return bool(
-        getattr(settings, "ENABLE_REQUEST_METRICS", True)
-    )
+    return bool(getattr(settings, "ENABLE_REQUEST_METRICS", True))
 
 
 # ---------------------------------------------------------------------------
 # Persistence
 # ---------------------------------------------------------------------------
+
 
 def persist_metrics(collector: RequestMetricsCollector) -> None:
     """
@@ -67,14 +68,10 @@ def persist_metrics(collector: RequestMetricsCollector) -> None:
 
         row = collector.to_row()
 
-        (
-            _get_supabase_client()
-            .table("request_metrics")
-            .insert(row)
-            .execute()
-        )
+        (_get_supabase_client().table("request_metrics").insert(row).execute())
         collector._persisted = True
         persist_execution_trace(collector)
+        persist_auto_evaluation_candidate(collector)
 
     except Exception as exc:
         logger.error(
@@ -101,6 +98,44 @@ def persist_execution_trace(collector: RequestMetricsCollector) -> None:
     except Exception as exc:
         logger.error(
             "[metrics] Gagal menyimpan rag_execution_traces "
+            f"request_id={collector.request_id}: {exc}"
+        )
+
+
+def persist_auto_evaluation_candidate(
+    collector: RequestMetricsCollector,
+) -> None:
+    """Collect clear RAG failures without overriding an admin review."""
+    if not get_settings().EVALUATION_AGENT_ENABLED:
+        return
+
+    from src.evaluation_agent.candidate_rules import detect_auto_candidate
+
+    decision = detect_auto_candidate(collector)
+    if decision is None:
+        return
+
+    try:
+        (
+            _get_supabase_client()
+            .table("evaluation_cases")
+            .upsert(
+                {
+                    "request_id": collector.request_id,
+                    "question": (collector.question or "").strip(),
+                    "actual_answer": collector.answer,
+                    "review_status": "unreviewed",
+                    "review_notes": decision.explanation,
+                    "created_by": f"system:auto:{decision.reason_code}",
+                },
+                on_conflict="request_id",
+                ignore_duplicates=True,
+            )
+            .execute()
+        )
+    except Exception as exc:
+        logger.error(
+            "[metrics] Gagal menambahkan kandidat evaluasi otomatis "
             f"request_id={collector.request_id}: {exc}"
         )
 
@@ -149,12 +184,7 @@ def persist_quota_rejection(
 
         row = fallback_collector.to_row()
 
-        (
-            _get_supabase_client()
-            .table("request_metrics")
-            .insert(row)
-            .execute()
-        )
+        (_get_supabase_client().table("request_metrics").insert(row).execute())
 
     except Exception as exc:
         logger.error(

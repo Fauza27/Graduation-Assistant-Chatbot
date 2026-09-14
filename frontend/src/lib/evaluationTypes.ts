@@ -14,6 +14,7 @@ export interface EvaluationCase {
   expected_answer: string | null;
   expected_evidence: Record<string, unknown> | null;
   review_notes: string | null;
+  created_by: string | null;
 }
 
 export interface EvaluationRun {
