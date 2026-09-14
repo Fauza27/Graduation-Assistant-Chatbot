@@ -1,12 +1,18 @@
-from fastapi import APIRouter, HTTPException, Request, status
+from fastapi import APIRouter, HTTPException, Request, Response, status
 from pydantic import BaseModel
-from typing import Dict, Any, Optional
 from loguru import logger
 from supabase import create_client, Client
 
 from config.settings import get_settings
 from src.auth.google_oauth import verify_google_id_token
 from src.auth.jwt_utils import create_access_token, verify_access_token
+from src.auth.refresh_tokens import (
+    InvalidRefreshTokenError,
+    RefreshTokenService,
+    clear_refresh_cookie,
+    set_refresh_cookie,
+)
+from src.security.browser_origin import require_trusted_origin
 
 settings = get_settings()
 
@@ -39,7 +45,7 @@ class GoogleAuthRequest(BaseModel):
     id_token: str
 
 @router.post("/google/verify")
-async def verify_google_auth(request: GoogleAuthRequest):
+async def verify_google_auth(request: GoogleAuthRequest, response: Response):
     """
     Verify Google id_token, upsert to database, and return JWT token.
     """
@@ -82,10 +88,14 @@ async def verify_google_auth(request: GoogleAuthRequest):
             "role": "mahasiswa"
         }
         access_token = create_access_token(payload)
+        if settings.ENABLE_REFRESH_TOKENS:
+            refresh_token = RefreshTokenService(supabase).issue(payload)
+            set_refresh_cookie(response, refresh_token)
 
         return {
             "access_token": access_token,
             "token_type": "bearer",
+            "expires_in": settings.JWT_EXPIRATION_MINUTES * 60,
             "mahasiswa_id": mahasiswa_id,
             "name": name,
             "avatar": picture
@@ -161,9 +171,42 @@ async def get_current_user(request: Request):
             "role": payload.get("role")
         }
 
+@router.post("/refresh")
+async def refresh_access_token(request: Request, response: Response):
+    """Rotate an HttpOnly refresh token and issue a short-lived access token."""
+    if not settings.ENABLE_REFRESH_TOKENS:
+        raise HTTPException(status_code=503, detail="Refresh token belum diaktifkan")
+    require_trusted_origin(request)
+
+    token = request.cookies.get(settings.REFRESH_COOKIE_NAME)
+    if not token:
+        raise HTTPException(status_code=401, detail="Refresh token tidak ditemukan")
+
+    try:
+        rotated = RefreshTokenService(supabase).rotate(token)
+        if rotated.payload.get("role") != "mahasiswa":
+            raise InvalidRefreshTokenError("Refresh token tidak sesuai channel")
+    except InvalidRefreshTokenError as exc:
+        clear_refresh_cookie(response)
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
+    except Exception as exc:
+        logger.error("Refresh token gagal: {}", type(exc).__name__)
+        raise HTTPException(status_code=503, detail="Layanan autentikasi tidak tersedia") from exc
+
+    set_refresh_cookie(response, rotated.token)
+    return {
+        "access_token": create_access_token(rotated.payload),
+        "token_type": "bearer",
+        "expires_in": settings.JWT_EXPIRATION_MINUTES * 60,
+    }
+
+
 @router.post("/logout")
-async def logout():
-    """
-    Logout endpoint. Client is responsible for clearing the token.
-    """
+async def logout(request: Request, response: Response):
+    """Revoke the current refresh token and clear its browser cookie."""
+    require_trusted_origin(request)
+    token = request.cookies.get(settings.REFRESH_COOKIE_NAME)
+    if token and settings.ENABLE_REFRESH_TOKENS:
+        RefreshTokenService(supabase).revoke(token)
+    clear_refresh_cookie(response)
     return {"message": "Logout sukses"}

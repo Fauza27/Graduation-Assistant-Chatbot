@@ -3,7 +3,7 @@
 import './admin.css';
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { getAdminToken } from '@/lib/adminAuth';
+import { getAdminToken, refreshAdminToken } from '@/lib/adminAuth';
 import { useAdminStore } from '@/lib/adminStore';
 import AdminSidebar from '@/components/admin/AdminSidebar';
 import MobileKnowledgeShell from '@/components/admin/MobileKnowledgeShell';
@@ -21,14 +21,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const isKnowledgeBaseRoute = !pathname?.includes('/admin/dashboard/monitoring');
 
   useEffect(() => {
-    const token = getAdminToken();
-    if (!token) {
-      router.push('/admin/login');
-      return;
-    }
-    if (!tree) {
-      fetchTree();
-    }
+    const initialize = async () => {
+      const token = getAdminToken() || await refreshAdminToken();
+      if (!token) {
+        router.push('/admin/login');
+        return;
+      }
+      if (!tree) await fetchTree();
+    };
+    void initialize();
     const handleResize = () => {
       setIsMobileViewport(window.innerWidth < 768);
     };

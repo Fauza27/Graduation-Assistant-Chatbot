@@ -1,9 +1,18 @@
-import { getAuthToken, logout } from './auth';
+import { getAuthToken, logout, refreshAuthToken } from './auth';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://127.0.0.1:8000';
 
-async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {
-  const token = getAuthToken();
+let refreshPromise: Promise<string | null> | null = null;
+
+async function getOrRefreshToken(): Promise<string | null> {
+  const currentToken = getAuthToken();
+  if (currentToken) return currentToken;
+  refreshPromise ||= refreshAuthToken().finally(() => { refreshPromise = null; });
+  return refreshPromise;
+}
+
+async function fetchWithAuth(endpoint: string, options: RequestInit = {}, retry = true) {
+  const token = await getOrRefreshToken();
   if (!token) {
     logout();
     throw new Error('Not authenticated');
@@ -18,7 +27,16 @@ async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     ...options,
     headers,
+    credentials: 'include',
   });
+
+  if (response.status === 401 && retry) {
+    refreshPromise ||= refreshAuthToken().finally(() => { refreshPromise = null; });
+    const refreshedToken = await refreshPromise;
+    if (refreshedToken) {
+      return fetchWithAuth(endpoint, options, false);
+    }
+  }
 
   if (response.status === 401) {
     logout();

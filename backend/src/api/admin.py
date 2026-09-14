@@ -1,6 +1,6 @@
-from typing import List, Optional
+from typing import Optional
 from datetime import datetime
-from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks, Request
+from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks, Request, Response
 from pydantic import BaseModel, Field, field_validator
 from supabase import Client
 
@@ -13,6 +13,13 @@ from src.services.admin_quota_service import (
     get_admin_rate_limiter_stats
 )
 from config.settings import get_settings
+from src.auth.refresh_tokens import (
+    InvalidRefreshTokenError,
+    RefreshTokenService,
+    clear_refresh_cookie,
+    set_refresh_cookie,
+)
+from src.security.browser_origin import require_trusted_origin
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
@@ -23,6 +30,8 @@ class AdminLoginRequest(BaseModel):
 
 class AdminLoginResponse(BaseModel):
     access_token: str
+    token_type: str = "bearer"
+    expires_in: int
     admin: dict
 
 class ChunkSaveRequest(BaseModel):
@@ -110,7 +119,7 @@ def get_supabase() -> Client:
 
 # Endpoints
 @router.post("/login", response_model=AdminLoginResponse)
-def login_admin(req: AdminLoginRequest, request: Request, supabase: Client = Depends(get_supabase)):
+def login_admin(req: AdminLoginRequest, request: Request, response: Response, supabase: Client = Depends(get_supabase)):
     # Check rate limiting
     allowed, reason = check_admin_login_allowed(req.username, request)
     if not allowed:
@@ -132,12 +141,73 @@ def login_admin(req: AdminLoginRequest, request: Request, supabase: Client = Dep
         raise HTTPException(status_code=401, detail="Invalid username or password")
         
     token = issue_admin_token(admin)
-    return AdminLoginResponse(access_token=token, admin=admin)
+    settings = get_settings()
+    if settings.ENABLE_REFRESH_TOKENS:
+        refresh_payload = {
+            "sub": str(admin["admin_id"]),
+            "username": admin["username"],
+            "role": "admin",
+        }
+        set_refresh_cookie(
+            response,
+            RefreshTokenService(supabase).issue(refresh_payload),
+            role="admin",
+        )
+    return AdminLoginResponse(
+        access_token=token,
+        expires_in=settings.JWT_EXPIRATION_MINUTES * 60,
+        admin=admin,
+    )
 
 @router.post("/logout")
-def logout_admin(admin: dict = Depends(get_current_admin)):
-    # JWT is stateless, so we just return success. Client should delete token.
+def logout_admin(
+    request: Request,
+    response: Response,
+    admin: dict = Depends(get_current_admin),
+    supabase: Client = Depends(get_supabase),
+):
+    settings = get_settings()
+    require_trusted_origin(request)
+    token = request.cookies.get(settings.ADMIN_REFRESH_COOKIE_NAME)
+    if token and settings.ENABLE_REFRESH_TOKENS:
+        RefreshTokenService(supabase).revoke(token)
+    clear_refresh_cookie(response, role="admin")
     return {"message": "Logged out successfully"}
+
+
+@router.post("/refresh")
+def refresh_admin_token(
+    request: Request,
+    response: Response,
+    supabase: Client = Depends(get_supabase),
+):
+    """Rotate the admin refresh cookie without requiring an access token."""
+    settings = get_settings()
+    if not settings.ENABLE_REFRESH_TOKENS:
+        raise HTTPException(status_code=503, detail="Refresh token belum diaktifkan")
+    require_trusted_origin(request)
+    token = request.cookies.get(settings.ADMIN_REFRESH_COOKIE_NAME)
+    if not token:
+        raise HTTPException(status_code=401, detail="Refresh token tidak ditemukan")
+    try:
+        rotated = RefreshTokenService(supabase).rotate(token)
+        if rotated.payload.get("role") != "admin":
+            raise InvalidRefreshTokenError("Refresh token tidak sesuai channel")
+    except InvalidRefreshTokenError as exc:
+        clear_refresh_cookie(response, role="admin")
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
+
+    set_refresh_cookie(response, rotated.token, role="admin")
+    return {
+        "access_token": issue_admin_token(
+            {
+                "admin_id": rotated.payload["sub"],
+                "username": rotated.payload["username"],
+            }
+        ),
+        "token_type": "bearer",
+        "expires_in": settings.JWT_EXPIRATION_MINUTES * 60,
+    }
 
 @router.get("/documents")
 def get_knowledge_tree(admin: dict = Depends(get_current_admin), supabase: Client = Depends(get_supabase)):

@@ -1,8 +1,17 @@
-import { getAdminToken, adminLogout } from './adminAuth';
+import { getAdminToken, adminLogout, refreshAdminToken } from './adminAuth';
 import { KnowledgeTreeResponse, ChunkDetail, ChunkEditStatus } from './adminTypes';
 
-async function adminFetch(path: string, options: RequestInit = {}) {
-  const token = getAdminToken();
+let adminRefreshPromise: Promise<string | null> | null = null;
+
+async function getOrRefreshAdminToken(): Promise<string | null> {
+  const currentToken = getAdminToken();
+  if (currentToken) return currentToken;
+  adminRefreshPromise ||= refreshAdminToken().finally(() => { adminRefreshPromise = null; });
+  return adminRefreshPromise;
+}
+
+async function adminFetch(path: string, options: RequestInit = {}, retry = true) {
+  const token = await getOrRefreshAdminToken();
   
   if (!token) {
     adminLogout();
@@ -20,7 +29,15 @@ async function adminFetch(path: string, options: RequestInit = {}) {
   const response = await fetch(url, {
     ...options,
     headers,
+    credentials: 'include',
   });
+
+  if (response.status === 401 && retry) {
+    adminRefreshPromise ||= refreshAdminToken().finally(() => { adminRefreshPromise = null; });
+    if (await adminRefreshPromise) {
+      return adminFetch(path, options, false);
+    }
+  }
 
   if (response.status === 401) {
     adminLogout();

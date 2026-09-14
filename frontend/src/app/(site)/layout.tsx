@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { getAuthToken, logout } from '../../lib/auth';
+import { getAuthToken, logout, refreshAuthToken } from '../../lib/auth';
 import { useAppStore } from '../../lib/store';
 import Link from 'next/link';
 import { jwtDecode } from 'jwt-decode';
@@ -35,20 +35,23 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
   useEffect(() => {
     if (!isClient) return;
     
-    const token = getAuthToken();
-    if (!token) {
-      router.replace('/login');
-      return;
-    }
+    const checkAuth = async () => {
+      let token = getAuthToken();
+      try {
+        if (!token) token = await refreshAuthToken();
+        if (!token) throw new Error('No active session');
 
-    try {
-      const decoded = jwtDecode<JWTPayload>(token);
-      if (decoded.exp * 1000 < Date.now()) {
+        const decoded = jwtDecode<JWTPayload>(token);
+        if (decoded.exp * 1000 < Date.now()) {
+          token = await refreshAuthToken();
+          if (!token) throw new Error('Session expired');
+        }
+      } catch {
         logout();
       }
-    } catch {
-      logout();
-    }
+    };
+
+    void checkAuth();
   }, [router, isClient]);
 
   // Early return for SSR hydration safety - no state needed

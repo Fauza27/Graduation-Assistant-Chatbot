@@ -4,7 +4,6 @@ from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import ValidationInfo
 from typing import Optional, Literal
-import os
 
 
 def _find_env_file() -> str:
@@ -32,6 +31,17 @@ class Settings(BaseSettings):
     VERSION: str = "1.0.0"
     ENVIRONMENT: Literal["development", "staging", "production"] = "development"
     DEBUG: bool = Field(default=False, description="Enable debug mode")
+    CORS_ALLOWED_ORIGINS: list[str] = Field(
+        default=[
+            "http://localhost:3000",
+            "http://localhost:3001",
+            "http://127.0.0.1:3000",
+            "http://127.0.0.1:3001",
+        ]
+    )
+    CORS_ALLOWED_ORIGIN_REGEX: str = Field(
+        default=r"https://rag-chatbot-.*\.vercel\.app"
+    )
 
     # OpenAI Configuration
     open_api_key: str = Field(..., description="OpenAI API Key")
@@ -72,6 +82,7 @@ class Settings(BaseSettings):
     # Cross-Encoder Configuration
     cross_encoder_model: str = Field(default="cross-encoder/ms-marco-MiniLM-L-6-v2")
     cross_encoder_batch_size: int = Field(default=32, ge=1, le=128)
+    MAX_CONTEXT_TOKENS: int = Field(default=12000, ge=1000, le=100000)
 
     # Hugging Face (Optional)
     hf_token: Optional[str] = Field(default=None, description="Hugging Face token for private models")
@@ -100,12 +111,20 @@ class Settings(BaseSettings):
     # Authentication Configuration
     JWT_SECRET_KEY: str = Field(default="super-secret-key-change-in-production", description="Secret key for JWT generation")
     JWT_ALGORITHM: str = Field(default="HS256", description="Algorithm for JWT generation")
-    JWT_EXPIRATION_MINUTES: int = Field(default=4320, description="JWT expiration time in minutes")
+    JWT_EXPIRATION_MINUTES: int = Field(default=30, ge=5, le=10080, description="JWT access-token expiration time in minutes")
+    JWT_CLOCK_SKEW_SECONDS: int = Field(default=30, ge=0, le=300)
+    ENABLE_REFRESH_TOKENS: bool = Field(default=False)
+    REFRESH_TOKEN_EXPIRATION_DAYS: int = Field(default=14, ge=1, le=90)
+    REFRESH_COOKIE_NAME: str = Field(default="refresh_token")
+    ADMIN_REFRESH_COOKIE_NAME: str = Field(default="admin_refresh_token")
+    REFRESH_COOKIE_SAMESITE: Literal["lax", "strict", "none"] = Field(default="lax")
+    REFRESH_COOKIE_DOMAIN: Optional[str] = Field(default=None)
     GOOGLE_CLIENT_ID: str = Field(default="", description="Google OAuth Client ID")
 
     # Performance Settings
     MAX_CONCURRENT_REQUESTS: int = Field(default=10, ge=1, le=50)
     REQUEST_TIMEOUT: int = Field(default=30, ge=10, le=120)
+    REQUEST_QUEUE_TIMEOUT: float = Field(default=1.0, ge=0.1, le=30.0)
     
     # Memory Management
     MAX_ACTIVE_SESSIONS: int = Field(default=1000, ge=100, le=10000)
@@ -133,6 +152,13 @@ class Settings(BaseSettings):
     # Monitoring & Observability
     ENABLE_REQUEST_METRICS: bool = Field(default=True, description="Aktifkan pencatatan request_metrics")
 
+    # Distributed tracing. Tanpa OTEL_EXPORTER_OTLP_ENDPOINT, span tetap
+    # tersedia di process dan tidak dikirim ke layanan eksternal.
+    OTEL_ENABLED: bool = Field(default=False)
+    OTEL_SERVICE_NAME: str = Field(default="graduation-assistant-backend")
+    OTEL_EXPORTER_OTLP_ENDPOINT: Optional[str] = Field(default=None)
+    OTEL_EXPORTER_OTLP_HEADERS: Optional[str] = Field(default=None)
+
     @field_validator("bm25_weight", "dense_weight")
     @classmethod
     def validate_weights_sum(cls, v: float, info: ValidationInfo) -> float:
@@ -149,6 +175,34 @@ class Settings(BaseSettings):
             raise ValueError(
                 "MEMORY_SUMMARY_MAX_TOKENS harus lebih kecil dari "
                 "MEMORY_MAX_HISTORY_TOKENS"
+            )
+        return self
+
+    @model_validator(mode="after")
+    def validate_production_security(self) -> "Settings":
+        """Tolak konfigurasi autentikasi yang tidak aman di production."""
+        if self.ENVIRONMENT != "production":
+            return self
+
+        insecure_defaults = {
+            "super-secret-key-change-in-production",
+            "change-me",
+            "secret",
+        }
+        if (
+            self.JWT_SECRET_KEY.strip().lower() in insecure_defaults
+            or len(self.JWT_SECRET_KEY.encode("utf-8")) < 32
+        ):
+            raise ValueError(
+                "JWT_SECRET_KEY production wajib unik dan minimal 32 byte"
+            )
+        if not self.ENABLE_REFRESH_TOKENS:
+            raise ValueError(
+                "ENABLE_REFRESH_TOKENS wajib aktif di production setelah migration auth dijalankan"
+            )
+        if self.JWT_EXPIRATION_MINUTES > 60:
+            raise ValueError(
+                "JWT_EXPIRATION_MINUTES production maksimal 60 menit"
             )
         return self
 

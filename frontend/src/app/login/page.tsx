@@ -24,6 +24,7 @@ export default function LoginPage() {
       
       const res = await fetch(`${API_BASE_URL}/api/auth/google/verify`, {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },

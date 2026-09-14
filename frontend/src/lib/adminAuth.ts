@@ -4,6 +4,7 @@ export async function adminLogin(username: string, password: string, rememberMe:
   try {
     const response = await fetch(url, {
       method: 'POST',
+      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
       },
@@ -36,6 +37,18 @@ export function getAdminToken(): string | null {
   return localStorage.getItem('admin_access_token') || sessionStorage.getItem('admin_access_token') || null;
 }
 
+export async function refreshAdminToken(): Promise<string | null> {
+  const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/admin/refresh`;
+  const response = await fetch(url, { method: 'POST', credentials: 'include' });
+  if (!response.ok) return null;
+  const data = await response.json();
+  if (typeof data.access_token !== 'string') return null;
+
+  const storage = localStorage.getItem('admin_access_token') ? localStorage : sessionStorage;
+  storage.setItem('admin_access_token', data.access_token);
+  return data.access_token;
+}
+
 interface AdminInfo {
   full_name: string;
   username: string;
@@ -57,13 +70,21 @@ export function getAdminInfo(): AdminInfo | null {
 export function adminLogout() {
   if (typeof window === 'undefined') return;
   
+  const token = getAdminToken();
+  const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/admin/logout`;
+  if (token) {
+    void fetch(url, {
+      method: 'POST',
+      credentials: 'include',
+      keepalive: true,
+      headers: { Authorization: `Bearer ${token}` },
+    }).catch(() => undefined);
+  }
+
   // Remove from both to be safe
   localStorage.removeItem('admin_access_token');
   localStorage.removeItem('admin_info');
   sessionStorage.removeItem('admin_access_token');
   sessionStorage.removeItem('admin_info');
 
-  // Optional: ping logout endpoint best-effort
-  const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/admin/logout`;
-  fetch(url, { method: 'POST' }).catch(() => {});
 }
