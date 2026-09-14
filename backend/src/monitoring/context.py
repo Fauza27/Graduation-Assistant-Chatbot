@@ -110,6 +110,9 @@ class RequestMetricsCollector:
     is_no_relevant_doc: bool = False
     retrieved_parent_ids: Optional[list[str]] = None
     rewrite_method: Optional[str] = None
+    prompt_injection_detected: bool = False
+    trace_id: Optional[str] = None
+    provider_request_id: Optional[str] = None
 
     # Token / cost / retry
     input_tokens: Optional[int] = None
@@ -213,6 +216,9 @@ class RequestMetricsCollector:
             "is_no_relevant_doc": self.is_no_relevant_doc,
             "retrieved_parent_ids": self.retrieved_parent_ids,
             "rewrite_method": self.rewrite_method,
+            "prompt_injection_detected": self.prompt_injection_detected,
+            "trace_id": self.trace_id,
+            "provider_request_id": self.provider_request_id,
 
             # Token / cost
             "input_tokens": self.input_tokens,

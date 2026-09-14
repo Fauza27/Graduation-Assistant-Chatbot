@@ -27,16 +27,6 @@ from src.api import admin_metrics
 API_PREFIX = "/api"
 DEFAULT_RATE_LIMIT = "100/minute"
  
-ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://localhost:3001",
-    "http://127.0.0.1:3000",
-    "http://127.0.0.1:3001",
-]
-# More restrictive regex - should be customized for actual project preview URLs
-# TODO: Replace with actual project-specific preview URL pattern
-ALLOWED_ORIGIN_REGEX = r"https://rag-chatbot-.*\.vercel\.app"  # Example: project-specific prefix
-
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     """Add security headers to responses"""
     
@@ -88,6 +78,9 @@ async def lifespan(app: FastAPI):
         except Exception:
             logger.exception("Error shutting down Telegram bot")
 
+    from src.services.request_guard import shutdown_ai_request_guard
+    shutdown_ai_request_guard()
+
 def create_app() -> FastAPI:
     """Buat dan konfigurasikan instance FastAPI."""
     settings = get_settings()
@@ -105,21 +98,27 @@ def create_app() -> FastAPI:
  
     _register_middleware(app)
     _register_routers(app)
+
+    from src.monitoring.tracing import configure_telemetry
+    configure_telemetry(app)
  
     return app
 
 def _register_middleware(app: FastAPI) -> None:
     """Daftarkan middleware: security headers, rate limiting, dan CORS."""
     app.add_middleware(SecurityHeadersMiddleware)
+    from src.middleware.request_context import RequestContextMiddleware
+    app.add_middleware(RequestContextMiddleware)
 
     app.add_exception_handler(SessionAccessError, _session_access_error_handler)
     app.add_middleware(SlowAPIMiddleware)
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
  
+    settings = get_settings()
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=ALLOWED_ORIGINS,
-        allow_origin_regex=ALLOWED_ORIGIN_REGEX,
+        allow_origins=settings.CORS_ALLOWED_ORIGINS,
+        allow_origin_regex=settings.CORS_ALLOWED_ORIGIN_REGEX,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
