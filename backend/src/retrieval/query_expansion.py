@@ -1,8 +1,8 @@
 """
 Query Expansion
 
-melakukan ekspansi linguistik, memperluas akronim/singkatan akademik agar
-matching FTS dan vector lebih konsisten.
+Melakukan ekspansi linguistik untuk query lexical/FTS. Query semantic untuk
+vector search tetap menggunakan bentuk query dari QueryPlan tanpa expansion.
 
 Aturan:
 - Akronim yang TIDAK ambigu (SKS, IPK, KRS, KKP, BAAK, BAUK, BKK, EYD)

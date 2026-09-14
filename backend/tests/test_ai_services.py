@@ -120,6 +120,11 @@ class TestAIServices:
         assert result["num_docs"] == 1
         assert len(result["sources"]) == 1
         assert result["sources"][0]["title"] == "Panduan KKP"
+        mock_run_retrieval.assert_called_once_with(
+            query="apa syarat kkp?",
+            rerank_query="apa syarat kkp?",
+            search_queries=("apa syarat kkp?",),
+        )
 
     def test_chat_exception_handling(self):
         """Test chat exception handling on unexpected runtime error."""

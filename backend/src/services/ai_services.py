@@ -130,6 +130,14 @@ def _prepare_query_plan_and_memory(
             plan.resolved_query,
         )
 
+    if plan.is_decomposed:
+        logger.info(
+            "[session={}] Query decomposed into {} searches: {}",
+            session_id,
+            len(plan.search_queries),
+            list(plan.search_queries),
+        )
+
     memory.add_user_turn(plan.normalized_query)
 
     return plan, memory

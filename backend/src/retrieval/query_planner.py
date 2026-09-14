@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
@@ -24,6 +25,37 @@ RewriteFunction = Callable[
     [str, ConversationMemory],
     tuple[str, RewriteMethod],
 ]
+
+MAX_SEARCH_QUERIES = 3
+
+_CLAUSE_START = (
+    r"(?:apa|apakah|bagaimana|berapa|kapan|siapa|"
+    r"di\s+mana|dimana|mengapa|adakah)\b"
+)
+_CLAUSE_SEPARATOR = re.compile(
+    rf"(?:[,;]\s*(?:(?:dan|serta)\s+)?|"
+    rf"\s+(?:dan|serta)\s+)(?={_CLAUSE_START})",
+    re.IGNORECASE,
+)
+
+_DOMAIN_TERMS: tuple[tuple[str, tuple[str, ...]], ...] = (
+    (
+        "tugas akhir non skripsi",
+        ("non skripsi", "non-skripsi", "wirausaha", "pekerja profesional"),
+    ),
+    (
+        "Penulisan Ilmiah",
+        ("penulisan ilmiah",),
+    ),
+    (
+        "KKP",
+        ("kkp", "kuliah kerja praktik", "kuliah kerja praktek"),
+    ),
+    (
+        "skripsi",
+        ("skripsi", "pendadaran", "seminar proposal", "seminar hasil"),
+    ),
+)
 
 
 @dataclass(frozen=True)
@@ -59,11 +91,75 @@ def build_query_plan(
     if needs_rewrite(normalized_query) and memory.has_prior_context:
         resolved_query, rewrite_method = rewrite(normalized_query, memory)
 
+    search_queries = decompose_query(resolved_query)
+
     return QueryPlan(
         original_query=original_query,
         normalized_query=normalized_query,
         resolved_query=resolved_query,
-        search_queries=(resolved_query,),
+        search_queries=search_queries,
         rerank_query=original_query,
         rewrite_method=rewrite_method,
+        complexity=(
+            QueryComplexity.COMPLEX
+            if len(search_queries) > 1
+            else QueryComplexity.SIMPLE
+        ),
+        is_decomposed=len(search_queries) > 1,
+    )
+
+
+def decompose_query(query: str) -> tuple[str, ...]:
+    """Pisahkan kebutuhan eksplisit tanpa memanggil LLM.
+
+    Pemisahan hanya dilakukan ketika klausa berikutnya dimulai dengan kata
+    tanya. Frasa seperti "dosen pembimbing dan penguji" tetap satu query.
+    """
+    raw_clauses = _CLAUSE_SEPARATOR.split(query)
+    clauses = [clause.strip(" ,;?.") for clause in raw_clauses]
+    clauses = [clause for clause in clauses if len(clause.split()) >= 2]
+
+    if len(clauses) < 2:
+        return (query,)
+
+    if len(clauses) > MAX_SEARCH_QUERIES:
+        clauses = [
+            *clauses[: MAX_SEARCH_QUERIES - 1],
+            " dan ".join(clauses[MAX_SEARCH_QUERIES - 1 :]),
+        ]
+
+    domain = _find_single_domain(query)
+    queries: list[str] = []
+
+    for clause in clauses:
+        if domain and not _contains_domain(clause):
+            clause = f"{clause} terkait {domain}"
+        if clause not in queries:
+            queries.append(clause)
+
+    return tuple(queries) if len(queries) > 1 else (query,)
+
+
+def _find_single_domain(query: str) -> str | None:
+    query_lower = query.lower()
+    matched: list[str] = []
+
+    for canonical, terms in _DOMAIN_TERMS:
+        searchable = query_lower
+        if canonical == "skripsi":
+            non_skripsi_terms = _DOMAIN_TERMS[0][1]
+            for term in non_skripsi_terms:
+                searchable = searchable.replace(term, " ")
+        if any(term in searchable for term in terms):
+            matched.append(canonical)
+
+    return matched[0] if len(matched) == 1 else None
+
+
+def _contains_domain(query: str) -> bool:
+    query_lower = query.lower()
+    return any(
+        term in query_lower
+        for _, terms in _DOMAIN_TERMS
+        for term in terms
     )

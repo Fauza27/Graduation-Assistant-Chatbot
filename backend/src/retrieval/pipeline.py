@@ -15,11 +15,18 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from loguru import logger
 
 from config.settings import get_settings
 from src.monitoring.context import end_stage, set_field, start_stage
+
+if TYPE_CHECKING:
+    from src.retrieval.hybrid_search import HybridSearchResult
+
+
+MULTI_QUERY_RRF_K = 60
 
 
 # ============================================================================
@@ -76,8 +83,8 @@ def run_retrieval(
 
     settings = get_settings()
     rerank_query = rerank_query or query
-    if search_queries:
-        query = search_queries[0]
+    planned_queries = _normalize_search_queries(query, search_queries)
+    query = planned_queries[0]
     pipeline_start = time.time()
 
     # ------------------------------------------------------------------
@@ -87,25 +94,26 @@ def run_retrieval(
     start_stage("self_query")
     started_at = time.time()
 
-    try:
-        parsed = extract_query_components(query)
-    except Exception as exc:
-        logger.error(
-            "Error in extract_query_components: {}",
-            exc,
-        )
-        parsed = ParsedQuery(
-            semantic_query=query,
-            filters={},
-            original_query=query,
-            confidence="low",
-        )
+    parsed_queries: list[ParsedQuery] = []
+    for planned_query in planned_queries:
+        try:
+            parsed_queries.append(extract_query_components(planned_query))
+        except Exception as exc:
+            logger.error("Error in extract_query_components: {}", exc)
+            parsed_queries.append(
+                ParsedQuery(
+                    semantic_query=planned_query,
+                    filters={},
+                    original_query=planned_query,
+                    confidence="low",
+                )
+            )
 
     parse_time = time.time() - started_at
     end_stage()
 
-    _record_detected_domain(
-        parsed,
+    _record_detected_domains(
+        parsed_queries,
         detect_panduan_type,
     )
 
@@ -115,17 +123,26 @@ def run_retrieval(
 
     started_at = time.time()
 
-    try:
-        search_results = _get_hybrid_searcher().search(
-            query=parsed.semantic_query,
-            filters=parsed.filters,
-        )
-    except Exception as exc:
-        logger.error(
-            "Error in HybridSearcher.search: {}",
-            exc,
-        )
-        search_results = []
+    search_batches: list[list[HybridSearchResult]] = []
+    searcher = _get_hybrid_searcher()
+
+    for parsed in parsed_queries:
+        try:
+            search_batches.append(
+                searcher.search(
+                    query=parsed.semantic_query,
+                    filters=parsed.filters,
+                )
+            )
+        except Exception as exc:
+            logger.error(
+                "Error in HybridSearcher.search for '{}': {}",
+                parsed.semantic_query,
+                exc,
+            )
+
+    search_results = _merge_search_results(search_batches)
+    set_field(num_docs_retrieved=len(search_results))
 
     search_time = time.time() - started_at
 
@@ -348,28 +365,106 @@ def run_retrieval(
 # Small helpers
 # ============================================================================
 
-def _record_detected_domain(
-    parsed: object,
+def _record_detected_domains(
+    parsed_queries: list[object],
     detect_panduan_type,
 ) -> None:
-    """Record the domain detected by self-query parsing."""
+    """Record one domain, MULTI_DOMAIN, or UNKNOWN for planned queries."""
+    domains = {
+        detect_panduan_type({"source": source})
+        for parsed in parsed_queries
+        if (source := getattr(parsed, "detected_source", None))
+    }
+    if len(domains) == 1:
+        domain = next(iter(domains))
+    elif len(domains) > 1:
+        domain = "MULTI_DOMAIN"
+    else:
+        domain = "UNKNOWN"
+    set_field(domain_detected=domain)
 
-    detected_source = getattr(
-        parsed,
-        "detected_source",
-        None,
+
+def _normalize_search_queries(
+    primary_query: str,
+    search_queries: tuple[str, ...] | list[str] | None,
+) -> tuple[str, ...]:
+    """Deduplicate planned queries while preserving their order."""
+    candidates = search_queries or (primary_query,)
+    normalized: list[str] = []
+    for candidate in candidates:
+        value = candidate.strip()
+        if value and value not in normalized:
+            normalized.append(value)
+    return tuple(normalized) or (primary_query,)
+
+
+def _merge_search_results(
+    search_batches: list[list[HybridSearchResult]],
+) -> list[HybridSearchResult]:
+    """Merge child results using cross-query reciprocal-rank fusion."""
+    if len(search_batches) <= 1:
+        return _deduplicate_single_search(search_batches[0] if search_batches else [])
+
+    best_by_child: dict[str, HybridSearchResult] = {}
+    fused_scores: dict[str, float] = {}
+    first_seen: list[str] = []
+    max_batch_size = max((len(batch) for batch in search_batches), default=0)
+
+    # Round-robin traversal gives equally ranked results from every subquery
+    # the same stable priority before parent candidate limiting.
+    for rank in range(max_batch_size):
+        for batch in search_batches:
+            if rank >= len(batch):
+                continue
+            result = batch[rank]
+            child_id = str(getattr(result, "child_id", ""))
+            if not child_id:
+                continue
+            fused_scores[child_id] = fused_scores.get(child_id, 0.0) + 1.0 / (
+                MULTI_QUERY_RRF_K + rank + 1
+            )
+            existing = best_by_child.get(child_id)
+            if existing is None:
+                first_seen.append(child_id)
+            if existing is None or getattr(result, "hybrid_score", 0.0) > getattr(
+                existing,
+                "hybrid_score",
+                0.0,
+            ):
+                best_by_child[child_id] = result
+
+    for child_id, result in best_by_child.items():
+        result.hybrid_score = fused_scores[child_id]
+        result.score_source = "multi_query_rrf"
+
+    stable_order = {child_id: index for index, child_id in enumerate(first_seen)}
+    return sorted(
+        best_by_child.values(),
+        key=lambda result: (
+            -getattr(result, "hybrid_score", 0.0),
+            stable_order[str(getattr(result, "child_id", ""))],
+        ),
     )
 
-    domain = (
-        detect_panduan_type(
-            {"source": detected_source}
-        )
-        if detected_source
-        else "UNKNOWN"
-    )
 
-    set_field(
-        domain_detected=domain
+def _deduplicate_single_search(
+    search_results: list[HybridSearchResult],
+) -> list[HybridSearchResult]:
+    """Preserve the existing score semantics for the common single-query path."""
+    best_by_child: dict[str, HybridSearchResult] = {}
+    for result in search_results:
+        child_id = str(getattr(result, "child_id", ""))
+        existing = best_by_child.get(child_id)
+        if child_id and (
+            existing is None
+            or getattr(result, "hybrid_score", 0.0)
+            > getattr(existing, "hybrid_score", 0.0)
+        ):
+            best_by_child[child_id] = result
+    return sorted(
+        best_by_child.values(),
+        key=lambda result: getattr(result, "hybrid_score", 0.0),
+        reverse=True,
     )
 
 
