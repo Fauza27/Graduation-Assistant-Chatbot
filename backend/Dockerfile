@@ -1,67 +1,56 @@
-# Multi-stage build for production optimization
-FROM python:3.11-slim as builder
+# syntax=docker/dockerfile:1.7
+ARG PYTHON_IMAGE=python:3.11.16-slim-bookworm@sha256:528257d48c1da0dcecc2e725d1ae34498d60c965f1241e39cd6a85a8859bdf84
 
-# Set environment variables
+FROM ${PYTHON_IMAGE} AS builder
+
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    curl \
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Create virtual environment
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
+WORKDIR /app
 
-# Copy requirements and install Python dependencies
+COPY requirements.txt .
+RUN pip install --upgrade pip \
+    && pip install --requirement requirements.txt
+
+FROM builder AS development
 COPY requirements-dev.txt .
-RUN pip install --upgrade pip && \
-    pip install -r requirements-dev.txt
+RUN pip install --requirement requirements-dev.txt
 
-# Production stage
-FROM python:3.11-slim as production
+FROM ${PYTHON_IMAGE} AS production
 
-# Set environment variables
+ARG VCS_REF=unknown
+LABEL org.opencontainers.image.source="https://github.com/Fauza27/Graduation-Assistant-Chatbot" \
+      org.opencontainers.image.revision="${VCS_REF}"
+
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PATH="/opt/venv/bin:$PATH" \
-    ENVIRONMENT=production
+    ENVIRONMENT=production \
+    PORT=8000
 
-# Install runtime dependencies only
-RUN apt-get update && apt-get install -y \
-    curl \
-    && rm -rf /var/lib/apt/lists/* \
-    && apt-get clean
-
-# Copy virtual environment from builder stage
 COPY --from=builder /opt/venv /opt/venv
 
-# Create non-root user for security
-RUN groupadd -r appuser && useradd -r -g appuser appuser
+RUN groupadd --system appuser \
+    && useradd --system --gid appuser --home-dir /app appuser
 
-# Create app directory
 WORKDIR /app
+COPY --chown=appuser:appuser application.py main.py ./
+COPY --chown=appuser:appuser config ./config
+COPY --chown=appuser:appuser src ./src
+RUN mkdir -p /app/logs && chown appuser:appuser /app/logs
 
-# Copy application code
-COPY --chown=appuser:appuser . .
-
-# Create necessary directories
-RUN mkdir -p /app/logs && \
-    chown -R appuser:appuser /app
-
-# Switch to non-root user
 USER appuser
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8000/health/ || exit 1
+HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
+    CMD ["python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/liveness', timeout=3)"]
 
-# Expose port
 EXPOSE 8000
-
-# Default command
-CMD ["python", "main.py"]
+CMD ["uvicorn", "application:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers", "--forwarded-allow-ips", "127.0.0.1"]

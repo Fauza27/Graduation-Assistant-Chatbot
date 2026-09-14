@@ -1,0 +1,33 @@
+.git
+.github
+.agents
+.codex
+.env
+.env.*
+!.env.example
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.benchmarks/
+virtual_environment/
+venv/
+.venv/
+logs/
+logs_eksperimen_rag/
+backup/
+results/
+personal_docs/
+original docs/
+naskah PI/
+extract-pdf/
+tests/
+docs/
+ADR/
+*.csv
+*.zip
+*.docx
+*.pdf
+percakapan.txt
+demo_review.py
+export_*.py

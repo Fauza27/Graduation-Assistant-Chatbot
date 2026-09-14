@@ -1,0 +1,5 @@
+-r requirements-dev.txt
+
+# Evaluation is intentionally excluded from the production image.
+ragas==0.4.3
+datasets==4.8.4

@@ -55,6 +55,8 @@ htmlcov/
 # Personal Notes (keep private)
 personal_docs/
 *.txt
+!requirements-dev.txt
+!requirements-eval.txt
 
 # Conversation logs
 conversation.txt
