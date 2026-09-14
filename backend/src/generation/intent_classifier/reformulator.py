@@ -1,147 +1,490 @@
-"""Query processing and reformulation utilities."""
+"""Query reformulation for context-dependent academic questions."""
+
+from __future__ import annotations
 
 import re
+from enum import Enum
+from functools import lru_cache
+from typing import Optional
+
 from langchain_core.messages import HumanMessage
 from langchain_openai import ChatOpenAI
 from loguru import logger
 
 from config.settings import get_settings
 from src.generation.memory import ConversationMemory
-from .constants import IMPLICIT_REFERENCE_SIGNALS, REFORMULATION_PROMPT
+from src.monitoring.openai_client import build_instrumented_http_client
+
+IMPLICIT_REFERENCE_SIGNALS = [
+    "yang itu",
+    "hal itu",
+    "tentang itu",
+    "mengenai itu",
+    "seperti itu",
+    "tersebut",
+    "tadi",
+    "yang tadi",
+    "lebih detail",
+    "jelaskan lagi",
+    "elaborasi",
+    "lanjutkan",
+    "bagaimana dengan",
+    "kalau untuk",
+    "dan untuk",
+    "gimana kalau",
+]
+
+REFORMULATION_PROMPT = """
+Anda membantu sistem pencarian dokumen internal akademik.
+
+Gunakan istilah baku institusi:
+- Penulisan Ilmiah (PI)
+- Kuliah Kerja Praktik (KKP)
+- Skripsi
+- Tugas Akhir Non Skripsi
+
+Riwayat percakapan:
+{history}
+
+Pertanyaan terkini user:
+"{question}"
+
+Jika pertanyaan terkini menggunakan referensi implisit seperti:
+"itu", "tersebut", "yang tadi", "lebih detail tentang itu",
+tulis ulang menjadi pertanyaan yang berdiri sendiri dan lengkap
+untuk digunakan sebagai query pencarian.
+
+Jika pertanyaan sudah jelas dan mandiri,
+kembalikan persis sama.
+
+Output:
+HANYA pertanyaan yang sudah ditulis ulang,
+tanpa penjelasan apa pun.
+""".strip()
+
+
+class RewriteMethod(str, Enum):
+    """Method used to rewrite a query."""
+
+    NONE = "None"
+    RULE = "Rule"
+    LLM = "LLM"
+
+
+SUFFIX_REWRITES = {
+    "syaratnya": "syarat",
+    "durasinya": "durasi",
+    "formatnya": "format",
+    "prosedurnya": "prosedur",
+    "pendaftarannya": "pendaftaran",
+    "dosennya": "dosen",
+    "pembimbingnya": "pembimbing",
+    "pengujinya": "penguji",
+    "tempatnya": "tempat",
+    "ujiannya": "ujian",
+    "laporannya": "laporan",
+    "nilainya": "nilai",
+    "plagiarismenya": "plagiarisme",
+    "referensinya": "referensi",
+}
+
+FOLLOW_UP_PREFIXES = (
+    "kalau",
+    "bagaimana dengan",
+    "terus",
+)
+
+def contains_word(text: str, word: str) -> bool:
+    """Check whether a complete word/phrase exists."""
+
+    return (
+        re.search(
+            rf"\b{re.escape(word)}\b",
+            text,
+            re.IGNORECASE,
+        )
+        is not None
+    )
+
 
 def normalize_query(query: str) -> str:
-    """Normalize common academic acronyms using regex."""
-    # KKP aliases
-    query = re.sub(r"(?i)\bkp\b|\bk\.p\.\b|\bmagang\b", "KKP", query)
-    # PI aliases
-    query = re.sub(r"(?i)\bpi\b|\bp\.i\.\b", "Penulisan Ilmiah", query)
-    
-    # Aggressive Regex Rule: "apa itu X" -> "Apa yang dimaksud dengan X?"
-    query = re.sub(r"(?i)^apa\s+itu\s+(.+)", r"Apa yang dimaksud dengan \1", query)
-    
-    # Remove extra spaces
-    return re.sub(r"\s+", " ", query).strip()
+    """
+    Normalize common academic terminology.
+
+    Examples:
+        "apa syarat magang?" → "apa syarat KKP?"
+        "apa itu kp"          → "Apa yang dimaksud dengan KKP"
+    """
+
+    query = re.sub(
+        r"(?i)\b(?:kp|k\.p\.|magang|internship|praktik|praktek)\b",
+        "KKP",
+        query,
+    )
+
+    query = re.sub(
+        r"(?i)\b(?:pi|p\.i\.)\b",
+        "Penulisan Ilmiah",
+        query,
+    )
+
+    query = re.sub(
+        r"(?i)\bapa\s+itu\s+(.+)",
+        r"Apa yang dimaksud dengan \1",
+        query,
+    )
+
+    return re.sub(
+        r"\s+",
+        " ",
+        query,
+    ).strip()
+
 
 def needs_rewrite(query: str) -> bool:
-    """Check if query contains implicit references that require history context."""
-    query_lower = query.lower()
-    
-    # Exclude explicitly self-contained phrases like "apa itu kkp"
-    if "apa itu" in query_lower or "siapa itu" in query_lower:
-        if len(query_lower.split()) > 2:
-            # Contains an object, so it's not an implicit reference (e.g. "apa itu kkp")
-            query_lower = query_lower.replace("apa itu", "").replace("siapa itu", "")
-            
-    # Use word boundaries for exact matching to prevent substring bugs ("itu" matching inside a word)
-    for ref in IMPLICIT_REFERENCE_SIGNALS:
-        if re.search(r"\b" + re.escape(ref) + r"\b", query_lower):
+    """
+    Check whether a query contains implicit references or follow-up signals
+    that require contextual reformulation using conversation history.
+    """
+    query_lower = query.lower().strip()
+
+    # Cek kata/frasa pemicu referensi implisit
+    for signal in IMPLICIT_REFERENCE_SIGNALS:
+        if " " in signal:
+            if signal in query_lower:
+                return True
+        else:
+            if contains_word(query_lower, signal):
+                return True
+
+    # Cek kata berakhiran -nya yang ada di SUFFIX_REWRITES
+    words = query_lower.split()
+    for word in words:
+        clean_word = word.lower().rstrip("?.,!")
+        if clean_word in SUFFIX_REWRITES:
             return True
-            
+
+    # Cek awalan pertanyaan lanjutan
+    if query_lower.startswith(FOLLOW_UP_PREFIXES):
+        return True
+
     return False
 
+
+def _extract_last_topic(
+    memory: ConversationMemory,
+) -> Optional[str]:
+    """Find the most recently discussed academic topic."""
+
+    for turn in reversed(memory.turns):
+        content = turn.content.lower()
+
+        if (
+            "non skripsi" in content
+            or "tugas akhir non skripsi" in content
+            or "karya ilmiah" in content
+            or "wirausaha" in content
+            or "profesional" in content
+        ):
+            return "Tugas Akhir Non Skripsi"
+
+        if (
+            contains_word(content, "skripsi")
+            and "non skripsi" not in content
+        ):
+            return "Skripsi"
+
+        if (
+            contains_word(content, "pi")
+            or "penulisan ilmiah" in content
+        ):
+            return "Penulisan Ilmiah"
+
+        if (
+            contains_word(content, "kkp")
+            or "kuliah kerja praktik" in content
+            or "kuliah kerja praktek" in content
+            or contains_word(content, "magang")
+        ):
+            return "KKP"
+
+    return None
+
+@lru_cache(maxsize=1)
+def _get_default_llm() -> ChatOpenAI:
+    """Create and cache the reformulation LLM."""
+
+    settings = get_settings()
+
+    return ChatOpenAI(
+        model=settings.llm_model,
+        api_key=settings.open_api_key,
+        http_client=build_instrumented_http_client(),
+        temperature=0,
+        max_tokens=200,
+    )
+
 class QueryReformulator:
-    """Processes and reformulates queries based on rules and LLM."""
-    
-    def __init__(self, llm: ChatOpenAI = None):
-        if llm is None:
-            settings = get_settings()
-            from src.monitoring.openai_client import build_instrumented_http_client
-            self._llm = ChatOpenAI(
-                model=settings.llm_model,
-                http_client=build_instrumented_http_client(),
-                temperature=0,
-                api_key=settings.open_api_key,  
-                max_tokens=100,
+    """
+    Reformulate context-dependent queries.
+
+    Priority:
+        1. Normalize
+        2. Deterministic rules
+        3. LLM fallback
+    """
+
+    def __init__(
+        self,
+        llm: Optional[ChatOpenAI] = None,
+    ) -> None:
+        self._llm = llm or _get_default_llm()
+
+    def reformulate(
+        self,
+        message: str,
+        memory: ConversationMemory,
+    ) -> tuple[str, RewriteMethod]:
+        """Return a self-contained retrieval query."""
+
+        message = normalize_query(message)
+
+        if memory.is_empty:
+            return message, RewriteMethod.NONE
+
+        last_topic = _extract_last_topic(memory)
+
+        if last_topic:
+            rewritten = self._rewrite_with_rules(
+                message,
+                last_topic,
+            )
+
+            if rewritten:
+                self._log_rewrite(
+                    RewriteMethod.RULE,
+                    message,
+                    rewritten,
+                )
+                return (
+                    rewritten,
+                    RewriteMethod.RULE,
+                )
+
+        rewritten = self._rewrite_with_llm(
+            message,
+            memory,
+        )
+
+        if rewritten:
+            self._log_rewrite(
+                RewriteMethod.LLM,
+                message,
+                rewritten,
+            )
+            return (
+                rewritten,
+                RewriteMethod.LLM,
+            )
+
+        return message, RewriteMethod.NONE
+
+    def _rewrite_with_rules(
+        self,
+        message: str,
+        last_topic: str,
+    ) -> Optional[str]:
+        """Apply deterministic rewrites."""
+
+        message_lower = message.lower().strip()
+        topic_lower = last_topic.lower()
+
+        # Cek apakah topik sudah secara spesifik disebut dalam pesan saat ini
+        if topic_lower == "skripsi":
+            topic_already_present = (
+                contains_word(message_lower, "skripsi")
+                and "non skripsi" not in message_lower
             )
         else:
-            self._llm = llm
-            
-    def _extract_last_topic(self, memory: ConversationMemory) -> str | None:
-        """Extract the last discussed academic domain from history."""
-        # Look backwards to find the most recent topic
-        for turn in reversed(memory._turns):
-            content = turn.content.lower()
-            if "penulisan ilmiah" in content or " pi " in content or content.startswith("pi ") or content.endswith(" pi"): 
-                return "Penulisan Ilmiah"
-            if "kkp" in content or "kuliah kerja praktik" in content: 
-                return "KKP"
-        return None
+            topic_already_present = contains_word(message_lower, topic_lower)
 
-    def _apply_rule_rewrite(self, message: str, last_topic: str) -> str | None:
-        """Apply simple rule-based rewrites if possible."""
-        message_lower = message.lower()
-        
-        # Rule 1: Questions starting with "kalau", "bagaimana dengan", "terus"
-        if message_lower.startswith("kalau") or message_lower.startswith("bagaimana dengan") or message_lower.startswith("terus"):
-            # Ensure it doesn't already contain the topic
-            if last_topic.lower() not in message_lower:
-                return f"{message} untuk {last_topic}?"
-                
-        # Rule 2: Implicit suffixes like "syaratnya", "durasinya", "formatnya"
-        if "nya" in message_lower:
-            words = message.split()
-            rewritten_words = []
-            applied = False
-            for w in words:
-                if w.lower() in ["syaratnya", "syaratnya?", "durasinya", "durasinya?", "formatnya", "formatnya?"]:
-                    # Replace "nya" with " {last_topic}"
-                    w = w.replace("nya", f" {last_topic}")
-                    applied = True
-                rewritten_words.append(w)
-            
-            if applied:
-                return " ".join(rewritten_words)
-                
-        # Rule 3: "itu" reference
-        if " itu" in message_lower:
-            if last_topic.lower() not in message_lower:
-                return message_lower.replace(" itu", f" {last_topic}")
-                
-        return None
+        if topic_already_present:
+            return None
 
-    def reformulate_query(self, message: str, memory: ConversationMemory) -> tuple[str, str]:
-        """
-        Reformulate query to be self-contained.
-        Returns: (resolved_query, rewrite_method)
-        where rewrite_method in ["None", "Rule", "LLM"]
-        """
-        if memory.is_empty:
-            return message, "None"
-        
-        # Rule-based Rewrite Attempt
-        last_topic = self._extract_last_topic(memory)
-        if last_topic:
-            rule_rewritten = self._apply_rule_rewrite(message, last_topic)
-            if rule_rewritten:
-                logger.info(f"🔄 [Rewrite] Rule: '{message}' → '{rule_rewritten}'")
-                return rule_rewritten, "Rule"
-        
-        # Fallback to LLM Rewrite
-        history_text = memory.get_conversation_summary()
+        suffix_rewritten = self._rewrite_suffix(
+            message,
+            last_topic,
+        )
+
+        base = suffix_rewritten or message
+        base_lower = base.lower().strip()
+
+        if base_lower.startswith(FOLLOW_UP_PREFIXES):
+            base_has_topic = (
+                (contains_word(base_lower, "skripsi") and "non skripsi" not in base_lower)
+                if topic_lower == "skripsi"
+                else contains_word(base_lower, topic_lower)
+            )
+            if not base_has_topic:
+                return (
+                    f"{base.rstrip('?')} "
+                    f"terkait {last_topic}?"
+                )
+
+            return base
+
+        if suffix_rewritten:
+            return suffix_rewritten
+
+        return self._rewrite_implicit_reference(
+            message,
+            last_topic,
+        )
+
+    @staticmethod
+    def _rewrite_suffix(
+        message: str,
+        topic: str,
+    ) -> Optional[str]:
+        """Rewrite known '-nya' follow-up forms."""
+
+        words = message.split()
+        changed = False
+        rewritten_words: list[str] = []
+
+        for word in words:
+            match = re.search(
+                r"([?.,!]+)$",
+                word,
+            )
+
+            punctuation = (
+                match.group(1)
+                if match
+                else ""
+            )
+
+            normalized = (
+                word.lower()
+                .rstrip("?.,!")
+            )
+
+            replacement = SUFFIX_REWRITES.get(
+                normalized
+            )
+
+            if replacement:
+                rewritten_words.append(
+                    f"{replacement} {topic}{punctuation}"
+                )
+                changed = True
+            else:
+                rewritten_words.append(word)
+
+        if not changed:
+            return None
+
+        return " ".join(rewritten_words)
+
+    @staticmethod
+    def _rewrite_implicit_reference(
+        message: str,
+        topic: str,
+    ) -> Optional[str]:
+        """Replace implicit 'itu' references."""
+
+        if not contains_word(
+            message.lower(),
+            "itu",
+        ):
+            return None
+
+        return re.sub(
+            r"\bitu\b",
+            topic,
+            message,
+            count=1,
+            flags=re.IGNORECASE,
+        )
+
+    def _rewrite_with_llm(
+        self,
+        message: str,
+        memory: ConversationMemory,
+    ) -> Optional[str]:
+        """Use the LLM as the final fallback."""
+
+        history = memory.get_conversation_summary()
+
         prompt = REFORMULATION_PROMPT.format(
-            history=history_text,
+            history=history,
             question=message,
         )
-        
-        try:
-            response = self._llm.invoke([HumanMessage(content=prompt)])
-            reformulated = response.content.strip()
-            
-            if reformulated and reformulated != message:
-                logger.info(f"🔄 [Rewrite] LLM: '{message}' → '{reformulated}'")
-                return reformulated, "LLM"
-            
-            return message, "LLM"
-        
-        except Exception as e:
-            logger.warning(f"LLM Reformulation failed: {e} → using original query")
-            return message, "None"
 
-# Backward compatibility (or just alias)
+        try:
+            response = self._llm.invoke(
+                [HumanMessage(content=prompt)]
+            )
+
+        except Exception as exc:
+            logger.warning(
+                "LLM query reformulation failed: {}",
+                exc,
+            )
+            return None
+
+        reformulated = response.content.strip()
+
+        if (
+            not reformulated
+            or reformulated == message
+        ):
+            return None
+
+        return reformulated
+
+    @staticmethod
+    def _log_rewrite(
+        method: RewriteMethod,
+        original: str,
+        rewritten: str,
+    ) -> None:
+        """Log successful query rewrites."""
+
+        logger.info(
+            "[Rewrite:{}] '{}' → '{}'",
+            method.value,
+            original,
+            rewritten,
+        )
+
+
+@lru_cache(maxsize=1)
+def _get_default_reformulator() -> QueryReformulator:
+    """Return the shared reformulator."""
+
+    return QueryReformulator()
+
+
 def reformulate_query(
     message: str,
     memory: ConversationMemory,
     llm: ChatOpenAI | None = None,
-) -> tuple[str, str]:
-    reformulator = QueryReformulator(llm)
-    return reformulator.reformulate_query(message, memory)
+) -> tuple[str, RewriteMethod]:
+    """
+    Backward-compatible helper.
+
+    Existing callers can continue using:
+        reformulate_query(message, memory)
+    """
+
+    reformulator = (
+        _get_default_reformulator()
+        if llm is None
+        else QueryReformulator(llm)
+    )
+
+    return reformulator.reformulate(
+        message,
+        memory,
+    )

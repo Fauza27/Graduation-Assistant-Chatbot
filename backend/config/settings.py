@@ -63,6 +63,7 @@ class Settings(BaseSettings):
     rerank_relative_gap: float = Field(default=2.5, description="Adaptive gap from top score to keep documents")
     bm25_weight: float = Field(default=0.4, ge=0.0, le=1.0, description="BM25 weight in hybrid search")
     dense_weight: float = Field(default=0.6, ge=0.0, le=1.0, description="Dense search weight")
+    dense_fallback_threshold: float = Field(default=0.3, ge=0.0, le=1.0, description="Minimum similarity threshold for dense-only fallback search")
 
     # Evaluation Configuration
     ragas_sample_size: int = Field(default=50, ge=10, le=500)
@@ -88,6 +89,13 @@ class Settings(BaseSettings):
     # Rate Limiting
     RATE_LIMIT_REQUESTS: int = Field(default=100, ge=1, le=100, description="Requests per day per user")
     RATE_LIMIT_WINDOW: int = Field(default=86400, ge=3600, le=604800, description="Rate limit window in seconds")
+    TIMEZONE: str = Field(default="Asia/Makassar", description="Zona waktu aplikasi untuk kuota & tanggal (default: Asia/Makassar / WITA)")
+    
+    # Proxy Configuration
+    TRUSTED_PROXIES: list[str] = Field(
+        default=["127.0.0.1", "::1"],
+        description="List of trusted proxy IP addresses that can send X-Forwarded-For headers"
+    )
 
     # Authentication Configuration
     JWT_SECRET_KEY: str = Field(default="super-secret-key-change-in-production", description="Secret key for JWT generation")
@@ -104,7 +112,8 @@ class Settings(BaseSettings):
     SESSION_CLEANUP_INTERVAL: int = Field(default=3600, ge=300, le=7200)  # seconds
     USE_DATABASE_SESSIONS: bool = Field(default=True, description="Use database-backed sessions instead of in-memory")
     MAX_HISTORY_TURNS: int = Field(default=3, ge=1, le=10, description="Maximum number of conversation turns sent to LLM")
-    
+    MAX_TURNS: int = Field(default=5, ge=2, le=10)
+
     # Monitoring & Observability
     ENABLE_REQUEST_METRICS: bool = Field(default=True, description="Aktifkan pencatatan request_metrics")
 

@@ -3,12 +3,6 @@
 # Format: setiap key adalah nama section, value adalah list keyword yang
 # menandai section tersebut. Keyword yang mengandung spasi dianggap frasa
 # (substring match), keyword satu kata dimatch dengan word boundary.
-#
-# CATATAN PEMELIHARAAN:
-# - Hindari keyword yang muncul di banyak section (loader akan memberi warning).
-# - Logika di self_query.py mensyaratkan minimal 2 keyword match agar filter
-#   section diaplikasikan (confidence high). Jadi keyword tidak perlu eksklusif
-#   100%, tapi sebaiknya minim overlap.
 
 Front Matter:
   - kata pengantar

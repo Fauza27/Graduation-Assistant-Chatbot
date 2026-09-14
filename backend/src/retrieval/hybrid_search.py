@@ -1,55 +1,80 @@
+"""Hybrid BM25 + vector search."""
+
 from __future__ import annotations
 
-from dataclasses import dataclass
+import time
+from dataclasses import dataclass, field
 from typing import Any
 
-import time
+import tiktoken
 from langchain_core.documents import Document
 from langchain_openai import OpenAIEmbeddings
 from loguru import logger
 from supabase import Client, create_client
 
 from config.settings import get_settings
+from src.monitoring.context import end_stage, set_field, start_stage
+from src.monitoring.pricing import calculate_embedding_cost
+from src.monitoring.openai_client import (
+    build_instrumented_http_client,
+)
 from src.retrieval.query_expansion import expand_query_smart
+
 
 settings = get_settings()
 
 EMBEDDING_DIMENSIONS = 2000
 RRF_K_DEFAULT = 60
+DENSE_FALLBACK_THRESHOLD = getattr(
+    settings,
+    "dense_fallback_threshold",
+    0.3,
+)
 
 
 @dataclass
 class HybridSearchResult:
-    """
-    Hasil pencarian hybrid (BM25 FTS + vector) yang sudah digabung lewat RRF
-    di sisi PostgreSQL. Lihat fungsi `hybrid_search` di scripts/supabase.sql.
-    """
+    """Normalized result from hybrid or dense search."""
+
     document: Document
     hybrid_score: float
     child_id: str
     parent_id: str
+    score_source: str = field(
+        default="rrf"
+    )
 
 
 class HybridSearcher:
     """
-    Hybrid retriever yang melakukan fusion BM25 + vector di PostgreSQL.
+    Hybrid retriever using PostgreSQL BM25/FTS + vector search.
 
-    Tokenisasi BM25 menggunakan `to_tsvector('indonesian')` di Postgres
-    (memiliki Snowball stemmer untuk bahasa Indonesia). Bobot fusion dan
-    parameter RRF dikontrol via settings.
+    Query expansion is applied only to FTS/BM25.
+    Vector search always uses the original query.
     """
 
-    def __init__(self, supabase_client: Client | None = None):
-        self._supabase = supabase_client or create_client(
-            settings.supabase_url, settings.supabase_service_key
+    def __init__(
+        self,
+        supabase_client: Client | None = None,
+    ) -> None:
+        self._supabase = (
+            supabase_client
+            or create_client(
+                settings.supabase_url,
+                settings.supabase_service_key,
+            )
         )
-        from src.monitoring.openai_client import build_instrumented_http_client
+
         self._embedder = OpenAIEmbeddings(
             model=settings.embedding_model,
             api_key=settings.open_api_key,
             dimensions=EMBEDDING_DIMENSIONS,
             http_client=build_instrumented_http_client(),
         )
+
+    def warmup(self) -> None:
+        """Pre-warm the embedding model and underlying HTTP connection."""
+        self._embedder.embed_query("warmup")
 
     def search(
         self,
@@ -58,130 +83,389 @@ class HybridSearcher:
         top_k: int | None = None,
         enable_query_expansion: bool = True,
     ) -> list[HybridSearchResult]:
-        """
-        Melakukan pencarian hybrid (BM25 + Vector) di database Supabase.
-        
-        Args:
-            query: Teks pencarian dari pengguna
-            filters: Dictionary filter metadata (seperti section)
-            top_k: Jumlah hasil maksimal yang dikembalikan
-            enable_query_expansion: Flag untuk mengekspansi query (default: True)
-            
-        Returns:
-            List dari HybridSearchResult yang berisi dokumen dan skor RRF.
-        """
-        k = top_k or settings.retrieval_top_k
+        """Run hybrid search and return normalized results."""
+
         filters = filters or {}
+        match_count = (
+            top_k
+            if top_k is not None
+            else settings.retrieval_top_k
+        )
 
-        # Apply query expansion for better recall.
         original_query = query
-        if enable_query_expansion:
-            query = expand_query_smart(query, enable_expansion=True)
-            if query != original_query:
-                logger.info(
-                    f"Query expansion applied: '{original_query}' → '{query[:100]}...'"
-                )
 
-        logger.info(f"Hybrid search: '{original_query}' | filters: {filters} | top_k: {k}")
+        expanded_query = (
+            expand_query_smart(query)
+            if enable_query_expansion
+            else query
+        )
 
-        from src.monitoring.context import start_stage, end_stage
+        if expanded_query != original_query:
+            logger.info(
+                "Query expansion applied: "
+                "'{}' → '{}'",
+                original_query,
+                expanded_query[:150],
+            )
+
+        logger.info(
+            "Hybrid search: '{}' | filters={} | top_k={}",
+            original_query,
+            filters,
+            match_count,
+        )
+
+        query_embedding = self._create_embedding(
+            original_query
+        )
+
+        if query_embedding is None:
+            logger.warning(
+                "Query embedding gagal dihitung untuk '{}'. "
+                "Menjalankan fallback pencarian Full-Text Search (FTS) murni.",
+                original_query,
+            )
+            rows = self._fts_fallback(
+                expanded_query=expanded_query,
+                filters=filters,
+                match_count=match_count,
+            )
+            score_source = "fts_only_fallback"
+        else:
+            rows, score_source = self._execute_search(
+                original_query=original_query,
+                expanded_query=expanded_query,
+                query_embedding=query_embedding,
+                filters=filters,
+                match_count=match_count,
+            )
+
+        results = self._build_results(
+            rows=rows,
+            score_source=score_source,
+        )
+
+        logger.info(
+            "Hybrid search selesai: "
+            "{} results (source={})",
+            len(results),
+            score_source,
+        )
+
+        if results:
+            logger.info(
+                "Top: {} | score={:.4f}",
+                results[0].child_id,
+                results[0].hybrid_score,
+            )
+
+        set_field(
+            num_docs_retrieved=len(results)
+        )
+
+        return results
+
+    def _create_embedding(
+        self,
+        query: str,
+    ) -> list[float] | None:
+        """Create query embedding and record usage."""
 
         start_stage("embedding")
-        t0 = time.time()
-        query_embedding = self._embedder.embed_query(query)
-        t_embed = time.time() - t0
-        end_stage()
-        logger.info(f"  [Profile] Query Embedding: {t_embed:.2f}s")
-
-        import tiktoken
-        from src.monitoring.pricing import calculate_embedding_cost
+        started_at = time.time()
 
         try:
-            _enc = tiktoken.encoding_for_model("text-embedding-3-large")
+            embedding = self._embedder.embed_query(
+                query
+            )
+        except Exception as exc:
+            logger.error(
+                "Gagal menghitung embedding: {}",
+                exc,
+            )
+            end_stage()
+            return None
+
+        elapsed = time.time() - started_at
+        end_stage()
+
+        logger.info(
+            "[Profile] Query Embedding: {:.2f}s",
+            elapsed,
+        )
+
+        try:
+            encoder = tiktoken.encoding_for_model(
+                settings.embedding_model
+            )
         except Exception:
-            _enc = tiktoken.get_encoding("cl100k_base")
-        embed_tokens = len(_enc.encode(query))
-        embed_cost = calculate_embedding_cost(settings.embedding_model, embed_tokens)
-        from src.monitoring.context import set_field
-        set_field(embedding_tokens=embed_tokens, embedding_cost_usd=embed_cost)
+            encoder = tiktoken.get_encoding(
+                "cl100k_base"
+            )
+
+        token_count = len(
+            encoder.encode(query)
+        )
+
+        cost = calculate_embedding_cost(
+            settings.embedding_model,
+            token_count,
+        )
+
+        set_field(
+            embedding_tokens=token_count,
+            embedding_cost_usd=cost,
+        )
+
+        return embedding
+
+    def _execute_search(
+        self,
+        original_query: str,
+        expanded_query: str,
+        query_embedding: list[float],
+        filters: dict[str, str],
+        match_count: int,
+    ) -> tuple[list[dict[str, Any]], str]:
+        """Run hybrid search and dense fallback."""
 
         rpc_params: dict[str, Any] = {
             "query_embedding": query_embedding,
-            "query_text": query,
-            "match_count": k,
+            "query_text": expanded_query,
+            "match_count": match_count,
             "fts_weight": settings.bm25_weight,
             "vector_weight": settings.dense_weight,
             "rrf_k": RRF_K_DEFAULT,
-            "filter_section": filters.get("section"),
-            "filter_source": filters.get("source"),
+            "filter_section": filters.get(
+                "section"
+            ),
+            "filter_source": filters.get(
+                "source"
+            ),
         }
 
         start_stage("retrieval")
-        t1 = time.time()
-        response = self._supabase.rpc("hybrid_search", rpc_params).execute()
-        t_rpc = time.time() - t1
-        end_stage()
-        logger.info(f"  [Profile] Supabase Hybrid RPC: {t_rpc:.2f}s")
-        
-        db_results = response.data or []
+        started_at = time.time()
 
-        # Fallback: kalau hybrid search tidak menemukan apa pun (mis. query
-        # tidak match FTS sama sekali dan vector juga lemah), coba dense-only.
-        if not db_results:
-            logger.warning("Tidak ada hasil dari hybrid_search RPC.")
-            logger.info("Fallback ke dense-only via match_child_documents...")
-            fallback_response = self._supabase.rpc(
+        try:
+            response = self._supabase.rpc(
+                "hybrid_search",
+                rpc_params,
+            ).execute()
+
+            rows = response.data or []
+
+        except Exception as exc:
+            logger.error(
+                "Hybrid search RPC gagal: {}",
+                exc,
+            )
+            rows = []
+
+        elapsed = time.time() - started_at
+        end_stage()
+
+        logger.info(
+            "[Profile] Supabase Hybrid RPC: {:.2f}s",
+            elapsed,
+        )
+
+        if rows:
+            return rows, "rrf"
+
+        logger.warning(
+            "Tidak ada hasil hybrid_search RPC."
+        )
+
+        fallback_rows = self._dense_fallback(
+            query_embedding=query_embedding,
+            filters=filters,
+            match_count=match_count,
+        )
+
+        if not fallback_rows:
+            return [], "dense_fallback"
+
+        return fallback_rows, "dense_fallback"
+
+    def _dense_fallback(
+        self,
+        query_embedding: list[float],
+        filters: dict[str, str],
+        match_count: int,
+    ) -> list[dict[str, Any]]:
+        """Run dense-only search when hybrid returns nothing."""
+
+        logger.info(
+            "Fallback ke dense-only via "
+            "match_child_documents..."
+        )
+
+        try:
+            response = self._supabase.rpc(
                 "match_child_documents",
                 {
                     "query_embedding": query_embedding,
-                    "match_threshold": 0.0,
-                    "match_count": k,
+                    "match_threshold": DENSE_FALLBACK_THRESHOLD,
+                    "match_count": match_count,
+                    "filter_section": filters.get(
+                        "section"
+                    ),
+                    "filter_source": filters.get(
+                        "source"
+                    ),
+                },
+            ).execute()
+
+        except Exception as exc:
+            logger.error(
+                "Fallback dense search RPC gagal: {}",
+                exc,
+            )
+            return []
+
+        if not response.data:
+            logger.warning(
+                "Dense search juga kosong."
+            )
+            return []
+
+        normalized_rows: list[dict[str, Any]] = []
+
+        for row in response.data:
+            normalized = dict(row)
+
+            normalized["rrf_score"] = normalized.get(
+                "similarity",
+                0.0,
+            )
+
+            normalized_rows.append(
+                normalized
+            )
+
+        return normalized_rows
+
+    def _fts_fallback(
+        self,
+        expanded_query: str,
+        filters: dict[str, str],
+        match_count: int,
+    ) -> list[dict[str, Any]]:
+        """Run pure Full-Text Search fallback via search_fts_child_documents RPC."""
+        logger.info(
+            "Fallback ke FTS-only via search_fts_child_documents..."
+        )
+
+        start_stage("retrieval")
+        started_at = time.time()
+
+        try:
+            response = self._supabase.rpc(
+                "search_fts_child_documents",
+                {
+                    "query_text": expanded_query,
+                    "match_count": match_count,
                     "filter_section": filters.get("section"),
                     "filter_source": filters.get("source"),
                 },
             ).execute()
+        except Exception as exc:
+            logger.error(
+                "Fallback FTS search RPC gagal: {}",
+                exc,
+            )
+            end_stage()
+            return []
 
-            if not fallback_response.data:
-                logger.warning("Dense search juga kosong, tidak ada hasil.")
-                return []
+        elapsed = time.time() - started_at
+        end_stage()
 
-            # Normalisasi field: dense-only return `similarity`, kita pakai
-            # itu sebagai hybrid_score agar struktur output konsisten.
-            db_results = []
-            for row in fallback_response.data:
-                row = dict(row)
-                row["rrf_score"] = row.get("similarity", 0.0)
-                db_results.append(row)
+        logger.info(
+            "[Profile] Supabase FTS Fallback RPC: {:.2f}s",
+            elapsed,
+        )
+
+        if not response.data:
+            logger.warning(
+                "FTS search fallback tidak menghasilkan dokumen."
+            )
+            return []
+
+        normalized_rows: list[dict[str, Any]] = []
+        for row in response.data:
+            normalized = dict(row)
+            # Normalisasi fts_rank ke rrf_score agar seragam dengan output RRF
+            normalized["rrf_score"] = normalized.get(
+                "fts_rank",
+                0.0,
+            )
+            normalized_rows.append(normalized)
+
+        return normalized_rows
+
+    @staticmethod
+    def _build_results(
+        rows: list[dict[str, Any]],
+        score_source: str,
+    ) -> list[HybridSearchResult]:
+        """Convert database rows into typed search results."""
 
         results: list[HybridSearchResult] = []
-        for row in db_results:
-            doc = Document(
-                page_content=row["content"],
+
+        for row in rows:
+            document = Document(
+                page_content=row.get(
+                    "content",
+                    "",
+                ),
                 metadata={
-                    "child_id": row["id"],
-                    "parent_id": row.get("parent_id", ""),
-                    "title": row.get("title", ""),
-                    "section": row.get("section", ""),
-                    "pages": row.get("pages", []),
-                    "source": row.get("source", ""),
+                    "child_id": row.get(
+                        "id",
+                        "",
+                    ),
+                    "parent_id": row.get(
+                        "parent_id",
+                        "",
+                    ),
+                    "title": row.get(
+                        "title",
+                        "",
+                    ),
+                    "section": row.get(
+                        "section",
+                        "",
+                    ),
+                    "pages": row.get(
+                        "pages",
+                        [],
+                    ),
+                    "source": row.get(
+                        "source",
+                        "",
+                    ),
                 },
             )
 
             results.append(
                 HybridSearchResult(
-                    document=doc,
-                    hybrid_score=float(row.get("rrf_score", 0.0)),
-                    child_id=row["id"],
-                    parent_id=row.get("parent_id", ""),
+                    document=document,
+                    hybrid_score=float(
+                        row.get(
+                            "rrf_score",
+                            0.0,
+                        )
+                    ),
+                    child_id=row.get(
+                        "id",
+                        "",
+                    ),
+                    parent_id=row.get(
+                        "parent_id",
+                        "",
+                    ),
+                    score_source=score_source,
                 )
             )
 
-        logger.info(f"Hybrid search selesai: {len(results)} results")
-        if results:
-            logger.info(
-                f"  Top: {results[0].child_id} | hybrid={results[0].hybrid_score:.4f}"
-            )
-
-        from src.monitoring.context import set_field
-        set_field(num_docs_retrieved=len(results))
         return results

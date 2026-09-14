@@ -1,217 +1,596 @@
-"""
-Single source of truth untuk pipeline retrieval RAG:
-self-query → hybrid search → parent fetching → reranking.
+"""Single source of truth for the RAG retrieval pipeline.
 
-Fungsi `run_retrieval` dipakai oleh:
-- `src/services/ai_services.py`
+Pipeline:
+    self-query → hybrid search → parent fetching → reranking
 
-Mengimplementasikan:
-- Candidate Limiting (membatasi parent yang direrank)
-- Adaptive Reranking (skip rerank jika dokumen <= batas minimal)
-- Zero-doc shortcircuit
+Features:
+    - Candidate limiting
+    - Adaptive reranking
+    - Zero-document short-circuit
+    - Structured fallback on retrieval errors
+    - Retrieval metrics and profiling
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import time
+from dataclasses import dataclass
 
 from loguru import logger
 
 from config.settings import get_settings
-from src.monitoring.context import start_stage, end_stage, set_field
+from src.monitoring.context import end_stage, set_field, start_stage
 
+
+# ============================================================================
+# Result model
+# ============================================================================
 
 @dataclass
 class RetrievalResult:
-    """Hasil pipeline retrieval, siap dikonsumsi generator."""
+    """Final retrieval result ready for the answer generator."""
+
     parent_documents: list[dict]
     is_empty: bool
 
     @property
     def num_docs(self) -> int:
+        """Number of retrieved parent documents."""
+
         return len(self.parent_documents)
 
 
-def run_retrieval(query: str, rerank_query: str | None = None) -> RetrievalResult:
-    """
-    Jalankan pipeline retrieval lengkap untuk satu query.
+# ============================================================================
+# Main pipeline
+# ============================================================================
 
-    `query` adalah teks yang dipakai untuk semantic search (sudah
-    direformulasi kalau perlu).
-    `rerank_query` adalah teks yang dipakai cross-encoder; default ke
-    `query` kalau tidak diberikan. Biasanya pakai pertanyaan asli user
-    di sini agar reranking konsisten dengan intent original.
+def run_retrieval(
+    query: str,
+    rerank_query: str | None = None,
+) -> RetrievalResult:
     """
-    from src.retrieval.self_query import extract_query_components
-    from src.retrieval.hybrid_search import HybridSearcher
-    from src.retrieval.parent_child import ParentChildFetcher
+    Run the complete retrieval pipeline for one query.
+
+    Args:
+        query:
+            Semantic retrieval query. Normally this is the reformulated
+            query when conversation context requires it.
+
+        rerank_query:
+            Query used by the cross-encoder reranker. Defaults to `query`.
+            Usually the original user question is preferable here.
+    """
+
     from src.retrieval.reranker import CrossEncoderReranker
+    from src.retrieval.self_query import (
+        ParsedQuery,
+        extract_query_components,
+    )
     from src.retrieval.source_utils import detect_panduan_type
+    from src.services.ai_services import _get_hybrid_searcher, _get_parent_child_fetcher
 
     settings = get_settings()
     rerank_query = rerank_query or query
+    pipeline_start = time.time()
 
-    t_start = time.time()
-    parsed = extract_query_components(query)
-    t_parse = time.time()
+    # ------------------------------------------------------------------
+    # Stage 1: Self-query parsing
+    # ------------------------------------------------------------------
 
-    # C5: domain_detected dihitung dari hasil self-query classifier, BUKAN
-    # dari dokumen yang berhasil diambil — supaya tetap ada atribusi domain
-    # walaupun retrieval-nya gagal total (dibutuhkan untuk analisis "domain
-    # mana paling sering gagal retrieval").
-    domain_detected = (
-        detect_panduan_type({"source": parsed.detected_source})
-        if parsed.detected_source
-        else "UNKNOWN"
+    start_stage("self_query")
+    started_at = time.time()
+
+    try:
+        parsed = extract_query_components(query)
+    except Exception as exc:
+        logger.error(
+            "Error in extract_query_components: {}",
+            exc,
+        )
+        parsed = ParsedQuery(
+            semantic_query=query,
+            filters={},
+            original_query=query,
+            confidence="low",
+        )
+
+    parse_time = time.time() - started_at
+    end_stage()
+
+    _record_detected_domain(
+        parsed,
+        detect_panduan_type,
     )
-    set_field(domain_detected=domain_detected)
 
-    searcher = HybridSearcher()
-    search_results = searcher.search(
-        query=parsed.semantic_query,
-        filters=parsed.filters,
-    )
-    t_search = time.time()
+    # ------------------------------------------------------------------
+    # Stage 2: Hybrid search
+    # ------------------------------------------------------------------
+
+    started_at = time.time()
+
+    try:
+        search_results = _get_hybrid_searcher().search(
+            query=parsed.semantic_query,
+            filters=parsed.filters,
+        )
+    except Exception as exc:
+        logger.error(
+            "Error in HybridSearcher.search: {}",
+            exc,
+        )
+        search_results = []
+
+    search_time = time.time() - started_at
 
     if not search_results:
-        logger.info("⏭️ Zero documents found in Hybrid Search. Short-circuiting.")
-        set_field(is_no_relevant_doc=True, num_docs_after_rerank=0, retrieved_parent_ids=[])
-        return RetrievalResult(parent_documents=[], is_empty=True)
+        logger.info(
+            "Zero documents found in Hybrid Search. "
+            "Short-circuiting."
+        )
+
+        _record_empty_retrieval_metrics()
+
+        return RetrievalResult(
+            parent_documents=[],
+            is_empty=True,
+        )
+
+    # ------------------------------------------------------------------
+    # Stage 3: Parent document assembly
+    # ------------------------------------------------------------------
 
     start_stage("parent_assembly")
-    fetcher = ParentChildFetcher()
-    parent_results = fetcher.fetch_parents(search_results)
+    started_at = time.time()
+
+    try:
+        parent_results = _get_parent_child_fetcher().fetch_parents(
+            search_results
+        )
+    except Exception as exc:
+        logger.error(
+            "Error in ParentChildFetcher.fetch_parents: {}",
+            exc,
+        )
+        parent_results = []
+
+    fetch_time = time.time() - started_at
     end_stage()
-    t_fetch = time.time()
 
     if not parent_results:
-        logger.info("⏭️ Zero parent documents fetched. Short-circuiting.")
-        set_field(is_no_relevant_doc=True, num_docs_after_rerank=0, retrieved_parent_ids=[])
-        return RetrievalResult(parent_documents=[], is_empty=True)
+        logger.info(
+            "Zero parent documents fetched. "
+            "Short-circuiting."
+        )
 
-    # Candidate Limiting: Ambil Top N parent sebelum di-rerank
-    # (fetch_parents sudah mensortir secara descending berdasarkan hybrid score)
-    candidate_parents = parent_results[: settings.max_parent_for_rerank]
-    
-    # Adaptive Reranking: Skip Reranking jika kandidat sedikit
+        _record_empty_retrieval_metrics()
+
+        return RetrievalResult(
+            parent_documents=[],
+            is_empty=True,
+        )
+
+    # ------------------------------------------------------------------
+    # Stage 4: Limit candidates before reranking
+    # ------------------------------------------------------------------
+
+    candidate_parents = parent_results[
+        : settings.max_parent_for_rerank
+    ]
+
+    logger.debug(
+        "Reranking candidates: {} → {}",
+        len(parent_results),
+        len(candidate_parents),
+    )
+
+    # ------------------------------------------------------------------
+    # Stage 5: Adaptive reranking
+    # ------------------------------------------------------------------
+
     if len(candidate_parents) <= settings.min_parent_for_rerank:
-        logger.info(f"⏭️ Skipping Reranking: only {len(candidate_parents)} candidates (<= {settings.min_parent_for_rerank})")
-        
-        final_results = candidate_parents[: settings.rerank_top_n]
-        # Pastikan ada key cross_encoder_score agar format seragam
-        for p in final_results:
-            p["cross_encoder_score"] = p.get("best_child_score", 0.0)
-            
-        t_rerank = time.time()
-        logger.info(f"⏱️ [Retrieval Pipeline] Total: {t_rerank - t_start:.2f}s | "
-                    f"Parse: {t_parse - t_start:.2f}s | "
-                    f"Search: {t_search - t_parse:.2f}s | "
-                    f"Fetch: {t_fetch - t_search:.2f}s | "
-                    f"Rerank (Skipped): 0.00s")
+        final_results = _skip_reranking(
+            candidate_parents,
+            settings.rerank_top_n,
+        )
 
-        _record_final_retrieval_metrics(final_results, all_scored_candidates=candidate_parents)
-        return RetrievalResult(parent_documents=final_results, is_empty=False)
+        rerank_time = 0.0
+        reason = "Reranking Skipped"
+
+        _log_pipeline_summary(
+            pipeline_start=pipeline_start,
+            parse_time=parse_time,
+            search_time=search_time,
+            fetch_time=fetch_time,
+            rerank_time=rerank_time,
+            candidate_count=len(candidate_parents),
+            final_results=final_results,
+            reason=reason,
+        )
+
+        _record_final_retrieval_metrics(
+            final_results,
+            all_scored_candidates=candidate_parents,
+        )
+
+        return RetrievalResult(
+            parent_documents=final_results,
+            is_empty=not final_results,
+        )
+
+    # ------------------------------------------------------------------
+    # Stage 5B: Cross-encoder reranking
+    # ------------------------------------------------------------------
 
     start_stage("reranking")
+    started_at = time.time()
+
+    reranked: list[dict] = []
+    final_results: list[dict] = []
+    reason = ""
+    top_score = 0.0
+
     try:
-        reranker = CrossEncoderReranker()
-        reranked = reranker.rerank(query=rerank_query, documents=candidate_parents)
-        
-        if reranked:
-            top_score = reranked[0].get("cross_encoder_score", 0.0)
-            
+        reranked = CrossEncoderReranker().rerank(
+            query=rerank_query,
+            documents=candidate_parents,
+        )
+
+        for document in reranked:
+            document["score_source"] = "cross_encoder"
+            document["rerank_method"] = "cross_encoder"
+
+        if not reranked:
+            reason = "No documents reranked"
+        else:
+            top_score = float(
+                reranked[0].get(
+                    "cross_encoder_score",
+                    0.0,
+                )
+            )
+
             if top_score < settings.rerank_min_top_score:
                 final_results = []
                 reason = "Minimum Evidence Triggered"
             else:
-                min_accepted_score = top_score - settings.rerank_relative_gap
+                min_accepted_score = (
+                    top_score
+                    - settings.rerank_relative_gap
+                )
+
                 final_results = [
-                    doc for doc in reranked 
-                    if doc.get("cross_encoder_score", 0.0) >= min_accepted_score
+                    document
+                    for document in reranked
+                    if document.get(
+                        "cross_encoder_score",
+                        0.0,
+                    ) >= min_accepted_score
                 ][: settings.rerank_top_n]
+
                 reason = "Adaptive Relative Gap"
-        else:
-            final_results = []
-            reason = "No documents reranked"
-            top_score = 0.0
-            
-    except Exception as e:
-        logger.warning(f"Reranking failed, using unranked top-N: {e}")
-        final_results = candidate_parents[: settings.rerank_top_n]
+
+    except Exception as exc:
+        logger.warning(
+            "Reranking failed, using unranked top-N: {}",
+            exc,
+        )
+
+        final_results = [
+            dict(document)
+            for document in candidate_parents[
+                : settings.rerank_top_n
+            ]
+        ]
+
+        for document in final_results:
+            document[
+                "cross_encoder_score"
+            ] = document.get(
+                "best_child_score",
+                0.0,
+            )
+            document["score_source"] = "hybrid_fallback"
+            document["rerank_method"] = "fallback"
+
+        top_score = (
+            final_results[0].get(
+                "cross_encoder_score",
+                0.0,
+            )
+            if final_results
+            else 0.0
+        )
+
         reason = "Reranking Failed (Fallback)"
-        top_score = final_results[0].get("best_child_score", 0.0) if final_results else 0.0
+
+    rerank_time = time.time() - started_at
     end_stage()
 
-    t_rerank = time.time()
-    
-    summary_log = (
-        f"\n========== Retrieval Summary ==========\n"
-        f"Retrieved Parents : {len(candidate_parents)}\n"
-        f"After Threshold   : {len(final_results)}\n"
-        f"Top Score         : {top_score:.2f}\n"
-        f"Reason            : {reason}\n"
-        f"LLM Mode          : {'Conversation (Empty Context)' if not final_results else 'RAG'}\n"
-        f"======================================="
-    )
-    logger.info(summary_log)
-    
-    logger.info(f"⏱️ [Retrieval Pipeline] Total: {t_rerank - t_start:.2f}s | "
-                f"Parse: {t_parse - t_start:.2f}s | "
-                f"Search: {t_search - t_parse:.2f}s | "
-                f"Fetch: {t_fetch - t_search:.2f}s | "
-                f"Rerank: {t_rerank - t_fetch:.2f}s")
+    # ------------------------------------------------------------------
+    # Final metrics
+    # ------------------------------------------------------------------
 
-    _record_final_retrieval_metrics(final_results, all_scored_candidates=(reranked if reranked else candidate_parents))
-    return RetrievalResult(parent_documents=final_results, is_empty=(len(final_results) == 0))
+    _log_pipeline_summary(
+        pipeline_start=pipeline_start,
+        parse_time=parse_time,
+        search_time=search_time,
+        fetch_time=fetch_time,
+        rerank_time=rerank_time,
+        candidate_count=len(candidate_parents),
+        final_results=final_results,
+        reason=reason,
+        top_score=top_score,
+    )
+
+    _record_final_retrieval_metrics(
+        final_results,
+        all_scored_candidates=(
+            reranked
+            if reranked
+            else candidate_parents
+        ),
+    )
+
+    return RetrievalResult(
+        parent_documents=final_results,
+        is_empty=not final_results,
+    )
+
+
+# ============================================================================
+# Small helpers
+# ============================================================================
+
+def _record_detected_domain(
+    parsed: object,
+    detect_panduan_type,
+) -> None:
+    """Record the domain detected by self-query parsing."""
+
+    detected_source = getattr(
+        parsed,
+        "detected_source",
+        None,
+    )
+
+    domain = (
+        detect_panduan_type(
+            {"source": detected_source}
+        )
+        if detected_source
+        else "UNKNOWN"
+    )
+
+    set_field(
+        domain_detected=domain
+    )
+
+
+def _skip_reranking(
+    candidate_parents: list[dict],
+    top_n: int,
+) -> list[dict]:
+    """
+    Skip cross-encoder when candidate count is already small.
+
+    Hybrid score is reused as `cross_encoder_score` so downstream
+    consumers can continue using one score field.
+    """
+
+    logger.info(
+        "Skipping Reranking: only {} candidates",
+        len(candidate_parents),
+    )
+
+    final_results = [
+        dict(document)
+        for document in candidate_parents[:top_n]
+    ]
+
+    for document in final_results:
+        document[
+            "cross_encoder_score"
+        ] = document.get(
+            "best_child_score",
+            0.0,
+        )
+
+        document["score_source"] = "hybrid_skip_rerank"
+        document["rerank_method"] = "skipped"
+
+    return final_results
+
+
+def _log_pipeline_summary(
+    *,
+    pipeline_start: float,
+    parse_time: float,
+    search_time: float,
+    fetch_time: float,
+    rerank_time: float,
+    candidate_count: int,
+    final_results: list[dict],
+    reason: str,
+    top_score: float = 0.0,
+) -> None:
+    """Log retrieval result and stage timings."""
+
+    total_time = time.time() - pipeline_start
+
+    mode = (
+        "RAG"
+        if final_results
+        else "Conversation (Empty Context)"
+    )
+
+    logger.info(
+        "\n"
+        "========== Retrieval Summary ==========\n"
+        "Retrieved Parents : {}\n"
+        "After Threshold   : {}\n"
+        "Top Score         : {:.2f}\n"
+        "Reason            : {}\n"
+        "LLM Mode          : {}\n"
+        "=======================================",
+        candidate_count,
+        len(final_results),
+        top_score,
+        reason,
+        mode,
+    )
+
+    logger.info(
+        "Retrieval Pipeline | "
+        "Total: {:.2f}s | "
+        "Parse: {:.2f}s | "
+        "Search: {:.2f}s | "
+        "Fetch: {:.2f}s | "
+        "Rerank: {:.2f}s",
+        total_time,
+        parse_time,
+        search_time,
+        fetch_time,
+        rerank_time,
+    )
+
+
+# ============================================================================
+# Metrics
+# ============================================================================
+
+def _record_empty_retrieval_metrics() -> None:
+    """Record metrics for an empty retrieval."""
+
+    _record_final_retrieval_metrics(
+        [],
+        all_scored_candidates=[],
+    )
 
 
 def _record_final_retrieval_metrics(
     final_results: list[dict],
     all_scored_candidates: list[dict] | None = None,
 ) -> None:
-    """Kirim skor cross-encoder & daftar parent_id akhir ke metrics collector.
-    Dipanggil di kedua jalur (reranking penuh maupun adaptive-skip).
-
-    `all_scored_candidates` (G5, Fase 10): SEMUA kandidat yang sempat diberi
-    skor SEBELUM di-threshold — dipakai untuk retrieval_detail supaya admin
-    bisa lihat "kenapa dokumen X tidak lolos" (skornya berapa), bukan cuma
-    yang lolos akhir. Kalau tidak diisi, fallback pakai final_results saja.
     """
-    accepted_ids = {p.get("parent_id", "") for p in final_results}
-    candidates_for_detail = all_scored_candidates if all_scored_candidates is not None else final_results
+    Record final retrieval metrics.
+
+    Used by both:
+        - full reranking
+        - adaptive reranking skip
+        - empty retrieval
+    """
+
+    accepted_ids = {
+        document.get(
+            "parent_id",
+            "",
+        )
+        for document in final_results
+    }
+
+    candidates = (
+        all_scored_candidates
+        if all_scored_candidates is not None
+        else final_results
+    )
 
     if not final_results:
         set_field(
             is_no_relevant_doc=True,
             num_docs_after_rerank=0,
             retrieved_parent_ids=[],
-            retrieval_detail=_build_retrieval_detail(candidates_for_detail, accepted_ids),
+            retrieval_detail=_build_retrieval_detail(
+                candidates,
+                accepted_ids,
+            ),
         )
         return
 
-    scores = [p.get("cross_encoder_score", 0.0) for p in final_results]
+    scores = [
+        float(
+            document.get(
+                "cross_encoder_score",
+                0.0,
+            )
+        )
+        for document in final_results
+    ]
+
     set_field(
         is_no_relevant_doc=False,
         num_docs_after_rerank=len(final_results),
-        top_cross_encoder_score=max(scores) if scores else None,
-        avg_cross_encoder_score=(sum(scores) / len(scores)) if scores else None,
-        retrieved_parent_ids=[p.get("parent_id", "") for p in final_results],
-        retrieval_detail=_build_retrieval_detail(candidates_for_detail, accepted_ids),
+        top_cross_encoder_score=(
+            max(scores)
+            if scores
+            else None
+        ),
+        avg_cross_encoder_score=(
+            sum(scores) / len(scores)
+            if scores
+            else None
+        ),
+        retrieved_parent_ids=[
+            document.get(
+                "parent_id",
+                "",
+            )
+            for document in final_results
+        ],
+        retrieval_detail=_build_retrieval_detail(
+            candidates,
+            accepted_ids,
+        ),
     )
 
 
-def _build_retrieval_detail(candidates: list[dict], accepted_ids: set[str]) -> list[dict]:
-    """(G5, Fase 10) Bentuk struktur ringkas untuk kolom JSONB retrieval_detail —
-    dipakai fitur 'detail cross-encoder per pertanyaan' di admin panel.
-    Skor diambil dari cross_encoder_score kalau ada (jalur reranking penuh),
-    fallback ke best_child_score (jalur adaptive-skip, lihat catatan di atas)."""
+def _build_retrieval_detail(
+    candidates: list[dict],
+    accepted_ids: set[str],
+) -> list[dict]:
+    """Build compact retrieval details for JSONB metrics."""
+
     return [
         {
-            "parent_id": c.get("parent_id", ""),
-            "title": c.get("title") or c.get("section") or "",
-            "score": round(c.get("cross_encoder_score", c.get("best_child_score", 0.0)), 4),
-            "accepted": c.get("parent_id", "") in accepted_ids,
+            "parent_id": candidate.get(
+                "parent_id",
+                "",
+            ),
+            "title": (
+                candidate.get("title")
+                or candidate.get("section")
+                or ""
+            ),
+            "score": round(
+                float(
+                    candidate.get(
+                        "cross_encoder_score",
+                        candidate.get(
+                            "best_child_score",
+                            0.0,
+                        ),
+                    )
+                ),
+                4,
+            ),
+            "score_source": candidate.get(
+                "score_source",
+                "cross_encoder",
+            ),
+            "rerank_method": candidate.get(
+                "rerank_method",
+                "cross_encoder",
+            ),
+            "search_score_source": candidate.get(
+                "search_score_source",
+                "rrf",
+            ),
+            "accepted": (
+                candidate.get(
+                    "parent_id",
+                    "",
+                )
+                in accepted_ids
+            ),
         }
-        for c in candidates
+        for candidate in candidates
     ]

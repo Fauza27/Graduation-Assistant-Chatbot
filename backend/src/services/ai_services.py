@@ -1,54 +1,98 @@
-from typing import Dict, Any, Optional
+"""
+AI Services Layer: Orchestrates memory, query rewrite, retrieval, and RAG generation.
+"""
+
+from __future__ import annotations
+
+import functools
 import time
+from typing import Any, Dict, Optional
+
 from loguru import logger
-from cachetools import TTLCache
 
+from src.generation.chain import get_rag_generator
+from src.generation.intent_classifier.reformulator import (
+    needs_rewrite,
+    normalize_query,
+    reformulate_query,
+)
 from src.generation.memory import ConversationMemory
-from src.generation.intent_classifier.reformulator import normalize_query, needs_rewrite, reformulate_query
-from src.generation.chain import RAGChain
-from src.services.session_strategy import create_session_store, SessionStore
-from src.monitoring.context import new_collector, start_stage, end_stage, set_field, get_current
+from src.monitoring.context import (
+    clear_current,
+    end_stage,
+    get_current,
+    new_collector,
+    set_field,
+    start_stage,
+)
+from src.monitoring.errors import classify_exception
 from src.monitoring.writer import persist_metrics
-from src.monitoring.errors import ChatError, RetrievalError, classify_exception
-from config.settings import get_settings
+from src.services.retrieval_cache import RevisionedRetrievalCache
+from src.services.session_strategy import SessionStore, create_session_store, SessionAccessError
 
-settings = get_settings()
+retrieval_cache = RevisionedRetrievalCache()
 
-# Cache for retrieval results (max 500 items, TTL 30 minutes)
-retrieval_cache = TTLCache(maxsize=500, ttl=1800)
-KNOWLEDGE_VERSION = "v1"
-
-# Initialize session store strategy (dipilih sekali saat startup)
 _session_store_strategy: SessionStore = create_session_store()
 
-_rag_chain = RAGChain()
 
-# NOTE: ChatError & RetrievalError sekarang didefinisikan di
-# src/monitoring/errors.py (diimpor di atas) supaya taksonomi error
-# konsisten dipakai di seluruh codebase, termasuk untuk klasifikasi
-# `error_source` di request_metrics.
+# ============================================================================
+# Cached factory functions for retrieval components
+# Menghindari overhead TCP+TLS handshake baru di setiap panggilan run_retrieval().
+# Pola ini konsisten dengan @lru_cache yang sudah dipakai di get_llm(),
+# get_intent_classifier(), dan _get_default_llm() di modul lain.
+# ============================================================================
+
+@functools.lru_cache(maxsize=1)
+def _get_hybrid_searcher():
+    """Cached singleton HybridSearcher — reuse koneksi Supabase & OpenAI Embeddings."""
+    from src.retrieval.hybrid_search import HybridSearcher
+    return HybridSearcher()
 
 
-def get_or_create_memory(session_id: str, mahasiswa_id: Optional[str] = None) -> ConversationMemory:
+@functools.lru_cache(maxsize=1)
+def _get_parent_child_fetcher():
+    """Cached singleton ParentChildFetcher — reuse koneksi Supabase."""
+    from src.retrieval.parent_child import ParentChildFetcher
+    return ParentChildFetcher()
+
+
+# ============================================================================
+# Session management helpers
+# ============================================================================
+
+def get_or_create_memory(
+    session_id: str,
+    mahasiswa_id: Optional[str] = None,
+) -> ConversationMemory:
     """Get or create conversation memory for a session."""
     return _session_store_strategy.load_memory(session_id, mahasiswa_id=mahasiswa_id)
 
 
-def _save_memory_if_needed(session_id: str, memory: ConversationMemory, channel: str = "telegram", mahasiswa_id: Optional[str] = None) -> None:
+def _save_memory_if_needed(
+    session_id: str,
+    memory: ConversationMemory,
+    channel: str = "telegram",
+    mahasiswa_id: Optional[str] = None,
+) -> None:
     """Save memory to persistent storage."""
     try:
-        _session_store_strategy.save_memory(session_id, memory, channel=channel, mahasiswa_id=mahasiswa_id)
-    except Exception as e:
-        logger.error(f"Failed to save session {session_id}: {e}")
+        _session_store_strategy.save_memory(
+            session_id,
+            memory,
+            channel=channel,
+            mahasiswa_id=mahasiswa_id,
+        )
+    except Exception as exc:
+        logger.error("Failed to save session {}: {}", session_id, exc)
 
 
 def clear_session(session_id: str) -> bool:
-    """Clear conversation memory for a session"""
+    """Clear conversation memory for a session."""
     return _session_store_strategy.delete_session(session_id)
 
 
 def get_session_stats() -> Dict[str, Any]:
-    """Get statistics about active sessions"""
+    """Get statistics about active sessions."""
     return _session_store_strategy.get_session_stats()
 
 
@@ -57,154 +101,291 @@ def cleanup_sessions() -> int:
     return _session_store_strategy.cleanup_idle_sessions()
 
 
-def chat(query: str, session_id: str, username: str, channel: str = "telegram", mahasiswa_id: Optional[str] = None) -> Dict[str, Any]:
+# ============================================================================
+# Orchestration step helpers
+# ============================================================================
+
+def _resolve_query_and_prepare_memory(
+    question: str,
+    session_id: str,
+    mahasiswa_id: Optional[str],
+) -> tuple[str, str, ConversationMemory]:
     """
-    Main chat function implementing Retrieval-First Architecture.
+    Resolve query with memory-aware reformulation if needed,
+    and register the user's turn into memory in the proper order.
+
+    Order of operations:
+        1. Normalize query
+        2. Check if query needs rewrite (implicit references, suffixes, follow-ups)
+        3. If rewrite needed:
+           - Load memory with PRIOR conversation history
+           - Reformulate query using prior context
+           - Append current user turn to memory
+        4. If rewrite not needed:
+           - Load memory
+           - Append current user turn to memory
+    """
+    normalized_query = normalize_query(question)
+    rewrite_needed = needs_rewrite(normalized_query)
+
+    start_stage("session_load")
+    memory = get_or_create_memory(session_id, mahasiswa_id=mahasiswa_id)
+    end_stage()
+
+    resolved_query = normalized_query
+    rewrite_method = "None"
+
+    if rewrite_needed and not memory.is_empty:
+        start_stage("reformulation")
+        t_rewrite_start = time.time()
+        # Reformulate using memory prior to adding the current turn
+        resolved_query, rewrite_method = reformulate_query(normalized_query, memory)
+        t_rewrite_end = time.time()
+        end_stage()
+        logger.info(
+            "[session={}] [Rewrite:{}] '{}' → '{}' [⏱️ {:.2f}s]",
+            session_id,
+            rewrite_method,
+            normalized_query,
+            resolved_query,
+            t_rewrite_end - t_rewrite_start,
+        )
+
+    set_field(rewrite_method=rewrite_method)
+
+    # Register current user turn after reformulation is resolved (gunakan normalized_query
+    # agar riwayat percakapan menyimpan istilah akademik terstandardisasi untuk turn berikutnya)
+    memory.add_user_turn(normalized_query)
+
+    return resolved_query, rewrite_method, memory
+
+
+def _get_retrieval_documents(
+    resolved_query: str,
+    original_question: str,
+    collector: Any,
+) -> list[dict]:
+    """
+    Fetch relevant documents with thread-safe caching and monitoring restoration.
+    """
+    revision, cached_entry = retrieval_cache.lookup(resolved_query, original_question)
+
+    if cached_entry is not None:
+        logger.info("⚡ [Cache Hit] Retrieval skipped for: '{}'", resolved_query)
+        # Restore monitoring fields so admin dashboard has complete metrics
+        set_field(**cached_entry.metrics)
+        set_field(cache_hit=True)
+        return cached_entry.documents
+
+    logger.info("🔍 [Cache Miss] Running retrieval for: '{}'", resolved_query)
+    from src.retrieval.pipeline import run_retrieval
+
+    retrieval = run_retrieval(query=resolved_query, rerank_query=original_question)
+    retrieval_docs = (
+        retrieval.parent_documents if not retrieval.is_empty else []
+    )
+
+    # Snapshot retrieval monitoring fields from collector for future cache hits
+    metrics_snapshot = {
+        "domain_detected": getattr(collector, "domain_detected", "UNKNOWN"),
+        "is_no_relevant_doc": getattr(collector, "is_no_relevant_doc", False),
+        "num_docs_after_rerank": getattr(
+            collector, "num_docs_after_rerank", len(retrieval_docs)
+        ),
+        "top_cross_encoder_score": getattr(
+            collector, "top_cross_encoder_score", None
+        ),
+        "avg_cross_encoder_score": getattr(
+            collector, "avg_cross_encoder_score", None
+        ),
+        "retrieved_parent_ids": getattr(
+            collector, "retrieved_parent_ids", []
+        ),
+        "retrieval_detail": getattr(collector, "retrieval_detail", []),
+    }
+
+    retrieval_cache.store_if_current(
+        revision, resolved_query, original_question, retrieval_docs, metrics_snapshot
+    )
+    set_field(cache_hit=False)
+
+    return retrieval_docs
+
+
+def _generate_answer(
+    question: str,
+    retrieval_docs: list[dict],
+    memory: ConversationMemory,
+    session_id: str,
+) -> str:
+    """Generate answer from LLM with retrieved context and conversation history."""
+    start_stage("generation")
+    t_gen_start = time.time()
+    result = get_rag_generator().generate(
+        question=question,
+        context_documents=retrieval_docs,
+        conversation_history=memory.get_history_for_llm(),
+    )
+    t_gen_end = time.time()
+    end_stage()
+    logger.info(
+        "[session={}] Generation time [⏱️ {:.2f}s]",
+        session_id,
+        t_gen_end - t_gen_start,
+    )
+    return result.get("answer", "")
+
+
+def _persist_conversation(
+    session_id: str,
+    memory: ConversationMemory,
+    answer: str,
+    retrieval_docs: list[dict],
+    sources_list: list[dict],
+    channel: str,
+    mahasiswa_id: Optional[str],
+    username: str,
+    question: str,
+) -> None:
+    """Save assistant turn to memory and log interaction."""
+    if retrieval_docs:
+        memory.add_assistant_turn(
+            content=answer,
+            retrieved_doc_contents=[
+                p.get("content", "") for p in retrieval_docs
+            ],
+            sources=sources_list,
+        )
+    else:
+        memory.add_assistant_turn(content=answer)
+
+    start_stage("db_save")
+    _save_memory_if_needed(
+        session_id,
+        memory,
+        channel=channel,
+        mahasiswa_id=mahasiswa_id,
+    )
+
+    user_id_log = str(mahasiswa_id) if mahasiswa_id else str(session_id)
+    _session_store_strategy.log_chat_interaction(
+        user_id=user_id_log,
+        username=username,
+        question=question,
+        answer=answer,
+    )
+    end_stage()
+
+
+# ============================================================================
+# Main chat orchestrator
+# ============================================================================
+
+def chat(
+    query: str,
+    session_id: str,
+    username: str,
+    channel: str = "telegram",
+    mahasiswa_id: Optional[str] = None,
+) -> Dict[str, Any]:
+    """
+    Main chat entrypoint implementing Retrieval-First Architecture.
     """
     if not query or not query.strip():
-        return {"answer": "Pertanyaan tidak boleh kosong.", "num_docs": 0, "error": "empty_query"}
+        return {
+            "answer": "Pertanyaan tidak boleh kosong.",
+            "num_docs": 0,
+            "error": "empty_query",
+        }
 
     if not session_id:
-        return {"answer": "Session ID diperlukan.", "num_docs": 0, "error": "missing_session_id"}
+        return {
+            "answer": "Session ID diperlukan.",
+            "num_docs": 0,
+            "error": "missing_session_id",
+        }
 
-    # Kalau titik masuk (ai.py / chat_handler.py, Fase 5) SUDAH membuat
-    # collector duluan untuk mengukur tahap "validation", pakai itu.
-    # Kalau belum ada (mis. dipanggil langsung dari script/test), buat baru
-    # di sini supaya fungsi ini tetap bisa dipakai standalone.
     collector = get_current()
     if collector is None:
         collector = new_collector(
-            session_id=session_id, channel=channel, mahasiswa_id=mahasiswa_id,
-            question=query.strip(), username=username,
+            session_id=session_id,
+            channel=channel,
+            mahasiswa_id=mahasiswa_id,
+            question=query.strip(),
+            username=username,
         )
     else:
         collector.session_id = session_id
         collector.mahasiswa_id = mahasiswa_id
         collector.channel = channel
-        # G1/G3/G4/G6: pastikan question/username terisi walau collector-nya
-        # sudah dibuat lebih dulu di Fase 5 (ai.py/chat_handler.py) — di sana
-        # `username` final (hasil resolve JWT/profil Telegram) baru diketahui
-        # SETELAH collector dibuat, jadi di-set (ulang) di sini untuk jaga-jaga.
         collector.question = collector.question or query.strip()
         collector.username = username
 
     t_start = time.time()
     question = query.strip()
-    logger.info(f"[session={session_id}] Question: {question}")
+    logger.info("[session={}] Question: {}", session_id, question)
 
     try:
-        # 1. Normalization
-        normalized_query = normalize_query(question)
+        # 1 & 2. Query resolution & memory lifecycle preparation
+        resolved_query, rewrite_method, memory = _resolve_query_and_prepare_memory(
+            question=question,
+            session_id=session_id,
+            mahasiswa_id=mahasiswa_id,
+        )
 
-        # 2. Need Rewrite?
-        rewrite_needed = needs_rewrite(normalized_query)
-
-        resolved_query = normalized_query
-        rewrite_method = "None"
-        memory = None
-
-        # SLOW PATH: Load memory early for query rewrite
-        if rewrite_needed:
-            start_stage("session_load")
-            memory = get_or_create_memory(session_id, mahasiswa_id=mahasiswa_id)
-            end_stage()
-            memory.add_user_turn(question)
-
-            start_stage("reformulation")
-            t_rewrite_start = time.time()
-            resolved_query, rewrite_method = reformulate_query(normalized_query, memory)
-            t_rewrite_end = time.time()
-            end_stage()
-            logger.info(f"[session={session_id}] [Rewrite] {rewrite_method}: '{normalized_query}' → '{resolved_query}' [⏱️ {t_rewrite_end - t_rewrite_start:.2f}s]")
-
-        set_field(rewrite_method=rewrite_method)
-
-        # 3. Cache Check
-        cache_key = f"{KNOWLEDGE_VERSION}_{resolved_query}"
-        cached_result = retrieval_cache.get(cache_key)
-
-        if cached_result is not None:
-            logger.info(f"⚡ [Cache Hit] Retrieval skipped for: '{resolved_query}'")
-            retrieval_docs = cached_result
-        else:
-            logger.info(f"🔍 [Cache Miss] Running retrieval for: '{resolved_query}'")
-            from src.retrieval.pipeline import run_retrieval
-            retrieval = run_retrieval(query=resolved_query, rerank_query=question)
-            retrieval_docs = retrieval.parent_documents
-            # Cache the results
-            retrieval_cache[cache_key] = retrieval_docs
-            # NOTE: retrieval.* field tambahan (domain_detected, skor, dst)
-            # sudah otomatis ditulis ke collector oleh run_retrieval() itu
-            # sendiri di Fase 3 — tidak perlu diulang manual di sini.
-            # Kalau cache HIT, field-field itu TIDAK terisi untuk request
-            # ini (retrieval tidak benar-benar jalan) — ini trade-off yang
-            # disengaja, cache hit memang tidak merepresentasikan retrieval
-            # baru.
-
-        # FAST PATH: Load memory here if not loaded yet
-        if memory is None:
-            start_stage("session_load")
-            memory = get_or_create_memory(session_id, mahasiswa_id=mahasiswa_id)
-            end_stage()
-            memory.add_user_turn(question)
+        # 3. Retrieval with thread-safe caching and monitoring preservation
+        retrieval_docs = _get_retrieval_documents(
+            resolved_query=resolved_query,
+            original_question=question,
+            collector=collector,
+        )
 
         # 4. LLM Generation
-        start_stage("generation")
-        t_gen_start = time.time()
-        result = _rag_chain.invoke_with_history(
+        answer = _generate_answer(
             question=question,
-            context_documents=retrieval_docs,
-            conversation_history=memory.get_history_for_llm(),
+            retrieval_docs=retrieval_docs,
+            memory=memory,
+            session_id=session_id,
         )
-        t_gen_end = time.time()
-        end_stage()
-        logger.info(f"[session={session_id}] Generation time [⏱️ {t_gen_end - t_gen_start:.2f}s]")
 
-        answer = result["answer"]
+        # Prepare top sources metadata
+        sources_list = (
+            [
+                {
+                    "section": p.get("section", ""),
+                    "title": p.get("title", ""),
+                    "parent_id": p.get("parent_id", ""),
+                    "score": p.get(
+                        "cross_encoder_score", p.get("best_child_score", 0.0)
+                    ),
+                    "score_source": p.get("score_source", "cross_encoder"),
+                    "pages": p.get("matched_pages", []),
+                }
+                for p in retrieval_docs[:3]
+            ]
+            if retrieval_docs
+            else []
+        )
 
-        # Prepare sources metadata
-        sources_list = [
-            {
-                "section": p.get("section", ""),
-                "title": p.get("title", ""),
-                "parent_id": p.get("parent_id", ""),
-                "score": p.get("cross_encoder_score", 0.0),
-                "pages": p.get("matched_pages", []),
-            }
-            for p in retrieval_docs[:3]
-        ] if retrieval_docs else []
-
-        # 5. Save state
-        if retrieval_docs:
-            memory.add_assistant_turn(
-                content=answer,
-                retrieved_doc_contents=[p["content"] for p in retrieval_docs],
-                sources=sources_list,
-            )
-        else:
-            memory.add_assistant_turn(content=answer)
-
-        start_stage("db_save")
-        _save_memory_if_needed(session_id, memory, channel=channel, mahasiswa_id=mahasiswa_id)
+        # 5 & 6. Persist conversation state & interaction log
+        _persist_conversation(
+            session_id=session_id,
+            memory=memory,
+            answer=answer,
+            retrieval_docs=retrieval_docs,
+            sources_list=sources_list,
+            channel=channel,
+            mahasiswa_id=mahasiswa_id,
+            username=username,
+            question=question,
+        )
 
         t_total_end = time.time()
-        logger.info(f"[session={session_id}] Total process time [⏱️ {t_total_end - t_start:.2f}s]")
-
-        # 6. Catat chat log (chat_logs, tabel lama — TIDAK diubah)
-        try:
-            # Use strategy untuk get database access jika menggunakan database sessions
-            if hasattr(_session_store_strategy, '_store') and hasattr(_session_store_strategy._store, '_supabase'):
-                user_id_log = str(mahasiswa_id) if mahasiswa_id else str(session_id)
-                _session_store_strategy._store._supabase.table("chat_logs").insert({
-                    "user_id": user_id_log,
-                    "username": username,
-                    "question": question,
-                    "answer": answer,
-                }).execute()
-        except Exception as e:
-            user_id_log = str(mahasiswa_id) if mahasiswa_id else str(session_id)
-            logger.error(f"Gagal menyimpan log chat untuk user {user_id_log}: {e}")
-        end_stage()  # menutup db_save
+        logger.info(
+            "[session={}] Total process time [⏱️ {:.2f}s]",
+            session_id,
+            t_total_end - t_start,
+        )
 
         collector.status = "success"
         persist_metrics(collector)
@@ -216,10 +397,18 @@ def chat(query: str, session_id: str, username: str, channel: str = "telegram", 
             "sources": sources_list,
         }
 
-    except Exception as e:
-        logger.error(f"[session={session_id}] Error processing query: {e}", exc_info=True)
+    except SessionAccessError:
+        # Re-raise SessionAccessError to let global handler convert to HTTP 403
+        raise
+    except Exception as exc:
+        logger.error(
+            "[session={}] Error processing query: {}",
+            session_id,
+            exc,
+            exc_info=True,
+        )
 
-        error_source, error_type = classify_exception(e)
+        error_source, error_type = classify_exception(exc)
         collector.status = "error"
         collector.error_source = error_source
         collector.error_type = error_type
@@ -231,34 +420,46 @@ def chat(query: str, session_id: str, username: str, channel: str = "telegram", 
                 "Silakan coba lagi atau hubungi administrator jika masalah berlanjut."
             ),
             "num_docs": 0,
-            "error": str(e),
-            "error_type": type(e).__name__,
+            "error": str(exc),
+            "error_type": type(exc).__name__,
         }
+
+    finally:
+        # Bersihkan collector dari ContextVar di akhir request supaya tidak
+        # "nyangkut" di thread pool yang memakai thread reuse lintas request.
+        clear_current()
+
+
+# ============================================================================
+# Model preloading
+# ============================================================================
 
 def preload_models() -> None:
     """
     Pre-warm the models used in the RAG pipeline to avoid cold-start delays.
-    This includes loading the embedding model (and its dependencies like tiktoken)
-    and the cross-encoder model (which loads PyTorch and the weights).
+    Memanggil warmup() via cached factory functions supaya instance yang
+    di-warm adalah instance yang sama yang dipakai saat runtime.
     """
     logger.info("Pre-warming AI models...")
-    
+
     t0 = time.time()
     try:
-        from src.retrieval.hybrid_search import HybridSearcher
         from src.retrieval.reranker import CrossEncoderReranker
-        
+
         # 1. Preload Cross-Encoder
         logger.info("Pre-warming: CrossEncoder")
         reranker = CrossEncoderReranker()
-        reranker._get_model()  # Forces model to load into memory
-        
-        # 2. Preload Embedding Model (OpenAI API / tiktoken)
+        reranker.warmup()
+
+        # 2. Preload Embedding Model — via cached singleton
         logger.info("Pre-warming: Embedding Model")
-        searcher = HybridSearcher()
-        searcher._embedder.embed_query("warmup")
-        
+        _get_hybrid_searcher().warmup()
+
+        # 3. Pastikan ParentChildFetcher juga diinisialisasi sekarang
+        # (tidak perlu warmup, tapi cached init menghindari cold-start pertama kali)
+        _get_parent_child_fetcher()
+
         t1 = time.time()
-        logger.info(f"✅ AI models pre-warmed successfully in {t1 - t0:.2f}s")
-    except Exception as e:
-        logger.error(f"Failed to pre-warm models: {e}")
+        logger.info("✅ AI models pre-warmed successfully in {:.2f}s", t1 - t0)
+    except Exception as exc:
+        logger.error("Failed to pre-warm models: {}", exc)

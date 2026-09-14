@@ -2,10 +2,14 @@
 Shared quota management service for daily rate limiting.
 """
 
+from __future__ import annotations
+
 from datetime import datetime
-from loguru import logger
-from supabase import create_client, Client
 from functools import lru_cache
+from typing import Any
+from zoneinfo import ZoneInfo
+from loguru import logger
+from supabase import Client, create_client
 
 from config.settings import get_settings
 
@@ -17,7 +21,18 @@ def _get_supabase_client() -> Client:
     return create_client(settings.supabase_url, settings.supabase_service_key)
 
 
-def check_and_update_quota(user_id: str, daily_limit: int = None) -> bool:
+def _get_current_date() -> str:
+    """Mengembalikan tanggal hari ini sesuai zona waktu aplikasi (WITA / Asia/Makassar)."""
+    settings = get_settings()
+    tz_name = getattr(settings, "TIMEZONE", "Asia/Makassar")
+    try:
+        tz = ZoneInfo(tz_name)
+    except Exception:
+        tz = ZoneInfo("Asia/Makassar")
+    return datetime.now(tz).strftime("%Y-%m-%d")
+
+
+def check_and_update_quota(user_id: str, daily_limit: int | None = None) -> bool:
     """
     Atomically increment quota and check daily limit via RPC.
 
@@ -29,9 +44,10 @@ def check_and_update_quota(user_id: str, daily_limit: int = None) -> bool:
         True if user is still under the daily limit and quota was incremented.
         False if user has reached the limit.
         
-    Fail-open behavior: Returns True on DB errors to avoid blocking legitimate users.
+    Fail-open behavior: Returns True on DB errors or unexpected RPC response
+    to avoid blocking legitimate users.
     """
-    today = datetime.now().strftime("%Y-%m-%d")
+    today = _get_current_date()
     settings = get_settings()
     
     # Use provided limit or fall back to settings
@@ -48,23 +64,38 @@ def check_and_update_quota(user_id: str, daily_limit: int = None) -> bool:
             },
         ).execute()
 
-        # RPC returns boolean: True = allowed (and incremented), False = limit reached
-        return bool(response.data)
+        # Format 1: Scalar boolean (jika RPC mengembalikan boolean)
+        if isinstance(response.data, bool):
+            return response.data
+
+        # Format 2: TABLE (allowed boolean, current_count integer) -> list[dict]
+        if isinstance(response.data, list) and response.data:
+            first_row = response.data[0]
+            if isinstance(first_row, dict) and "allowed" in first_row:
+                return bool(first_row["allowed"])
+
+        # Format tak terduga atau data kosong -> fail-open
+        logger.warning(
+            f"[quota] RPC increment_quota_if_under_limit mengembalikan "
+            f"hasil tak terduga ({response.data!r}) untuk user {user_id}. "
+            "Fail-open: request diloloskan."
+        )
+        return True
         
     except Exception as e:
-        logger.error(f"Error checking quota for user {user_id}: {e}")
+        logger.error(f"[quota] Error checking quota for user {user_id}: {e}")
         # Fail open to not block user on DB issues
         return True
 
 
-def get_quota_status(user_id: str) -> dict:
+def get_quota_status(user_id: str) -> dict[str, Any]:
     """
     Get current quota status for a user without incrementing.
     
     Returns:
         Dict with current count, limit, date, and remaining quota
     """
-    today = datetime.now().strftime("%Y-%m-%d")
+    today = _get_current_date()
     settings = get_settings()
     
     try:
@@ -84,7 +115,7 @@ def get_quota_status(user_id: str) -> dict:
         }
         
     except Exception as e:
-        logger.error(f"Error getting quota status for user {user_id}: {e}")
+        logger.error(f"[quota] Error getting quota status for user {user_id}: {e}")
         return {
             "user_id": str(user_id),
             "date": today,
