@@ -98,8 +98,8 @@ def get_session_stats() -> Dict[str, Any]:
 
 
 def cleanup_sessions() -> int:
-    """Manually trigger session cleanup. Returns number of sessions cleaned."""
-    return _session_store_strategy.cleanup_idle_sessions()
+    """Bersihkan cache session tanpa menghapus data session persisten."""
+    return _session_store_strategy.cleanup_cache()
 
 
 # ============================================================================

@@ -83,9 +83,13 @@ class SessionStore(ABC):
         ...
 
     @abstractmethod
-    def cleanup_idle_sessions(self) -> int:
-        """Hapus session yang idle terlalu lama."""
+    def cleanup_cache(self) -> int:
+        """Bersihkan state session yang hanya tersimpan di memory proses."""
         ...
+
+    def cleanup_idle_sessions(self) -> int:
+        """Alias kompatibilitas; cleanup tidak boleh menghapus session database."""
+        return self.cleanup_cache()
 
     def log_chat_interaction(
         self,
@@ -196,8 +200,8 @@ class DatabaseSessionStrategy(SessionStore):
     def get_session_stats(self) -> dict[str, Any]:
         return self._store.get_session_stats()
 
-    def cleanup_idle_sessions(self) -> int:
-        return self._store.cleanup_idle_sessions()
+    def cleanup_cache(self) -> int:
+        return self._store.cleanup_cache()
 
     def log_chat_interaction(
         self,
@@ -374,8 +378,8 @@ class InMemorySessionStrategy(SessionStore):
                 "storage_type": "in_memory",
             }
 
-    def cleanup_idle_sessions(self) -> int:
-        """Hapus session yang sudah idle melebihi TTL."""
+    def cleanup_cache(self) -> int:
+        """Hapus entry cache in-memory yang sudah idle melebihi TTL."""
         with self._lock:
             return self._remove_idle_sessions(time())
 

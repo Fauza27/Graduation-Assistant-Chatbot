@@ -115,13 +115,13 @@ class SessionCache:
                 "cached_sessions": list(self._items.keys()),
             }
 
-    def remove_idle(
-        self,
-        idle_session_ids: list[str],
-    ) -> None:
+    def clear(self) -> int:
+        """Kosongkan cache dan return jumlah entry yang dilepas."""
         with self._lock:
-            for session_id in idle_session_ids:
-                self._items.pop(session_id, None)
+            removed_count = len(self._items)
+            self._items.clear()
+            return removed_count
+
 
 class DatabaseSessionStore:
     """
@@ -270,33 +270,20 @@ class DatabaseSessionStore:
             )
             return False
 
+    def cleanup_cache(self) -> int:
+        """Kosongkan LRU cache tanpa menghapus session dari database."""
+        cleaned_count = self._cache.clear()
+        if cleaned_count:
+            logger.info("Cleared {} session(s) from LRU cache", cleaned_count)
+        return cleaned_count
+
     def cleanup_idle_sessions(
         self,
         ttl_seconds: Optional[int] = None,
     ) -> int:
-        """Hapus session yang sudah idle terlalu lama."""
-        ttl_seconds = (
-            ttl_seconds
-            if ttl_seconds is not None
-            else settings.SESSION_CLEANUP_INTERVAL
-        )
-
-        try:
-            result = (
-                self._supabase
-                .rpc(
-                    "cleanup_idle_sessions",
-                    {"p_ttl_seconds": ttl_seconds},
-                )
-                .execute()
-            )
-            cleaned_count = result.data or 0
-            if cleaned_count:
-                logger.info("Cleaned up {} idle session(s)", cleaned_count)
-            return cleaned_count
-        except Exception as exc:
-            logger.error("Failed to cleanup idle sessions: {}", exc)
-            return 0
+        """Alias lama untuk cleanup cache; ``ttl_seconds`` tidak lagi dipakai."""
+        del ttl_seconds
+        return self.cleanup_cache()
 
     def get_session_stats(self) -> Dict[str, Any]:
         """Ambil statistik session dari database dan cache."""

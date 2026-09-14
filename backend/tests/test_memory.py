@@ -1,5 +1,8 @@
+from unittest.mock import patch
+
 from src.generation.chain import build_messages
 from src.generation.memory import ConversationMemory
+from src.services.session_store import DatabaseSessionStore
 
 
 def _add_exchange(memory: ConversationMemory, question: str, answer: str) -> None:
@@ -62,3 +65,17 @@ class TestConversationMemory:
         )
 
         assert "User membahas persyaratan KKP." in messages[-1].content
+
+
+class TestDatabaseCacheCleanup:
+    @patch.object(DatabaseSessionStore, "_test_connection")
+    @patch.object(DatabaseSessionStore, "_create_supabase_client")
+    def test_cleanup_only_clears_cache(self, mock_client, mock_connection):
+        store = DatabaseSessionStore()
+        store._cache.put("session-1", ConversationMemory())
+
+        cleaned = store.cleanup_cache()
+
+        assert cleaned == 1
+        assert store._cache.stats()["cache_size"] == 0
+        mock_client.return_value.rpc.assert_not_called()
