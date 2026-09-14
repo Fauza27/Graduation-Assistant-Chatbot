@@ -11,11 +11,6 @@ from typing import Any, Dict, Optional
 from loguru import logger
 
 from src.generation.chain import get_rag_generator
-from src.generation.intent_classifier.reformulator import (
-    needs_rewrite,
-    normalize_query,
-    reformulate_query,
-)
 from src.generation.memory import ConversationMemory
 from src.generation.summarizer import get_conversation_summarizer
 from src.monitoring.context import (
@@ -29,6 +24,7 @@ from src.monitoring.context import (
 from src.monitoring.errors import classify_exception
 from src.monitoring.writer import persist_metrics
 from src.services.retrieval_cache import RevisionedRetrievalCache
+from src.retrieval.query_planner import QueryPlan, build_query_plan
 from src.services.session_strategy import SessionStore, create_session_store, SessionAccessError
 
 retrieval_cache = RevisionedRetrievalCache()
@@ -106,82 +102,63 @@ def cleanup_sessions() -> int:
 # Orchestration step helpers
 # ============================================================================
 
-def _resolve_query_and_prepare_memory(
+def _prepare_query_plan_and_memory(
     question: str,
     session_id: str,
     mahasiswa_id: Optional[str],
-) -> tuple[str, str, ConversationMemory]:
+) -> tuple[QueryPlan, ConversationMemory]:
     """
-    Resolve query with memory-aware reformulation if needed,
-    and register the user's turn into memory in the proper order.
-
-    Order of operations:
-        1. Normalize query
-        2. Check if query needs rewrite (implicit references, suffixes, follow-ups)
-        3. If rewrite needed:
-           - Load memory with PRIOR conversation history
-           - Reformulate query using prior context
-           - Append current user turn to memory
-        4. If rewrite not needed:
-           - Load memory
-           - Append current user turn to memory
+    Buat query plan memakai memory lama, lalu catat pertanyaan terbaru.
     """
-    normalized_query = normalize_query(question)
-    rewrite_needed = needs_rewrite(normalized_query)
-
     start_stage("session_load")
     memory = get_or_create_memory(session_id, mahasiswa_id=mahasiswa_id)
     end_stage()
 
-    resolved_query = normalized_query
-    rewrite_method = "None"
-
-    if rewrite_needed and not memory.is_empty:
-        start_stage("reformulation")
-        t_rewrite_start = time.time()
-        # Reformulate using memory prior to adding the current turn
-        resolved_query, rewrite_method = reformulate_query(normalized_query, memory)
-        t_rewrite_end = time.time()
+    start_stage("reformulation")
+    try:
+        plan = build_query_plan(question, memory)
+    finally:
         end_stage()
+    set_field(rewrite_method=plan.rewrite_method.value)
+
+    if plan.rewrite_method.value != "None":
         logger.info(
-            "[session={}] [Rewrite:{}] '{}' → '{}' [⏱️ {:.2f}s]",
+            "[session={}] [Rewrite:{}] '{}' → '{}'",
             session_id,
-            rewrite_method,
-            normalized_query,
-            resolved_query,
-            t_rewrite_end - t_rewrite_start,
+            plan.rewrite_method.value,
+            plan.normalized_query,
+            plan.resolved_query,
         )
 
-    set_field(rewrite_method=rewrite_method)
+    memory.add_user_turn(plan.normalized_query)
 
-    # Register current user turn after reformulation is resolved (gunakan normalized_query
-    # agar riwayat percakapan menyimpan istilah akademik terstandardisasi untuk turn berikutnya)
-    memory.add_user_turn(normalized_query)
-
-    return resolved_query, rewrite_method, memory
+    return plan, memory
 
 
 def _get_retrieval_documents(
-    resolved_query: str,
-    original_question: str,
+    plan: QueryPlan,
     collector: Any,
 ) -> list[dict]:
     """
     Fetch relevant documents with thread-safe caching and monitoring restoration.
     """
-    revision, cached_entry = retrieval_cache.lookup(resolved_query, original_question)
+    revision, cached_entry = retrieval_cache.lookup(plan.cache_key, plan.rerank_query)
 
     if cached_entry is not None:
-        logger.info("⚡ [Cache Hit] Retrieval skipped for: '{}'", resolved_query)
+        logger.info("⚡ [Cache Hit] Retrieval skipped for: '{}'", plan.resolved_query)
         # Restore monitoring fields so admin dashboard has complete metrics
         set_field(**cached_entry.metrics)
         set_field(cache_hit=True)
         return cached_entry.documents
 
-    logger.info("🔍 [Cache Miss] Running retrieval for: '{}'", resolved_query)
+    logger.info("🔍 [Cache Miss] Running retrieval for: '{}'", plan.resolved_query)
     from src.retrieval.pipeline import run_retrieval
 
-    retrieval = run_retrieval(query=resolved_query, rerank_query=original_question)
+    retrieval = run_retrieval(
+        query=plan.resolved_query,
+        rerank_query=plan.rerank_query,
+        search_queries=plan.search_queries,
+    )
     retrieval_docs = (
         retrieval.parent_documents if not retrieval.is_empty else []
     )
@@ -206,7 +183,11 @@ def _get_retrieval_documents(
     }
 
     retrieval_cache.store_if_current(
-        revision, resolved_query, original_question, retrieval_docs, metrics_snapshot
+        revision,
+        plan.cache_key,
+        plan.rerank_query,
+        retrieval_docs,
+        metrics_snapshot,
     )
     set_field(cache_hit=False)
 
@@ -357,7 +338,7 @@ def chat(
 
     try:
         # 1 & 2. Query resolution & memory lifecycle preparation
-        resolved_query, rewrite_method, memory = _resolve_query_and_prepare_memory(
+        query_plan, memory = _prepare_query_plan_and_memory(
             question=question,
             session_id=session_id,
             mahasiswa_id=mahasiswa_id,
@@ -365,8 +346,7 @@ def chat(
 
         # 3. Retrieval with thread-safe caching and monitoring preservation
         retrieval_docs = _get_retrieval_documents(
-            resolved_query=resolved_query,
-            original_question=question,
+            plan=query_plan,
             collector=collector,
         )
 
@@ -423,7 +403,7 @@ def chat(
         return {
             "answer": answer,
             "num_docs": len(retrieval_docs),
-            "rewrite_method": rewrite_method,
+            "rewrite_method": query_plan.rewrite_method.value,
             "sources": sources_list,
         }
 

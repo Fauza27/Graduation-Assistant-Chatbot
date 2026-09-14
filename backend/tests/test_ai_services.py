@@ -123,7 +123,10 @@ class TestAIServices:
 
     def test_chat_exception_handling(self):
         """Test chat exception handling on unexpected runtime error."""
-        with patch("src.services.ai_services.normalize_query", side_effect=RuntimeError("Unexpected error")):
+        with patch(
+            "src.retrieval.query_planner.normalize_query",
+            side_effect=RuntimeError("Unexpected error"),
+        ):
             result = chat("Test question", "test_session_err", username="testuser")
 
             assert "terjadi kesalahan" in result["answer"].lower()

@@ -47,6 +47,7 @@ class RetrievalResult:
 def run_retrieval(
     query: str,
     rerank_query: str | None = None,
+    search_queries: tuple[str, ...] | list[str] | None = None,
 ) -> RetrievalResult:
     """
     Run the complete retrieval pipeline for one query.
@@ -59,6 +60,10 @@ def run_retrieval(
         rerank_query:
             Query used by the cross-encoder reranker. Defaults to `query`.
             Usually the original user question is preferable here.
+
+        search_queries:
+            Query variants from QueryPlan. Multi-query execution is handled
+            by this pipeline; the first query remains the primary fallback.
     """
 
     from src.retrieval.reranker import CrossEncoderReranker
@@ -71,6 +76,8 @@ def run_retrieval(
 
     settings = get_settings()
     rerank_query = rerank_query or query
+    if search_queries:
+        query = search_queries[0]
     pipeline_start = time.time()
 
     # ------------------------------------------------------------------
