@@ -15,10 +15,21 @@ from src.monitoring.context import (
     new_collector,
     start_stage,
 )
-from src.monitoring.errors import SessionAccessError, classify_exception
+from src.monitoring.errors import (
+    OpenAIServiceError,
+    RetrievalError,
+    SessionAccessError,
+    classify_exception,
+)
 from src.monitoring.writer import persist_metrics, persist_quota_rejection
 from src.services.ai_services import chat as chat_service
 from src.services.quota_service import check_and_update_quota
+from src.services.request_guard import (
+    RequestDeadlineExceeded,
+    ServiceBusyError,
+    get_ai_request_guard,
+)
+from src.monitoring.tracing import current_trace_id, trace_span
 
 router = APIRouter(prefix="/ai", tags=["AI Chatbot"])
 settings = get_settings()
@@ -197,8 +208,9 @@ def _record_endpoint_error(
     summary="Chat with AI Chatbot",
     description="Kirim pertanyaan ke chatbot RAG KKP/PI",
 )
-def chat_endpoint(body: ChatRequest, request: Request):
+async def chat_endpoint(body: ChatRequest, request: Request):
     collector = new_collector(session_id=body.session_id, channel=body.channel, question=body.query)
+    collector.trace_id = current_trace_id()
     start_stage("validation")
     try:
         mahasiswa_id: str | None = None
@@ -218,18 +230,27 @@ def chat_endpoint(body: ChatRequest, request: Request):
         collector.username = username
         end_stage()  # menutup "validation" — kuota & chat_service TIDAK dihitung sebagai validation
 
-        # TAHAP 2: Cek Kuota
-        if mahasiswa_id:
-            _enforce_daily_quota(body, mahasiswa_id)
+        # TAHAP 2-3: Kapasitas diperoleh sebelum kuota dikonsumsi agar request
+        # yang ditolak karena worker penuh tidak mengurangi kuota harian.
+        def process_chat():
+            if mahasiswa_id:
+                _enforce_daily_quota(body, mahasiswa_id)
+            return chat_service(
+                query=body.query,
+                session_id=body.session_id,
+                username=username,
+                channel=body.channel,
+                mahasiswa_id=mahasiswa_id,
+            )
 
-        # TAHAP 3: Teruskan ke Chat Service
-        result = chat_service(
-            query=body.query,
+        with trace_span(
+            "chat.process",
             session_id=body.session_id,
-            username=username,
             channel=body.channel,
-            mahasiswa_id=mahasiswa_id
-        )
+        ):
+            result = await get_ai_request_guard().run(
+                process_chat,
+            )
 
         return ChatResponse(
             answer=result["answer"],
@@ -245,6 +266,26 @@ def chat_endpoint(body: ChatRequest, request: Request):
         # Handler global menerjemahkan error kepemilikan sesi menjadi HTTP 403.
         _record_endpoint_error(collector, exc, default_status_code=403)
         raise
+    except ServiceBusyError as exc:
+        _record_endpoint_error(collector, exc, default_status_code=503)
+        raise HTTPException(
+            status_code=503,
+            detail="Layanan AI sedang sibuk. Silakan coba lagi sebentar lagi.",
+            headers={"Retry-After": "2"},
+        ) from exc
+    except RequestDeadlineExceeded as exc:
+        _record_endpoint_error(collector, exc, default_status_code=504)
+        raise HTTPException(
+            status_code=504,
+            detail="Pemrosesan melewati batas waktu. Silakan coba lagi.",
+        ) from exc
+    except (RetrievalError, OpenAIServiceError) as exc:
+        _record_endpoint_error(collector, exc, default_status_code=503)
+        raise HTTPException(
+            status_code=503,
+            detail="Layanan pendukung AI sedang tidak tersedia. Silakan coba lagi.",
+            headers={"Retry-After": "5"},
+        ) from exc
     except HTTPException as exc:
         _record_endpoint_error(collector, exc)
         raise

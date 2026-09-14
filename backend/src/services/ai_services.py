@@ -21,11 +21,13 @@ from src.monitoring.context import (
     set_field,
     start_stage,
 )
-from src.monitoring.errors import classify_exception
+from src.monitoring.errors import OpenAIServiceError, RetrievalError, classify_exception
 from src.monitoring.writer import persist_metrics
 from src.services.retrieval_cache import RevisionedRetrievalCache
 from src.retrieval.query_planner import QueryPlan, build_query_plan
 from src.services.session_strategy import SessionStore, create_session_store, SessionAccessError
+from src.security.content_safety import text_for_log
+from src.monitoring.tracing import trace_span
 
 retrieval_cache = RevisionedRetrievalCache()
 
@@ -127,7 +129,7 @@ def _prepare_query_plan_and_memory(
             session_id,
             plan.rewrite_method.value,
             plan.normalized_query,
-            plan.resolved_query,
+            text_for_log(plan.resolved_query),
         )
 
     if plan.is_decomposed:
@@ -153,20 +155,25 @@ def _get_retrieval_documents(
     revision, cached_entry = retrieval_cache.lookup(plan.cache_key, plan.rerank_query)
 
     if cached_entry is not None:
-        logger.info("⚡ [Cache Hit] Retrieval skipped for: '{}'", plan.resolved_query)
+        logger.info("⚡ [Cache Hit] Retrieval skipped for: '{}'", text_for_log(plan.resolved_query))
         # Restore monitoring fields so admin dashboard has complete metrics
         set_field(**cached_entry.metrics)
         set_field(cache_hit=True)
         return cached_entry.documents
 
-    logger.info("🔍 [Cache Miss] Running retrieval for: '{}'", plan.resolved_query)
+    logger.info("🔍 [Cache Miss] Running retrieval for: '{}'", text_for_log(plan.resolved_query))
     from src.retrieval.pipeline import run_retrieval
 
-    retrieval = run_retrieval(
-        query=plan.resolved_query,
-        rerank_query=plan.rerank_query,
-        search_queries=plan.search_queries,
-    )
+    with trace_span(
+        "rag.retrieval",
+        query_count=len(plan.search_queries),
+        rewrite_method=plan.rewrite_method.value,
+    ):
+        retrieval = run_retrieval(
+            query=plan.resolved_query,
+            rerank_query=plan.rerank_query,
+            search_queries=plan.search_queries,
+        )
     retrieval_docs = (
         retrieval.parent_documents if not retrieval.is_empty else []
     )
@@ -211,12 +218,16 @@ def _generate_answer(
     """Generate answer from LLM with retrieved context and conversation history."""
     start_stage("generation")
     t_gen_start = time.time()
-    result = get_rag_generator().generate(
-        question=question,
-        context_documents=retrieval_docs,
-        conversation_history=memory.get_history_for_llm(),
-        conversation_summary=memory.summary,
-    )
+    try:
+        with trace_span("rag.generation", document_count=len(retrieval_docs)):
+            result = get_rag_generator().generate(
+                question=question,
+                context_documents=retrieval_docs,
+                conversation_history=memory.get_history_for_llm(),
+                conversation_summary=memory.summary,
+            )
+    except Exception as exc:
+        raise OpenAIServiceError("Layanan pembuat jawaban tidak tersedia") from exc
     t_gen_end = time.time()
     end_stage()
     logger.info(
@@ -342,7 +353,7 @@ def chat(
 
     t_start = time.time()
     question = query.strip()
-    logger.info("[session={}] Question: {}", session_id, question)
+    logger.info("[session={}] Question: {}", session_id, text_for_log(question))
 
     try:
         # 1 & 2. Query resolution & memory lifecycle preparation
@@ -417,6 +428,13 @@ def chat(
 
     except SessionAccessError:
         # Re-raise SessionAccessError to let global handler convert to HTTP 403
+        raise
+    except (RetrievalError, OpenAIServiceError) as exc:
+        error_source, error_type = classify_exception(exc)
+        collector.status = "error"
+        collector.error_source = error_source
+        collector.error_type = error_type
+        persist_metrics(collector)
         raise
     except Exception as exc:
         logger.error(

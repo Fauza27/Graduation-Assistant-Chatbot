@@ -49,6 +49,18 @@ class RetrievalError(ChatError):
     error_source = "retrieval"
 
 
+class ServiceBusyError(ChatError):
+    """Request ditolak karena seluruh worker AI sedang digunakan."""
+
+    error_source = "capacity"
+
+
+class RequestDeadlineExceeded(ChatError, TimeoutError):
+    """Batas waktu keseluruhan request telah terlampaui."""
+
+    error_source = "timeout"
+
+
 class RateLimitServiceError(ChatError):
     """Request ditolak karena rate/quota limit."""
 

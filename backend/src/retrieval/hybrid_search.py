@@ -15,10 +15,12 @@ from supabase import Client, create_client
 from config.settings import get_settings
 from src.monitoring.context import end_stage, set_field, start_stage
 from src.monitoring.pricing import calculate_embedding_cost
+from src.monitoring.errors import RetrievalError
 from src.monitoring.openai_client import (
     build_instrumented_http_client,
 )
 from src.retrieval.query_expansion import expand_query_smart
+from src.security.content_safety import text_for_log
 
 
 settings = get_settings()
@@ -104,13 +106,13 @@ class HybridSearcher:
             logger.info(
                 "Query expansion applied: "
                 "'{}' → '{}'",
-                original_query,
-                expanded_query[:150],
+                text_for_log(original_query),
+                text_for_log(expanded_query, preview_length=150),
             )
 
         logger.info(
             "Hybrid search: '{}' | filters={} | top_k={}",
-            original_query,
+            text_for_log(original_query),
             filters,
             match_count,
         )
@@ -247,6 +249,7 @@ class HybridSearcher:
         start_stage("retrieval")
         started_at = time.time()
 
+        hybrid_error: Exception | None = None
         try:
             response = self._supabase.rpc(
                 "hybrid_search",
@@ -260,6 +263,7 @@ class HybridSearcher:
                 "Hybrid search RPC gagal: {}",
                 exc,
             )
+            hybrid_error = exc
             rows = []
 
         elapsed = time.time() - started_at
@@ -277,11 +281,18 @@ class HybridSearcher:
             "Tidak ada hasil hybrid_search RPC."
         )
 
-        fallback_rows = self._dense_fallback(
-            query_embedding=query_embedding,
-            filters=filters,
-            match_count=match_count,
-        )
+        try:
+            fallback_rows = self._dense_fallback(
+                query_embedding=query_embedding,
+                filters=filters,
+                match_count=match_count,
+            )
+        except RetrievalError as exc:
+            if hybrid_error is not None:
+                raise RetrievalError(
+                    "Hybrid dan dense search database RPC gagal"
+                ) from exc
+            raise
 
         if not fallback_rows:
             return [], "dense_fallback"
@@ -322,7 +333,7 @@ class HybridSearcher:
                 "Fallback dense search RPC gagal: {}",
                 exc,
             )
-            return []
+            raise RetrievalError("Dense fallback database RPC gagal") from exc
 
         if not response.data:
             logger.warning(
@@ -376,7 +387,7 @@ class HybridSearcher:
                 exc,
             )
             end_stage()
-            return []
+            raise RetrievalError("FTS fallback database RPC gagal") from exc
 
         elapsed = time.time() - started_at
         end_stage()

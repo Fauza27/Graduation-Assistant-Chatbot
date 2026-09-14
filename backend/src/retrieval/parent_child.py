@@ -6,6 +6,7 @@ import time
 from dataclasses import dataclass, field
 
 from loguru import logger
+from src.monitoring.errors import RetrievalError
 from supabase import Client, create_client
 
 from config.settings import get_settings
@@ -186,7 +187,7 @@ class ParentChildFetcher:
                 "Gagal mengambil parent documents: {}",
                 exc,
             )
-            return []
+            raise RetrievalError("Parent document fetch gagal") from exc
 
         elapsed = time.time() - started_at
 

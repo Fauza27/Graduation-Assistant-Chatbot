@@ -21,6 +21,8 @@ from loguru import logger
 
 from config.settings import get_settings
 from src.monitoring.context import end_stage, set_field, start_stage
+from src.monitoring.errors import RetrievalError
+from src.security.content_safety import text_for_log
 
 if TYPE_CHECKING:
     from src.retrieval.hybrid_search import HybridSearchResult
@@ -124,6 +126,7 @@ def run_retrieval(
     started_at = time.time()
 
     search_batches: list[list[HybridSearchResult]] = []
+    search_errors: list[Exception] = []
     searcher = _get_hybrid_searcher()
 
     for parsed in parsed_queries:
@@ -137,9 +140,15 @@ def run_retrieval(
         except Exception as exc:
             logger.error(
                 "Error in HybridSearcher.search for '{}': {}",
-                parsed.semantic_query,
+                text_for_log(parsed.semantic_query),
                 exc,
             )
+            search_errors.append(exc)
+
+    if search_errors and len(search_errors) == len(parsed_queries):
+        raise RetrievalError(
+            "Seluruh pencarian retrieval gagal karena dependency tidak tersedia"
+        ) from search_errors[-1]
 
     search_results = _merge_search_results(search_batches)
     set_field(num_docs_retrieved=len(search_results))
@@ -175,7 +184,7 @@ def run_retrieval(
             "Error in ParentChildFetcher.fetch_parents: {}",
             exc,
         )
-        parent_results = []
+        raise RetrievalError("Gagal mengambil parent documents") from exc
 
     fetch_time = time.time() - started_at
     end_stage()

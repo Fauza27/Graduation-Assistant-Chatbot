@@ -141,14 +141,15 @@ class TestChatEndpoint:
         mock_req.headers = headers
         return mock_req
 
+    @pytest.mark.asyncio
     @patch("src.api.ai.persist_metrics")
-    def test_telegram_channel_rejection_persists_metrics_and_cleans_context(self, mock_persist):
+    async def test_telegram_channel_rejection_persists_metrics_and_cleans_context(self, mock_persist):
         """Telegram channel harus melempar 403, mem-persist metrics, dan membersihkan context."""
         body = ChatRequest(query="Halo", session_id="sess-tg-1", channel="telegram")
         request = self._create_mock_request()
 
         with pytest.raises(HTTPException) as exc_info:
-            chat_endpoint(body, request)
+            await chat_endpoint(body, request)
 
         assert exc_info.value.status_code == 403
         assert mock_persist.called
@@ -159,14 +160,15 @@ class TestChatEndpoint:
         # ContextVar harus bersih
         assert get_current() is None
 
+    @pytest.mark.asyncio
     @patch("src.api.ai.persist_metrics")
-    def test_unauthenticated_website_persists_metrics(self, mock_persist):
+    async def test_unauthenticated_website_persists_metrics(self, mock_persist):
         """Website request tanpa token harus 401 dan mem-persist metrics."""
         body = ChatRequest(query="Halo apa syarat kkp?", session_id="sess-web-1", channel="website")
         request = self._create_mock_request(auth_header=None)
 
         with pytest.raises(HTTPException) as exc_info:
-            chat_endpoint(body, request)
+            await chat_endpoint(body, request)
 
         assert exc_info.value.status_code == 401
         assert mock_persist.called
@@ -176,16 +178,17 @@ class TestChatEndpoint:
         assert collector.error_source == "authentication"
         assert get_current() is None
 
+    @pytest.mark.asyncio
     @patch("src.api.ai.persist_metrics")
     @patch("src.api.ai.verify_access_token")
-    def test_invalid_role_persists_metrics(self, mock_verify, mock_persist):
+    async def test_invalid_role_persists_metrics(self, mock_verify, mock_persist):
         """Website user dengan role bukan 'mahasiswa' harus 403 dan mem-persist metrics."""
         mock_verify.return_value = {"role": "dosen", "sub": "123"}
         body = ChatRequest(query="Halo apa syarat kkp?", session_id="sess-web-2", channel="website")
         request = self._create_mock_request(auth_header="Bearer token123")
 
         with pytest.raises(HTTPException) as exc_info:
-            chat_endpoint(body, request)
+            await chat_endpoint(body, request)
 
         assert exc_info.value.status_code == 403
         assert mock_persist.called
@@ -194,11 +197,12 @@ class TestChatEndpoint:
         assert collector.http_status == 403
         assert get_current() is None
 
+    @pytest.mark.asyncio
     @patch("src.api.ai.persist_metrics")
     @patch("src.api.ai.chat_service")
     @patch("src.api.ai.verify_access_token")
     @patch("src.api.ai.check_and_update_quota", return_value=True)
-    def test_session_access_error_reaches_global_handler_with_403_metrics(
+    async def test_session_access_error_reaches_global_handler_with_403_metrics(
         self, mock_quota, mock_verify, mock_chat_service, mock_persist
     ):
         """Penolakan akses sesi tetap dapat ditangani handler global sebagai 403."""
@@ -209,7 +213,7 @@ class TestChatEndpoint:
         request = self._create_mock_request(auth_header="Bearer valid_token")
 
         with pytest.raises(SessionAccessError) as exc_info:
-            chat_endpoint(body, request)
+            await chat_endpoint(body, request)
 
         assert exc_info.value is access_error
         mock_persist.assert_called_once()
@@ -220,10 +224,11 @@ class TestChatEndpoint:
         assert collector.error_type == "SessionAccessError"
         assert get_current() is None
 
+    @pytest.mark.asyncio
     @patch("src.api.ai.persist_quota_rejection")
     @patch("src.api.ai.verify_access_token")
     @patch("src.api.ai.check_and_update_quota")
-    def test_quota_rejection_persists_once(self, mock_quota, mock_verify, mock_persist_quota):
+    async def test_quota_rejection_persists_once(self, mock_quota, mock_verify, mock_persist_quota):
         """Jika kuota habis (429), persist_quota_rejection dipanggil dan HTTPException 429 dilempar."""
         mock_verify.return_value = {"role": "mahasiswa", "sub": "mhs-101", "name": "Budi"}
         mock_quota.return_value = False  # kuota habis
@@ -232,7 +237,7 @@ class TestChatEndpoint:
         request = self._create_mock_request(auth_header="Bearer valid_token")
 
         with pytest.raises(HTTPException) as exc_info:
-            chat_endpoint(body, request)
+            await chat_endpoint(body, request)
 
         assert exc_info.value.status_code == 429
         assert "mencapai batas kuota harian" in exc_info.value.detail
@@ -267,10 +272,11 @@ class TestChatEndpoint:
         finally:
             clear_current()
 
+    @pytest.mark.asyncio
     @patch("src.api.ai.chat_service")
     @patch("src.api.ai.verify_access_token")
     @patch("src.api.ai.check_and_update_quota")
-    def test_successful_chat_endpoint(self, mock_quota, mock_verify, mock_chat_service):
+    async def test_successful_chat_endpoint(self, mock_quota, mock_verify, mock_chat_service):
         """Jalur sukses mengembalikan ChatResponse dan membersihkan context."""
         mock_verify.return_value = {"role": "mahasiswa", "sub": "mhs-101", "name": "Budi"}
         mock_quota.return_value = True
@@ -283,23 +289,24 @@ class TestChatEndpoint:
         body = ChatRequest(query="Apa syarat KKP?", session_id="sess-success", channel="website")
         request = self._create_mock_request(auth_header="Bearer valid_token")
 
-        response = chat_endpoint(body, request)
+        response = await chat_endpoint(body, request)
         assert isinstance(response, ChatResponse)
         assert response.answer == "Syarat KKP adalah 100 SKS."
         assert response.num_docs == 1
         assert response.error is None
         assert get_current() is None
 
+    @pytest.mark.asyncio
     @patch("src.api.ai.persist_metrics")
     @patch("src.api.ai.verify_access_token")
-    def test_unexpected_endpoint_error_persists_500(self, mock_verify, mock_persist):
+    async def test_unexpected_endpoint_error_persists_500(self, mock_verify, mock_persist):
         """Error tak terduga di endpoint harus dicatat sebagai 500 dan dilempar ke client."""
         mock_verify.side_effect = RuntimeError("Database down")
         body = ChatRequest(query="Pertanyaan error", session_id="sess-err-500", channel="website")
         request = self._create_mock_request(auth_header="Bearer valid_token")
 
         with pytest.raises(HTTPException) as exc_info:
-            chat_endpoint(body, request)
+            await chat_endpoint(body, request)
 
         assert exc_info.value.status_code == 500
         assert mock_persist.called
