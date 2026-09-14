@@ -2,12 +2,17 @@
 Pytest configuration and fixtures
 """
 
-import pytest
 import asyncio
-from unittest.mock import Mock, AsyncMock
-from typing import Generator, AsyncGenerator
+import os
+from typing import Generator
+from unittest.mock import AsyncMock, Mock
 
-from config.settings import Settings
+import pytest
+
+# Unit tests must never write metrics, sessions, or chat history to the active
+# Supabase project loaded from the developer's .env file.
+os.environ["ENABLE_REQUEST_METRICS"] = "false"
+os.environ["USE_DATABASE_SESSIONS"] = "false"
 
 
 @pytest.fixture(scope="session")
@@ -19,8 +24,10 @@ def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
 
 
 @pytest.fixture
-def mock_settings() -> Settings:
+def mock_settings():
     """Mock settings for testing"""
+    from config.settings import Settings
+
     return Settings(
         open_api_key="test-key",
         supabase_url="https://test.supabase.co",
@@ -38,14 +45,14 @@ def mock_openai_client():
     """Mock OpenAI client"""
     client = Mock()
     client.embeddings = Mock()
-    client.embeddings.create = AsyncMock(return_value=Mock(
-        data=[Mock(embedding=[0.1] * 1536)]
-    ))
+    client.embeddings.create = AsyncMock(
+        return_value=Mock(data=[Mock(embedding=[0.1] * 1536)])
+    )
     client.chat = Mock()
     client.chat.completions = Mock()
-    client.chat.completions.create = AsyncMock(return_value=Mock(
-        choices=[Mock(message=Mock(content="Test response"))]
-    ))
+    client.chat.completions.create = AsyncMock(
+        return_value=Mock(choices=[Mock(message=Mock(content="Test response"))])
+    )
     return client
 
 
@@ -53,11 +60,11 @@ def mock_openai_client():
 def mock_supabase_client():
     """Mock Supabase client"""
     client = Mock()
-    client.table = Mock(return_value=Mock(
-        select=Mock(return_value=Mock(
-            execute=Mock(return_value=Mock(data=[]))
-        ))
-    ))
+    client.table = Mock(
+        return_value=Mock(
+            select=Mock(return_value=Mock(execute=Mock(return_value=Mock(data=[]))))
+        )
+    )
     return client
 
 
@@ -70,15 +77,15 @@ def sample_documents():
             "title": "Syarat PI",
             "content": "Syarat untuk mengambil PI adalah minimal 120 SKS",
             "section": "BAB II",
-            "cross_encoder_score": 0.9
+            "cross_encoder_score": 0.9,
         },
         {
-            "parent_id": "doc2", 
+            "parent_id": "doc2",
             "title": "Syarat KKP",
             "content": "Syarat untuk mengambil KKP adalah minimal 100 SKS",
             "section": "BAB III",
-            "cross_encoder_score": 0.8
-        }
+            "cross_encoder_score": 0.8,
+        },
     ]
 
 
@@ -89,5 +96,5 @@ def sample_questions():
         "Apa syarat SKS minimal untuk PI?",
         "Berapa IP minimal untuk KKP?",
         "Siapa dosen pembimbing PI?",
-        "Bagaimana format laporan KKP?"
+        "Bagaimana format laporan KKP?",
     ]

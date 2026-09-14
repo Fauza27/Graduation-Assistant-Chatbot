@@ -91,3 +91,8 @@ Migration tidak menghapus tabel, dokumen, chunk, maupun data percakapan. Foreign
 key memakai `ON DELETE CASCADE` hanya untuk menjaga konsistensi jika suatu evaluation
 run atau source document kelak sengaja dihapus. Policy RLS dibuat hanya bila belum
 ada dan akses tabel evaluator dibatasi ke `service_role`.
+
+Sebelum membuat unique index pada `request_metrics.request_id`, migration memeriksa
+ID historis yang duplikat. Baris pertama tetap memakai ID lama dan baris duplikat
+berikutnya memperoleh UUID baru. Tidak ada row metrics yang dihapus. Langkah ini
+diperlukan karena satu trace harus menunjuk tepat ke satu request.

@@ -44,6 +44,24 @@ ALTER TABLE public.child_documents
     ADD COLUMN IF NOT EXISTS chunking_version text,
     ADD COLUMN IF NOT EXISTS sequence_no integer;
 
+-- request_id lama belum memiliki unique constraint. Beberapa data test historis
+-- menggunakan UUID yang sama untuk request berbeda. Pertahankan baris pertama
+-- dan beri UUID baru hanya kepada salinan berikutnya agar tidak ada row hilang.
+WITH ranked_request_ids AS (
+    SELECT
+        id,
+        row_number() OVER (
+            PARTITION BY request_id
+            ORDER BY created_at, id
+        ) AS duplicate_position
+    FROM public.request_metrics
+)
+UPDATE public.request_metrics AS metrics
+SET request_id = gen_random_uuid()
+FROM ranked_request_ids AS ranked
+WHERE metrics.id = ranked.id
+  AND ranked.duplicate_position > 1;
+
 CREATE UNIQUE INDEX IF NOT EXISTS idx_request_metrics_request_id_unique
     ON public.request_metrics(request_id);
 
