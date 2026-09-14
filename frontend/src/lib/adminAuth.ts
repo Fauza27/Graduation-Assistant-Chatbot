@@ -1,5 +1,7 @@
+import { API_BASE_URL } from './apiConfig';
+
 export async function adminLogin(username: string, password: string, rememberMe: boolean) {
-  const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/admin/login`;
+  const url = `${API_BASE_URL}/api/admin/login`;
   
   try {
     const response = await fetch(url, {
@@ -8,7 +10,7 @@ export async function adminLogin(username: string, password: string, rememberMe:
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ username, password }),
+      body: JSON.stringify({ username, password, remember_me: rememberMe }),
     });
 
     if (response.status === 401) {
@@ -21,7 +23,11 @@ export async function adminLogin(username: string, password: string, rememberMe:
 
     const data = await response.json();
     const storage = rememberMe ? localStorage : sessionStorage;
-    
+
+    localStorage.removeItem('admin_access_token');
+    localStorage.removeItem('admin_info');
+    sessionStorage.removeItem('admin_access_token');
+    sessionStorage.removeItem('admin_info');
     storage.setItem('admin_access_token', data.access_token);
     storage.setItem('admin_info', JSON.stringify(data.admin));
 
@@ -38,7 +44,7 @@ export function getAdminToken(): string | null {
 }
 
 export async function refreshAdminToken(): Promise<string | null> {
-  const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/admin/refresh`;
+  const url = `${API_BASE_URL}/api/admin/refresh`;
   const response = await fetch(url, { method: 'POST', credentials: 'include' });
   if (!response.ok) return null;
   const data = await response.json();
@@ -71,15 +77,14 @@ export function adminLogout() {
   if (typeof window === 'undefined') return;
   
   const token = getAdminToken();
-  const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/admin/logout`;
-  if (token) {
-    void fetch(url, {
-      method: 'POST',
-      credentials: 'include',
-      keepalive: true,
-      headers: { Authorization: `Bearer ${token}` },
-    }).catch(() => undefined);
-  }
+  const url = `${API_BASE_URL}/api/admin/logout`;
+  const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
+  void fetch(url, {
+    method: 'POST',
+    credentials: 'include',
+    keepalive: true,
+    headers,
+  }).catch(() => undefined);
 
   // Remove from both to be safe
   localStorage.removeItem('admin_access_token');

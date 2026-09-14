@@ -4,11 +4,15 @@ from unittest.mock import Mock
 
 import jwt
 import pytest
-from fastapi import HTTPException
+from fastapi import HTTPException, Response
 
 from config.settings import Settings
 from src.auth import jwt_utils
-from src.auth.refresh_tokens import InvalidRefreshTokenError, RefreshTokenService
+from src.auth.refresh_tokens import (
+    InvalidRefreshTokenError,
+    RefreshTokenService,
+    set_refresh_cookie,
+)
 
 
 def test_access_token_has_identity_and_lifecycle_claims(monkeypatch):
@@ -87,3 +91,21 @@ def test_refresh_token_reuse_revokes_entire_family(monkeypatch):
         "revoke_refresh_token_family",
         {"p_family_id": "family-1"},
     )
+
+
+def test_session_refresh_cookie_has_no_max_age():
+    response = Response()
+
+    set_refresh_cookie(response, "token", role="admin", persistent=False)
+
+    cookie = response.headers["set-cookie"]
+    assert "Max-Age" not in cookie
+    assert "HttpOnly" in cookie
+
+
+def test_persistent_refresh_cookie_has_max_age():
+    response = Response()
+
+    set_refresh_cookie(response, "token", role="admin", persistent=True)
+
+    assert "Max-Age" in response.headers["set-cookie"]

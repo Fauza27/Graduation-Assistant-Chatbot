@@ -27,6 +27,7 @@ router = APIRouter(prefix="/admin", tags=["Admin"])
 class AdminLoginRequest(BaseModel):
     username: str
     password: str
+    remember_me: bool = False
 
 class AdminLoginResponse(BaseModel):
     access_token: str
@@ -150,8 +151,11 @@ def login_admin(req: AdminLoginRequest, request: Request, response: Response, su
         }
         set_refresh_cookie(
             response,
-            RefreshTokenService(supabase).issue(refresh_payload),
+            RefreshTokenService(supabase).issue(
+                {**refresh_payload, "persistent": req.remember_me}
+            ),
             role="admin",
+            persistent=req.remember_me,
         )
     return AdminLoginResponse(
         access_token=token,
@@ -163,7 +167,6 @@ def login_admin(req: AdminLoginRequest, request: Request, response: Response, su
 def logout_admin(
     request: Request,
     response: Response,
-    admin: dict = Depends(get_current_admin),
     supabase: Client = Depends(get_supabase),
 ):
     settings = get_settings()
@@ -197,7 +200,12 @@ def refresh_admin_token(
         clear_refresh_cookie(response, role="admin")
         raise HTTPException(status_code=401, detail=str(exc)) from exc
 
-    set_refresh_cookie(response, rotated.token, role="admin")
+    set_refresh_cookie(
+        response,
+        rotated.token,
+        role="admin",
+        persistent=bool(rotated.payload.get("persistent", True)),
+    )
     return {
         "access_token": issue_admin_token(
             {

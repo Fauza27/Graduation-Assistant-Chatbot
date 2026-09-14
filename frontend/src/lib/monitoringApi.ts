@@ -1,4 +1,4 @@
-import { getAdminToken, adminLogout } from './adminAuth';
+import { adminFetch } from './adminApi';
 import type {
   QueryLogRow, RequestDetail, LatencyHourlyRow, StageBreakdownDailyRow,
   ErrorStatsDailyRow, ErrorBreakdownDailyRow, OpenAIRetryStatsDailyRow,
@@ -8,39 +8,8 @@ import type {
   SystemOverview, SessionStats,
 } from './monitoringTypes';
 
-// Sama persis dengan pola adminFetch di adminApi.ts, tapi endpoint monitoring
-// ada di bawah prefix /api/admin/metrics (bukan /api/admin biasa), jadi kita
-// duplikasi kecil di sini alih-alih memaksakan reuse yang bikin path membingungkan.
 async function metricsFetch<T>(path: string): Promise<{ data: T }> {
-  const token = getAdminToken();
-  if (!token) {
-    adminLogout();
-    throw new Error('Unauthorized');
-  }
-
-  const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/admin/metrics${path}`;
-  const response = await fetch(url, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-
-  if (response.status === 401) {
-    adminLogout();
-    throw new Error('Sesi kedaluwarsa. Silakan login kembali.');
-  }
-  if (response.status === 404) {
-    throw new Error('Data tidak ditemukan.');
-  }
-  if (!response.ok) {
-    let msg = `Terjadi kesalahan (Status: ${response.status})`;
-    try {
-      const data = await response.json();
-      if (data.detail) msg = typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail);
-    } catch {
-      // ignored
-    }
-    throw new Error(msg);
-  }
-  return response.json();
+  return adminFetch<{ data: T }>(`/metrics${path}`, { method: 'GET' });
 }
 
 const qs = (params: Record<string, string | number | boolean | undefined>) => {

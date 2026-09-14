@@ -132,12 +132,23 @@ def refresh_cookie_name(role: str = "mahasiswa") -> str:
     )
 
 
-def set_refresh_cookie(response: Response, token: str, role: str = "mahasiswa") -> None:
+def set_refresh_cookie(
+    response: Response,
+    token: str,
+    role: str = "mahasiswa",
+    *,
+    persistent: bool = True,
+) -> None:
     settings = get_settings()
+    max_age = (
+        settings.REFRESH_TOKEN_EXPIRATION_DAYS * 24 * 60 * 60
+        if persistent
+        else None
+    )
     response.set_cookie(
         key=refresh_cookie_name(role),
         value=token,
-        max_age=settings.REFRESH_TOKEN_EXPIRATION_DAYS * 24 * 60 * 60,
+        max_age=max_age,
         httponly=True,
         secure=settings.is_production(),
         samesite=settings.REFRESH_COOKIE_SAMESITE,

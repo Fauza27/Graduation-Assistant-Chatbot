@@ -1,5 +1,6 @@
 import { getAdminToken, adminLogout, refreshAdminToken } from './adminAuth';
 import { KnowledgeTreeResponse, ChunkDetail, ChunkEditStatus } from './adminTypes';
+import { API_BASE_URL } from './apiConfig';
 
 let adminRefreshPromise: Promise<string | null> | null = null;
 
@@ -10,7 +11,11 @@ async function getOrRefreshAdminToken(): Promise<string | null> {
   return adminRefreshPromise;
 }
 
-async function adminFetch(path: string, options: RequestInit = {}, retry = true) {
+export async function adminFetch<T>(
+  path: string,
+  options: RequestInit = {},
+  retry = true,
+): Promise<T> {
   const token = await getOrRefreshAdminToken();
   
   if (!token) {
@@ -24,7 +29,7 @@ async function adminFetch(path: string, options: RequestInit = {}, retry = true)
     headers.set('Content-Type', 'application/json');
   }
 
-  const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/admin${path}`;
+  const url = `${API_BASE_URL}/api/admin${path}`;
 
   const response = await fetch(url, {
     ...options,
@@ -35,7 +40,7 @@ async function adminFetch(path: string, options: RequestInit = {}, retry = true)
   if (response.status === 401 && retry) {
     adminRefreshPromise ||= refreshAdminToken().finally(() => { adminRefreshPromise = null; });
     if (await adminRefreshPromise) {
-      return adminFetch(path, options, false);
+      return adminFetch<T>(path, options, false);
     }
   }
 
@@ -61,7 +66,7 @@ async function adminFetch(path: string, options: RequestInit = {}, retry = true)
     throw new Error(errorMessage);
   }
 
-  return response.json();
+  return response.json() as Promise<T>;
 }
 
 export async function getKnowledgeTree(): Promise<KnowledgeTreeResponse> {
