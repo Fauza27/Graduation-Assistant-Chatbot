@@ -50,6 +50,8 @@ def test_start_run_queues_selected_cases(monkeypatch):
     )
 
     assert response["run_id"] == "run-123"
-    assert "--run-id run-123" in response["next_command"]
+    assert response["next_command"] == (
+        "python -m scripts.run_failure_evaluation --run-id run-123"
+    )
     assert repository.created["case_ids"] == ["case-2"]
     assert repository.created["model"] == "evaluator-model"

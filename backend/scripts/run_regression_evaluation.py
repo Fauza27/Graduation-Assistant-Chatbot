@@ -5,8 +5,6 @@ from __future__ import annotations
 import argparse
 import json
 
-from src.evaluation_agent.regression import RegressionRunner
-
 
 def main() -> None:
     parser = argparse.ArgumentParser()
@@ -16,6 +14,9 @@ def main() -> None:
         help="ID evaluation run yang akan diuji ulang",
     )
     args = parser.parse_args()
+
+    from src.evaluation_agent.regression import RegressionRunner
+
     results = RegressionRunner().run(args.run_id)
     print(json.dumps(results, ensure_ascii=False, indent=2))
 

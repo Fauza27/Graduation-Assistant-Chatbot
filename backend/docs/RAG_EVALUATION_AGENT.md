@@ -51,31 +51,31 @@ EVALUATION_MODEL=gpt-4o-mini
 Daftarkan dan validasi dokumen:
 
 ```powershell
-python scripts/register_evaluation_documents.py
+python -m scripts.register_evaluation_documents
 ```
 
 Jalankan batch yang dibuat dashboard:
 
 ```powershell
-python scripts/run_failure_evaluation.py --run-id <RUN_ID>
+python -m scripts.run_failure_evaluation --run-id <RUN_ID>
 ```
 
 Worker juga dapat langsung membuat dan menjalankan batch seluruh kasus gagal:
 
 ```powershell
-python scripts/run_failure_evaluation.py
+python -m scripts.run_failure_evaluation
 ```
 
 Batasi ke kasus tertentu dengan mengulang argumen berikut:
 
 ```powershell
-python scripts/run_failure_evaluation.py --case-id <CASE_ID_1> --case-id <CASE_ID_2>
+python -m scripts.run_failure_evaluation --case-id <CASE_ID_1> --case-id <CASE_ID_2>
 ```
 
 Setelah perbaikan diterapkan, jalankan regression test:
 
 ```powershell
-python scripts/run_regression_evaluation.py --run-id <RUN_ID>
+python -m scripts.run_regression_evaluation --run-id <RUN_ID>
 ```
 
 Laporan lokal disimpan di `results/evaluations/<RUN_ID>/report.json` dan

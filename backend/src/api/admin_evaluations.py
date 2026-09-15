@@ -157,7 +157,10 @@ def start_evaluation_run(
     return {
         "message": "Batch evaluasi masuk antrean",
         "run_id": run_id,
-        "next_command": f"python scripts/run_failure_evaluation.py --run-id {run_id}",
+        "next_command": (
+            "python -m scripts.run_failure_evaluation "
+            f"--run-id {run_id}"
+        ),
     }
 
 
