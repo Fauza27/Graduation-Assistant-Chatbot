@@ -42,6 +42,39 @@ def build_incident_context(
     }
 
 
+def describe_reranking_failure(facts: dict) -> str | None:
+    """Explain a recorded rejection without guessing why the model scored it low."""
+    rows = {
+        row["parent_id"]: row
+        for row in facts.get("strongest_evidence_rerank_results", [])
+    }
+    for gate in facts.get("selection_counterfactuals", []):
+        row = rows.get(gate["parent_id"], {})
+        if row.get("accepted") or gate.get("top_score_passes_minimum_gate") is False:
+            continue
+        title = row.get("title") or gate["parent_id"]
+        rank = gate.get("rerank_rank")
+        score = gate.get("rerank_score")
+        threshold = gate.get("acceptance_threshold_at_request")
+        if not isinstance(score, (int, float)) or not isinstance(
+            threshold, (int, float)
+        ):
+            continue
+        if score < threshold:
+            return (
+                f"Bagian '{title}' ditemukan saat retrieval, tetapi berada pada peringkat {rank} "
+                f"setelah reranking. Skornya ({score:.2f}) di bawah batas penerimaan "
+                f"({threshold:.2f}), sehingga bukti tidak masuk ke konteks jawaban."
+            )
+        if gate.get("selection_reason") == "outside_top_n":
+            return (
+                f"Bagian '{title}' ditemukan, tetapi berada pada peringkat {rank} setelah "
+                f"reranking, melewati batas {gate.get('request_top_n')} dokumen. "
+                "Bukti akhirnya tidak masuk ke konteks jawaban."
+            )
+    return None
+
+
 def reranking_success_criteria(
     case: EvaluationCase, context: dict, facts: dict
 ) -> list[str]:

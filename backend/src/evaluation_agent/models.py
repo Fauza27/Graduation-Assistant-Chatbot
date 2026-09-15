@@ -148,14 +148,14 @@ class Diagnosis(BaseModel):
 class Recommendation(BaseModel):
     target: str = Field(description="File/fungsi atau parameter sistem yang dituju.")
     action: str = Field(
-        description="Langkah detail, nilai/perilaku sebelum dan usulan sesudah, trade-off, rollback."
+        description="1-3 kalimat: perubahan konkret yang diusulkan dan tujuannya."
     )
     rationale: str = Field(
-        description="Bukti trace/konfigurasi dengan ID/rank/skor; bedakan temuan dan hipotesis."
+        description="Satu kalimat bukti pendukung untuk catatan internal."
     )
     risk: str = Field(pattern="^(low|medium|high)$")
     validation_plan: str = Field(
-        description="Uji before/after, metrik, kriteria lulus, dan pemeriksaan regresi."
+        description="Satu kalimat cara menguji perbaikan untuk catatan internal."
     )
 
 
@@ -164,80 +164,6 @@ class DiagnosisReview(BaseModel):
     root_cause: str
     confidence: float = Field(ge=0.0, le=1.0)
     recommendations: list[Recommendation] = Field(default_factory=list)
-
-
-class DetailedRecommendation(BaseModel):
-    """Required review plan, rendered into the existing persistence columns."""
-
-    target: str = Field(description="Path file dan fungsi atau parameter sistem.")
-    current_behavior: str = Field(
-        description="Perilaku/nilai sekarang dari kode/config; sebut data yang belum diketahui."
-    )
-    proposed_change: str = Field(
-        description="Usulan perilaku/nilai spesifik untuk diuji."
-    )
-    implementation_steps: list[str] = Field(
-        min_length=1, description="Langkah implementasi konkret pada target."
-    )
-    implementation_example: str = Field(
-        description="Contoh perubahan kode/pseudocode atau nilai konfigurasi before/after yang dapat direview; bukan sekadar instruksi umum."
-    )
-    evidence_basis: list[str] = Field(
-        min_length=1,
-        description="Fakta trace dengan ID/rank/jenis skor; bedakan hipotesis.",
-    )
-    trade_offs: str = Field(
-        description="Dampak terhadap latency, precision/recall, biaya atau maintenance."
-    )
-    rollback_plan: str = Field(
-        description="Cara mengembalikan perilaku/nilai sebelumnya jika terjadi regresi."
-    )
-    validation_steps: list[str] = Field(
-        min_length=1,
-        description="Uji baseline dan usulan serta log/metrik yang dibandingkan.",
-    )
-    success_criteria: list[str] = Field(
-        min_length=1,
-        description="Kriteria lulus terukur termasuk kasus benar dan tanpa jawaban.",
-    )
-    risk: str = Field(pattern="^(low|medium|high)$")
-
-    def to_recommendation(self) -> Recommendation:
-        def numbered(items: list[str]) -> str:
-            return "\n".join(f"{index}. {item}" for index, item in enumerate(items, 1))
-
-        return Recommendation(
-            target=self.target,
-            action=(
-                f"Saat ini: {self.current_behavior}\n\nUsulan: {self.proposed_change}"
-                f"\n\nLangkah implementasi:\n{numbered(self.implementation_steps)}"
-                f"\n\nContoh implementasi:\n{self.implementation_example}"
-                f"\n\nTrade-off: {self.trade_offs}\n\nRollback: {self.rollback_plan}"
-            ),
-            rationale="\n".join(f"- {item}" for item in self.evidence_basis),
-            validation_plan=(
-                f"Langkah uji:\n{numbered(self.validation_steps)}"
-                f"\n\nKriteria lulus:\n{numbered(self.success_criteria)}"
-            ),
-            risk=self.risk,
-        )
-
-
-class DetailedDiagnosisReview(BaseModel):
-    failed_stage: FailureStage
-    root_cause: str
-    confidence: float = Field(ge=0.0, le=1.0)
-    recommendations: list[DetailedRecommendation] = Field(
-        default_factory=list, max_length=3
-    )
-
-    def to_review(self) -> DiagnosisReview:
-        return DiagnosisReview(
-            failed_stage=self.failed_stage,
-            root_cause=self.root_cause,
-            confidence=self.confidence,
-            recommendations=[item.to_recommendation() for item in self.recommendations],
-        )
 
 
 class RegressionJudgement(BaseModel):

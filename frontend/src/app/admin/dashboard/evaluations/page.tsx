@@ -29,6 +29,10 @@ const REVIEW_LABEL: Record<string, string> = {
 };
 const errorText = (error: unknown) => error instanceof Error ? error.message : 'Terjadi kesalahan.';
 
+function recommendationSummary(action: string): string {
+  return action.split('\n\nUsulan: ')[1]?.split('\n\n')[0]?.trim() || action;
+}
+
 export default function EvaluationsPage() {
   const [cases, setCases] = useState<EvaluationCase[]>([]);
   const [runs, setRuns] = useState<EvaluationRun[]>([]);
@@ -146,22 +150,15 @@ export default function EvaluationsPage() {
         <div className={styles.panelHeader}><div><h2>Hasil batch</h2><p className={styles.mono}>{report.run.run_id}</p></div></div>
         <div className={styles.findings}>{report.findings.map((finding) => {
           const evaluationCase = caseById.get(finding.case_id);
-          const evidence = report.evidence.find((item) => item.case_id === finding.case_id);
           const recommendations = report.recommendations.filter((item) => item.finding_id === finding.finding_id);
           return <article key={finding.finding_id} className={styles.finding}>
-            <div className={styles.findingHeader}><div><span className={styles.stage}>{STAGE_LABEL[finding.failed_stage] || finding.failed_stage}</span><h3>{evaluationCase?.question || finding.case_id}</h3></div><strong>{Math.round(Number(finding.confidence) * 100)}%</strong></div>
-            <p>{finding.root_cause}</p><p><b>Jawaban ada di dokumen asli:</b> {finding.answer_available ? 'Ya' : 'Tidak ditemukan'}</p>
-            {evidence && <blockquote><b>Bukti halaman {evidence.page_start}{evidence.page_end !== evidence.page_start ? `–${evidence.page_end}` : ''}:</b> {evidence.evidence_text}</blockquote>}
-            {finding.affected_chunk_ids.length > 0 && <p className={styles.mono}>Chunk terkait: {finding.affected_chunk_ids.join(', ')}</p>}
+            <div className={styles.findingHeader}><div><span className={styles.stage}>{STAGE_LABEL[finding.failed_stage] || finding.failed_stage}</span><h3>{evaluationCase?.question || finding.case_id}</h3></div></div>
+            <p><b>Alasan gagal:</b> {finding.root_cause}</p>
             {recommendations.map((recommendation) => <div key={recommendation.recommendation_id} className={styles.recommendation}>
               <div className={styles.recommendationDetails}>
-                <span className={styles.badge}>{recommendation.target} · risiko {recommendation.risk}</span>
-                <h4>Usulan perubahan</h4>
-                <p className={styles.recommendationText}>{recommendation.action}</p>
-                <h4>Dasar rekomendasi</h4>
-                <p className={styles.recommendationText}>{recommendation.rationale}</p>
-                <h4>Validasi</h4>
-                <p className={styles.recommendationText}>{recommendation.validation_plan}</p>
+                <span className={styles.badge}>{recommendation.target}</span>
+                <h4>Rekomendasi perbaikan</h4>
+                <p className={styles.recommendationText}>{recommendationSummary(recommendation.action)}</p>
               </div>
               <div className={styles.actions}><span>{recommendation.status}</span>{recommendation.status === 'proposed' && <><button aria-label="Setujui rekomendasi" onClick={() => void reviewRecommendation(recommendation.recommendation_id, 'approved')} disabled={working}><Check /></button><button aria-label="Tolak rekomendasi" onClick={() => void reviewRecommendation(recommendation.recommendation_id, 'rejected')} disabled={working}><X /></button></>}</div>
             </div>)}

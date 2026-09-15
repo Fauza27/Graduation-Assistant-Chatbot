@@ -6,15 +6,15 @@ from langchain_core.documents import Document
 from src.evaluation_agent.model_client import OpenAIEvaluatorModel
 from src.evaluation_agent.incident_context import (
     build_incident_context,
+    describe_reranking_failure,
     reranking_success_criteria,
 )
 from src.evaluation_agent.models import (
     ChunkAudit,
     Diagnosis,
     EvaluationCase,
-    DetailedRecommendation,
 )
-from src.evaluation_agent.report import write_report
+from src.evaluation_agent.report import write_report, recommendation_summary
 from src.evaluation_agent.system_context import build_system_context
 from src.monitoring.pipeline_snapshot import capture_pipeline_snapshot
 from src.retrieval import pipeline
@@ -92,17 +92,9 @@ def test_review_receives_configuration_and_implementation(mock_settings):
                 "recommendations": [
                     {
                         "target": "reranker.py",
-                        "current_behavior": "content",
-                        "proposed_change": "heading + content",
-                        "implementation_steps": ["Add heading"],
-                        "implementation_example": "pairs.append([query, title + content])",
-                        "evidence_basis": ["Parent ranked low"],
-                        "trade_offs": "More input tokens",
-                        "rollback_plan": "Use original content",
-                        "validation_steps": ["Replay identical candidates"],
-                        "success_criteria": [
-                            "WRONG_CRITERION: score > 0 is sufficient"
-                        ],
+                        "action": "Tambahkan heading ke input",
+                        "rationale": "Parent ranked low",
+                        "validation_plan": "WRONG_CRITERION: score > 0 is sufficient",
                         "risk": "medium",
                     }
                 ],
@@ -134,6 +126,28 @@ def test_review_receives_configuration_and_implementation(mock_settings):
     )
 
 
+def test_failure_reason_uses_recorded_rejection_and_does_not_guess_missing_scores():
+    row = {"parent_id": "parent", "title": "Ketentuan Profesional", "accepted": False}
+    gate = {
+        "parent_id": "parent",
+        "rerank_rank": 7,
+        "rerank_score": -1.5,
+        "acceptance_threshold_at_request": 2.53,
+        "top_score_passes_minimum_gate": True,
+    }
+    facts = {
+        "strongest_evidence_rerank_results": [row],
+        "selection_counterfactuals": [gate],
+    }
+    reason = describe_reranking_failure(facts)
+    assert "Ketentuan Profesional" in reason
+    assert "peringkat 7" in reason
+    assert "(-1.50)" in reason and "(2.53)" in reason
+    assert describe_reranking_failure({}) is None
+    row["accepted"] = True
+    assert describe_reranking_failure(facts) is None
+
+
 def test_rerank_validation_uses_actual_gate_contract_and_expected_answer():
     case = EvaluationCase(
         case_id="case",
@@ -161,7 +175,7 @@ def test_rerank_validation_uses_actual_gate_contract_and_expected_answer():
     assert "kasus tanpa jawaban" in text
 
 
-def test_report_displays_rationale_and_validation(tmp_path):
+def test_report_shows_cause_and_action_and_retains_debug_details_in_json(tmp_path):
     path = write_report(
         "run",
         [
@@ -187,8 +201,15 @@ def test_report_displays_rationale_and_validation(tmp_path):
         tmp_path,
     )
     text = path.read_text(encoding="utf-8")
-    assert "Parent ditemukan rank 3" in text
-    assert "Bukti harus masuk context" in text
+    assert "Alasan gagal:** Ditolak" in text
+    assert "Replay skor" in text
+    assert "Parent ditemukan rank 3" not in text
+    assert "Bukti harus masuk context" not in text
+    saved = json.loads(path.with_suffix(".json").read_text(encoding="utf-8"))
+    assert (
+        saved["results"][0]["diagnosis"]["recommendations"][0]["validation_plan"]
+        == "Bukti harus masuk context"
+    )
 
 
 def test_pipeline_records_all_scores_without_changing_final_selection(monkeypatch):
@@ -262,22 +283,6 @@ def test_empty_acceptance_set_does_not_mark_rejected_parents_accepted():
     assert rows[0]["accepted"] is False
 
 
-def test_detailed_plan_preserves_sections_in_existing_database_columns():
-    plan = DetailedRecommendation(
-        target="pipeline.py",
-        current_behavior="Gap 2.5",
-        proposed_change="Uji gap 3",
-        implementation_steps=["Ubah konfigurasi untuk eksperimen"],
-        implementation_example="baseline: rerank_relative_gap=2.5; eksperimen: 3.0",
-        evidence_basis=["Parent relevan ditolak"],
-        trade_offs="Precision dapat turun",
-        rollback_plan="Kembalikan gap 2.5",
-        validation_steps=["Bandingkan trace"],
-        success_criteria=["Bukti diterima tanpa regresi"],
-        risk="medium",
-    )
-    row = plan.to_recommendation().model_dump()
-    assert set(row) == {"target", "action", "rationale", "validation_plan", "risk"}
-    assert "Kembalikan gap 2.5" in row["action"]
-    assert "Precision dapat turun" in row["action"]
-    assert "Bukti diterima tanpa regresi" in row["validation_plan"]
+def test_report_supports_recommendations_from_older_verbose_runs():
+    action = "Saat ini: content\n\nUsulan: Tambahkan title dan section.\n\nLangkah implementasi:\n1. Update fungsi\n\nRollback: reset"
+    assert recommendation_summary(action) == "Tambahkan title dan section."

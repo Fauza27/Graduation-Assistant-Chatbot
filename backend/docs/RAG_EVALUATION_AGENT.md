@@ -15,21 +15,21 @@ snapshot. Kode diambil sebagai teks tanpa dieksekusi. Checksum membedakan versi
 kode request baru dari checkout saat evaluasi; request lama tanpa checksum
 ditandai memiliki keterbatasan provenance.
 
-Rekomendasi menyebut target file/fungsi/parameter, langkah perubahan, perilaku
-atau nilai sebelum dan usulan sesudah, dasar dari trace, trade-off, rollback,
-contoh kode/pseudocode atau nilai konfigurasi, serta uji before/after dan kriteria
-lulus. Ringkasan insiden menonjolkan parent dengan coverage bukti terbaik dan
-perhitungan gerbang seleksi; minimum top score tidak berlaku pada setiap parent.
+Laporan Markdown dan dashboard menampilkan alasan gagal yang spesifik serta
+rekomendasi perbaikan singkat dengan target file/fungsi/parameter. Konfigurasi,
+source, bukti, dan catatan validasi tetap menjadi konteks analisis dan tersimpan
+dalam JSON/database, tanpa memenuhi laporan yang dibaca admin.
 Kriteria lulus reranking dirender dari aturan seleksi dan konfigurasi sebenarnya,
 bukan threshold yang dikarang LLM. Eksperimen harus mencatat parameter yang dipakai,
 memasukkan bukti ke context akhir, menjawab expected answer, dan melewati regresi.
 Nilai usulan adalah eksperimen sampai regression test membuktikan hasilnya.
-Agent harus menyebut data yang belum
-tersedia dan tidak boleh mengklaim penyebab threshold tanpa skor yang lengkap.
+Agent harus menyebut keterbatasan data dan tidak boleh mengklaim penyebab
+threshold tanpa skor yang lengkap.
 
 Trace baru menyimpan seluruh skor reranker sebelum pemilihan top-N/relative gap,
 alasan penerimaan/penolakan, dan panjang teks sebelum/sesudah pemotongan. Hal ini
-tidak mengubah pemilihan dokumen akhir. Skor yang tidak tercatat pada trace lama
+tidak mengubah aturan pemilihan dokumen akhir. Input cross-encoder menyertakan
+title dan section sebelum content, dengan batas panjang yang sama. Skor yang tidak tercatat pada trace lama
 tidak dapat dipulihkan; diperlukan replay untuk mengujinya.
 
 Evaluator hanya membuat temuan dan rekomendasi. Perubahan chunk, konfigurasi,

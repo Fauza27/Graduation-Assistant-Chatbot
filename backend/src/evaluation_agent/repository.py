@@ -10,6 +10,7 @@ from typing import Any
 from supabase import Client, create_client
 
 from config.settings import get_settings
+from src.evaluation_agent.incident_context import describe_reranking_failure
 from src.evaluation_agent.document_reader import (
     PROJECT_ROOT,
     OriginalDocumentReader,
@@ -219,6 +220,12 @@ class EvaluationRepository:
             .execute()
         )
         finding_rows = list(findings.data or [])
+        for finding in finding_rows:
+            if finding["failed_stage"] == "reranking":
+                reason = describe_reranking_failure(
+                    finding.get("diagnostics", {}).get("incident_facts", {})
+                )
+                finding["root_cause"] = reason or finding["root_cause"]
         case_links = (
             self.client.table("evaluation_run_cases")
             .select("case_id,status,error_message")
