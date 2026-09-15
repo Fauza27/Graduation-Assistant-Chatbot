@@ -4,7 +4,10 @@ from types import SimpleNamespace
 from langchain_core.documents import Document
 
 from src.evaluation_agent.model_client import OpenAIEvaluatorModel
-from src.evaluation_agent.incident_context import build_incident_context
+from src.evaluation_agent.incident_context import (
+    build_incident_context,
+    reranking_success_criteria,
+)
 from src.evaluation_agent.models import (
     ChunkAudit,
     Diagnosis,
@@ -86,12 +89,29 @@ def test_review_receives_configuration_and_implementation(mock_settings):
                 "failed_stage": "reranking",
                 "root_cause": "Bukti ditolak",
                 "confidence": 0.9,
+                "recommendations": [
+                    {
+                        "target": "reranker.py",
+                        "current_behavior": "content",
+                        "proposed_change": "heading + content",
+                        "implementation_steps": ["Add heading"],
+                        "implementation_example": "pairs.append([query, title + content])",
+                        "evidence_basis": ["Parent ranked low"],
+                        "trade_offs": "More input tokens",
+                        "rollback_plan": "Use original content",
+                        "validation_steps": ["Replay identical candidates"],
+                        "success_criteria": [
+                            "WRONG_CRITERION: score > 0 is sufficient"
+                        ],
+                        "risk": "medium",
+                    }
+                ],
             }
 
     model = object.__new__(OpenAIEvaluatorModel)
     model._llm = FakeLLM()
     context = build_system_context("reranking", {}, mock_settings)
-    model.review_diagnosis(
+    review = model.review_diagnosis(
         case=EvaluationCase(
             case_id="case", question="Syarat?", review_status="incorrect"
         ),
@@ -107,6 +127,38 @@ def test_review_receives_configuration_and_implementation(mock_settings):
     payload = json.loads(captured["prompt"].split("DATA:\n", 1)[1])
     assert payload["system_context"]["current_configuration"]["rerank_top_n"] == 3
     assert payload["system_context"]["current_source_excerpts"]
+    assert "WRONG_CRITERION" not in review.recommendations[0].validation_plan
+    assert (
+        "skor parent >= skor tertinggi - rerank_relative_gap"
+        in review.recommendations[0].validation_plan
+    )
+
+
+def test_rerank_validation_uses_actual_gate_contract_and_expected_answer():
+    case = EvaluationCase(
+        case_id="case",
+        question="Syarat?",
+        review_status="incorrect",
+        expected_answer="Tiga syarat",
+    )
+    criteria = reranking_success_criteria(
+        case,
+        {
+            "current_configuration": {
+                "rerank_min_top_score": 0,
+                "rerank_relative_gap": 2.5,
+                "rerank_top_n": 5,
+            }
+        },
+        {"strongest_evidence_parent_ids": ["parent-027"]},
+    )
+    text = "\n".join(criteria)
+    assert "rerank_relative_gap=2.5" in text
+    assert "rerank_top_n=5" in text
+    assert "skor parent >= skor tertinggi - rerank_relative_gap" in text
+    assert "parent-027" in text
+    assert "expected_answer: Tiga syarat" in text
+    assert "kasus tanpa jawaban" in text
 
 
 def test_report_displays_rationale_and_validation(tmp_path):

@@ -10,7 +10,10 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_openai import ChatOpenAI
 
 from config.settings import get_settings
-from src.evaluation_agent.incident_context import build_incident_context
+from src.evaluation_agent.incident_context import (
+    build_incident_context,
+    reranking_success_criteria,
+)
 from src.evaluation_agent.models import (
     ChunkAudit,
     Diagnosis,
@@ -193,7 +196,16 @@ class OpenAIEvaluatorModel:
             [SystemMessage(content=SYSTEM_PROMPT), HumanMessage(content=prompt)],
             max_tokens=5000,
         )
-        return DetailedDiagnosisReview.model_validate(result).to_review()
+        detailed = DetailedDiagnosisReview.model_validate(result)
+        if detailed.failed_stage.value == "reranking":
+            # Selection requirements come from the pipeline contract, not an
+            # individual threshold the language model is allowed to invent.
+            criteria = reranking_success_criteria(
+                case, system_context, payload["incident_facts"]
+            )
+            for recommendation in detailed.recommendations:
+                recommendation.success_criteria = criteria
+        return detailed.to_review()
 
     def judge_regression(
         self, case: EvaluationCase, answer: str, evidence_text: str

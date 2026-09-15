@@ -20,8 +20,11 @@ atau nilai sebelum dan usulan sesudah, dasar dari trace, trade-off, rollback,
 contoh kode/pseudocode atau nilai konfigurasi, serta uji before/after dan kriteria
 lulus. Ringkasan insiden menonjolkan parent dengan coverage bukti terbaik dan
 perhitungan gerbang seleksi; minimum top score tidak berlaku pada setiap parent.
-Nilai usulan adalah eksperimen sampai
-regression test membuktikan hasilnya. Agent harus menyebut data yang belum
+Kriteria lulus reranking dirender dari aturan seleksi dan konfigurasi sebenarnya,
+bukan threshold yang dikarang LLM. Eksperimen harus mencatat parameter yang dipakai,
+memasukkan bukti ke context akhir, menjawab expected answer, dan melewati regresi.
+Nilai usulan adalah eksperimen sampai regression test membuktikan hasilnya.
+Agent harus menyebut data yang belum
 tersedia dan tidak boleh mengklaim penyebab threshold tanpa skor yang lengkap.
 
 Trace baru menyimpan seluruh skor reranker sebelum pemilihan top-N/relative gap,

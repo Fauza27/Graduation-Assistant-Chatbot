@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from src.evaluation_agent.models import ChunkAudit, Diagnosis
+from src.evaluation_agent.models import ChunkAudit, Diagnosis, EvaluationCase
 
 
 def build_incident_context(
@@ -40,3 +40,34 @@ def build_incident_context(
             "Acceptance requires highest score >= minimum top score, parent score >= highest score - relative gap, and position within top-N among gap survivors; parent score > 0 alone is insufficient.",
         ],
     }
+
+
+def reranking_success_criteria(
+    case: EvaluationCase, context: dict, facts: dict
+) -> list[str]:
+    """Render the actual selection contract rather than LLM-invented thresholds."""
+    config = context["current_configuration"]
+    parents = (
+        ", ".join(facts["strongest_evidence_parent_ids"])
+        or "parent bukti terverifikasi"
+    )
+    criteria = [
+        "Catat baseline dan konfigurasi eksperimen. Baseline saat evaluasi: "
+        f"rerank_min_top_score={config['rerank_min_top_score']}, "
+        f"rerank_relative_gap={config['rerank_relative_gap']}, rerank_top_n={config['rerank_top_n']}. "
+        "Jika eksperimen mengubah parameter, laporkan nilai barunya secara eksplisit.",
+        f"Dengan kandidat identik, parent bukti ({parents}) harus diterima: skor tertinggi "
+        ">= rerank_min_top_score, skor parent >= skor tertinggi - rerank_relative_gap, "
+        "dan rank di antara kandidat yang lolos gap <= rerank_top_n, menggunakan nilai "
+        "konfigurasi eksperimen. Skor parent > 0 atau naik saja tidak cukup.",
+        "Replay end-to-end: parent bukti harus tercatat dalam final_context.document_ids "
+        "dan jawaban menjawab seluruh fakta bukti terverifikasi, bukan hanya topik yang mirip.",
+        "Replay seluruh kasus pembanding yang sebelumnya benar dan kasus tanpa jawaban: "
+        "tidak boleh ada jawaban benar yang menjadi salah atau jawaban tanpa dukungan dokumen. "
+        "Bandingkan rank/acceptance bukti, akurasi jawaban, dan latency baseline versus eksperimen.",
+    ]
+    if case.expected_answer:
+        criteria.append(
+            f"Jawaban kasus ini harus memenuhi expected_answer: {case.expected_answer}"
+        )
+    return criteria
