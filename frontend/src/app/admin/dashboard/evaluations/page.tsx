@@ -154,7 +154,15 @@ export default function EvaluationsPage() {
             {evidence && <blockquote><b>Bukti halaman {evidence.page_start}{evidence.page_end !== evidence.page_start ? `–${evidence.page_end}` : ''}:</b> {evidence.evidence_text}</blockquote>}
             {finding.affected_chunk_ids.length > 0 && <p className={styles.mono}>Chunk terkait: {finding.affected_chunk_ids.join(', ')}</p>}
             {recommendations.map((recommendation) => <div key={recommendation.recommendation_id} className={styles.recommendation}>
-              <div><span className={styles.badge}>{recommendation.target} · risiko {recommendation.risk}</span><h4>{recommendation.action}</h4><p>{recommendation.rationale}</p><small>Validasi: {recommendation.validation_plan}</small></div>
+              <div className={styles.recommendationDetails}>
+                <span className={styles.badge}>{recommendation.target} · risiko {recommendation.risk}</span>
+                <h4>Usulan perubahan</h4>
+                <p className={styles.recommendationText}>{recommendation.action}</p>
+                <h4>Dasar rekomendasi</h4>
+                <p className={styles.recommendationText}>{recommendation.rationale}</p>
+                <h4>Validasi</h4>
+                <p className={styles.recommendationText}>{recommendation.validation_plan}</p>
+              </div>
               <div className={styles.actions}><span>{recommendation.status}</span>{recommendation.status === 'proposed' && <><button aria-label="Setujui rekomendasi" onClick={() => void reviewRecommendation(recommendation.recommendation_id, 'approved')} disabled={working}><Check /></button><button aria-label="Tolak rekomendasi" onClick={() => void reviewRecommendation(recommendation.recommendation_id, 'rejected')} disabled={working}><X /></button></>}</div>
             </div>)}
           </article>;

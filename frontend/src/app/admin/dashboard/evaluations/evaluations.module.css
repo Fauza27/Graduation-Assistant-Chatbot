@@ -43,3 +43,6 @@
 .actions button svg { width: 15px; }
 .mono { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 12px; overflow-wrap: anywhere; }
 @media (max-width: 720px) { .header, .panelHeader, .recommendation { align-items: stretch; flex-direction: column; } .primaryButton, .secondaryButton { justify-content: center; } .panel { padding: 15px; } }
+
+.recommendationDetails { flex: 1; min-width: 0; }
+.recommendationText { white-space: pre-wrap; overflow-wrap: anywhere; }
