@@ -39,18 +39,87 @@ def write_report(run_id: str, results: list[dict[str, Any]], root: Path) -> Path
                     f"**Bukti:** {evidence['document_title']}, halaman fisik "
                     f"{evidence['page_start']}–{evidence['page_end']}",
                     "",
-                    f"> {evidence['evidence_text']}",
+                    "\n".join(
+                        f"> {line}" for line in evidence["evidence_text"].splitlines()
+                    ),
                     "",
                 ]
             )
         recommendations = item["diagnosis"].get("recommendations", [])
+        gates = item.get("incident_facts", {}).get("selection_counterfactuals", [])
+        if gates:
+            lines.extend(
+                [
+                    "**Jejak parent dengan bukti terkuat (skor cross-encoder):**",
+                    "",
+                    "| Parent | Rank | Skor | Batas skor saat request | Alasan seleksi | Dipotong |",
+                    "|---|---|---|---|---|---|",
+                ]
+            )
+            for gate in gates:
+                lines.append(
+                    f"| `{gate['parent_id']}` | {gate['rerank_rank']} | "
+                    f"{gate['rerank_score']} | {gate['acceptance_threshold_at_request']} | "
+                    f"{gate['selection_reason']} | {gate['truncated']} |"
+                )
+            lines.extend(
+                [
+                    "",
+                    "Minimum top score menguji kandidat berskor tertinggi. "
+                    "Penerimaan parent juga harus memenuhi relative gap dan top-N. "
+                    "Batas gap/top-N hipotetis dalam report.json bukan rekomendasi "
+                    "untuk langsung menaikkan parameter.",
+                    "",
+                ]
+            )
+        system_context = item.get("system_context")
+        if system_context:
+            historical = system_context["request_configuration"]
+            current = system_context["current_configuration"]
+            lines.extend(
+                [
+                    "**Konfigurasi request dan konfigurasi saat evaluasi:**",
+                    "",
+                    "| Parameter | Saat request | Saat evaluasi |",
+                    "|---|---|---|",
+                ]
+            )
+            for name, value in current.items():
+                if name != "implementation_checksums":
+                    lines.append(
+                        f"| `{name}` | {historical.get(name, 'Tidak tercatat')} | {value} |"
+                    )
+            lines.extend(
+                [
+                    "",
+                    "Potongan kode saat ini dan checksum tersimpan dalam report.json. "
+                    "Untuk request lama tanpa checksum, kesamaan versi kode belum diketahui.",
+                    "",
+                ]
+            )
         if recommendations:
             lines.append("**Rekomendasi:**")
             lines.append("")
             for recommendation in recommendations:
-                lines.append(
-                    f"- `{recommendation['target']}`: {recommendation['action']} "
-                    f"(risiko {recommendation['risk']})"
+                lines.extend(
+                    [
+                        f"### {recommendation['target']}",
+                        "",
+                        f"**Risiko:** {recommendation['risk']}",
+                        "",
+                        "**Usulan perubahan:**",
+                        "",
+                        recommendation["action"],
+                        "",
+                        "**Dasar rekomendasi:**",
+                        "",
+                        recommendation["rationale"],
+                        "",
+                        "**Validasi:**",
+                        "",
+                        recommendation["validation_plan"],
+                        "",
+                    ]
                 )
             lines.append("")
     markdown_path.write_text("\n".join(lines), encoding="utf-8")

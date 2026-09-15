@@ -469,6 +469,7 @@ class EvaluationRepository:
         answer_available: bool,
         audit: ChunkAudit,
         review: DiagnosisReview,
+        diagnostics: dict | None = None,
     ) -> str:
         result = (
             self.client.table("evaluation_findings")
@@ -481,7 +482,9 @@ class EvaluationRepository:
                     "root_cause": review.root_cause,
                     "confidence": review.confidence,
                     "affected_chunk_ids": audit.affected_chunk_ids,
-                    "diagnostics": audit.diagnostics,
+                    "diagnostics": diagnostics
+                    if diagnostics is not None
+                    else audit.diagnostics,
                 },
                 on_conflict="run_id,case_id",
             )

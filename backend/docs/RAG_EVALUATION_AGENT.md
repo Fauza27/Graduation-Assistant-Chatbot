@@ -1,12 +1,33 @@
 # RAG Evaluation Agent
 
 Fitur ini membantu admin mencari penyebab jawaban chatbot yang salah atau tidak
-lengkap. Evaluator menggunakan tiga sumber yang berbeda:
+lengkap. Evaluator menggunakan empat sumber yang berbeda:
 
 1. PDF asli sebagai sumber kebenaran.
 2. Child chunk aktif untuk menilai hasil ekstraksi dan pemotongan dokumen.
 3. Trace request untuk melihat query processing, retrieval, parent assembly,
    reranker, context akhir, dan jawaban.
+4. Snapshot konfigurasi request, konfigurasi worker saat evaluasi, serta potongan
+   fungsi dan prompt dari file pipeline yang telah ditentukan secara eksplisit.
+
+Nilai API key, credential database, token, dan isi `.env` tidak dimasukkan ke
+snapshot. Kode diambil sebagai teks tanpa dieksekusi. Checksum membedakan versi
+kode request baru dari checkout saat evaluasi; request lama tanpa checksum
+ditandai memiliki keterbatasan provenance.
+
+Rekomendasi menyebut target file/fungsi/parameter, langkah perubahan, perilaku
+atau nilai sebelum dan usulan sesudah, dasar dari trace, trade-off, rollback,
+contoh kode/pseudocode atau nilai konfigurasi, serta uji before/after dan kriteria
+lulus. Ringkasan insiden menonjolkan parent dengan coverage bukti terbaik dan
+perhitungan gerbang seleksi; minimum top score tidak berlaku pada setiap parent.
+Nilai usulan adalah eksperimen sampai
+regression test membuktikan hasilnya. Agent harus menyebut data yang belum
+tersedia dan tidak boleh mengklaim penyebab threshold tanpa skor yang lengkap.
+
+Trace baru menyimpan seluruh skor reranker sebelum pemilihan top-N/relative gap,
+alasan penerimaan/penolakan, dan panjang teks sebelum/sesudah pemotongan. Hal ini
+tidak mengubah pemilihan dokumen akhir. Skor yang tidak tercatat pada trace lama
+tidak dapat dipulihkan; diperlukan replay untuk mengujinya.
 
 Evaluator hanya membuat temuan dan rekomendasi. Perubahan chunk, konfigurasi,
 prompt, dan kode tetap memerlukan keputusan manusia.

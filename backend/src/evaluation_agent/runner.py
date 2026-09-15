@@ -10,6 +10,7 @@ from typing import Iterable
 from loguru import logger
 
 from config.settings import get_settings
+from src.evaluation_agent.incident_context import build_incident_context
 from src.evaluation_agent.chunk_auditor import audit_chunks
 from src.evaluation_agent.document_reader import (
     PROJECT_ROOT,
@@ -35,6 +36,7 @@ from src.evaluation_agent.repository import (
     get_evaluation_repository,
 )
 from src.evaluation_agent.trace_analyzer import analyze_trace
+from src.evaluation_agent.system_context import build_system_context
 
 
 def _now() -> str:
@@ -259,15 +261,30 @@ class EvaluationRunner:
                     chunk_audit=audit,
                     trace=trace,
                 )
+                system_context = build_system_context(
+                    preliminary.failed_stage.value, trace, self.settings
+                )
+                incident_facts = build_incident_context(trace, audit, preliminary)
                 review = self.model.review_diagnosis(
                     case=case,
                     evidence_text=verified.evidence_text if verified else "",
                     chunk_audit=audit,
                     trace=trace,
                     preliminary=preliminary,
+                    system_context=system_context,
                 )
                 self.repository.save_finding(
-                    run_id, case.case_id, answer_available, audit, review
+                    run_id,
+                    case.case_id,
+                    answer_available,
+                    audit,
+                    review,
+                    diagnostics={
+                        "chunk_audit": audit.diagnostics,
+                        "trace_analysis": preliminary.model_dump(mode="json"),
+                        "system_context": system_context,
+                        "incident_facts": incident_facts,
+                    },
                 )
                 result = {
                     "case_id": case.case_id,
@@ -276,6 +293,8 @@ class EvaluationRunner:
                     "evidence": verified.model_dump(mode="json") if verified else None,
                     "chunk_audit": audit.model_dump(mode="json"),
                     "diagnosis": review.model_dump(mode="json"),
+                    "system_context": system_context,
+                    "incident_facts": incident_facts,
                 }
                 results.append(result)
                 self.repository.update_run_case(

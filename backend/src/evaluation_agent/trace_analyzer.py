@@ -9,6 +9,52 @@ def _ids(rows: list[dict], field: str) -> set[str]:
     return {str(row.get(field, "")) for row in rows if row.get(field)}
 
 
+def _rerank_gate_checks(trace: dict, audit: ChunkAudit) -> list[dict]:
+    """Compute score/selection counterfactuals without mixing RRF score units."""
+    rows = [
+        row
+        for row in trace.get("reranked_candidates", [])
+        if row.get("score_source") == "cross_encoder"
+        and isinstance(row.get("rerank_score"), (int, float))
+    ]
+    if not rows:
+        return []
+    top_score = max(row["rerank_score"] for row in rows)
+    config = trace.get("pipeline_snapshot", {})
+    relative_gap = config.get("rerank_relative_gap")
+    minimum_top_score = config.get("rerank_min_top_score")
+    coverage = {match.parent_id: match.coverage for match in audit.matches}
+    return [
+        {
+            "parent_id": row["parent_id"],
+            "evidence_coverage": coverage.get(row["parent_id"]),
+            "rerank_rank": row.get("rank"),
+            "rerank_score": row["rerank_score"],
+            "top_rerank_score": top_score,
+            "acceptance_threshold_at_request": (
+                top_score - relative_gap
+                if isinstance(relative_gap, (int, float))
+                else None
+            ),
+            "top_score_passes_minimum_gate": (
+                top_score >= minimum_top_score
+                if isinstance(minimum_top_score, (int, float))
+                else None
+            ),
+            "required_gap_if_scores_unchanged": round(
+                top_score - row["rerank_score"], 6
+            ),
+            "required_top_n_if_order_unchanged": row.get("rank"),
+            "request_relative_gap": config.get("rerank_relative_gap"),
+            "request_top_n": config.get("rerank_top_n"),
+            "truncated": row.get("rerank_truncated"),
+            "selection_reason": row.get("selection_reason"),
+        }
+        for row in rows
+        if row.get("parent_id") in audit.matched_parent_ids
+    ]
+
+
 def analyze_trace(
     *,
     answer_available: bool,
@@ -80,6 +126,26 @@ def analyze_trace(
             failed_stage=FailureStage.RERANKING,
             root_cause="Parent relevan tersedia sebelum reranker tetapi tidak diterima.",
             confidence=0.9,
+            diagnostics={
+                "rerank_gate_checks": _rerank_gate_checks(trace, chunk_audit),
+                "relevant_search_candidates": [
+                    row
+                    for row in trace.get("search_candidates", [])
+                    if row.get("child_id") in relevant_children
+                ],
+                "relevant_parent_candidates": [
+                    row
+                    for row in trace.get("parent_candidates", [])
+                    if row.get("parent_id") in relevant_parents
+                ],
+                "relevant_reranked_candidates": [
+                    row for row in reranked if row.get("parent_id") in relevant_parents
+                ],
+                "parents_without_recorded_rerank_score": sorted(
+                    relevant_parents.intersection(parent_candidates)
+                    - _ids(reranked, "parent_id")
+                ),
+            },
         )
     if relevant_parents.isdisjoint(context_parents):
         return Diagnosis(

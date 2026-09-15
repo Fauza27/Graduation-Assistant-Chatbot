@@ -29,11 +29,12 @@ def mock_settings():
     from config.settings import Settings
 
     return Settings(
+        _env_file=None,
         open_api_key="test-key",
         supabase_url="https://test.supabase.co",
         supabase_service_key="test-service-key",
         TELEGRAM_BOT_TOKEN="test-bot-token",
-        ENVIRONMENT="testing",
+        ENVIRONMENT="development",
         DEBUG=True,
         retrieval_top_k=5,
         rerank_top_n=3,
