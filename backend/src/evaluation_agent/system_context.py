@@ -34,6 +34,7 @@ STAGE_SOURCES = {
         "src/retrieval/reranker.py": (
             "CrossEncoderReranker.rerank",
             "CrossEncoderReranker._build_pairs",
+            "CrossEncoderReranker._document_text",
         ),
     },
     "context_assembly": {

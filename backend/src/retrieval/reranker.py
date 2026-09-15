@@ -32,10 +32,7 @@ class CrossEncoderReranker:
     ) -> None:
         settings = get_settings()
 
-        self.model_name = (
-            model_name
-            or settings.cross_encoder_model
-        )
+        self.model_name = model_name or settings.cross_encoder_model
 
         self.top_n = settings.rerank_top_n
         self.max_content_chars = max(
@@ -43,9 +40,7 @@ class CrossEncoderReranker:
             max_content_chars,
         )
 
-        self._configure_huggingface_token(
-            settings.hf_token
-        )
+        self._configure_huggingface_token(settings.hf_token)
 
     @staticmethod
     def _configure_huggingface_token(
@@ -75,19 +70,11 @@ class CrossEncoderReranker:
 
         cls = type(self)
 
-        if (
-            cls._shared_model is not None
-            and cls._shared_model_name
-            == self.model_name
-        ):
+        if cls._shared_model is not None and cls._shared_model_name == self.model_name:
             return cls._shared_model
 
         with cls._model_lock:
-            if (
-                cls._shared_model is None
-                or cls._shared_model_name
-                != self.model_name
-            ):
+            if cls._shared_model is None or cls._shared_model_name != self.model_name:
                 from sentence_transformers import (
                     CrossEncoder,
                 )
@@ -97,17 +84,11 @@ class CrossEncoderReranker:
                     self.model_name,
                 )
 
-                cls._shared_model = CrossEncoder(
-                    self.model_name
-                )
+                cls._shared_model = CrossEncoder(self.model_name)
 
-                cls._shared_model_name = (
-                    self.model_name
-                )
+                cls._shared_model_name = self.model_name
 
-                logger.info(
-                    "Cross-encoder model loaded."
-                )
+                logger.info("Cross-encoder model loaded.")
 
         return cls._shared_model
 
@@ -134,34 +115,24 @@ class CrossEncoderReranker:
         if not documents:
             return []
 
-        target_top_n = (
-            top_n
-            if top_n is not None
-            else self.top_n
-        )
+        target_top_n = top_n if top_n is not None else self.top_n
 
         if target_top_n <= 0:
             return []
 
         model = self._get_model()
 
-        scored_documents = [
-            dict(document)
-            for document in documents
-        ]
+        scored_documents = [dict(document) for document in documents]
 
-        pairs, truncated_count = (
-            self._build_pairs(
-                query=query,
-                documents=scored_documents,
-                content_key=content_key,
-            )
+        pairs, truncated_count = self._build_pairs(
+            query=query,
+            documents=scored_documents,
+            content_key=content_key,
         )
 
         if truncated_count:
             logger.debug(
-                "{} of {} document chunk(s) "
-                "truncated to {} characters",
+                "{} of {} document chunk(s) " "truncated to {} characters",
                 truncated_count,
                 len(documents),
                 self.max_content_chars,
@@ -187,9 +158,7 @@ class CrossEncoderReranker:
             reverse=True,
         )
 
-        reranked = scored_documents[
-            :target_top_n
-        ]
+        reranked = scored_documents[:target_top_n]
 
         self._log_result_summary(
             total_count=len(documents),
@@ -216,29 +185,32 @@ class CrossEncoderReranker:
         truncated_count = 0
 
         for document in documents:
-            content = str(
-                document.get(
-                    content_key,
-                    "",
-                )
-                or ""
-            )
+            content = self._document_text(document, content_key)
             document["rerank_original_chars"] = len(content)
             document["rerank_truncated"] = len(content) > self.max_content_chars
 
             if len(content) > self.max_content_chars:
-                content = content[
-                    : self.max_content_chars
-                ]
+                content = content[: self.max_content_chars]
                 truncated_count += 1
 
             document["rerank_input_chars"] = len(content)
 
-            pairs.append(
-                [query, content]
-            )
+            pairs.append([query, content])
 
         return pairs, truncated_count
+
+    @staticmethod
+    def _document_text(document: dict, content_key: str) -> str:
+        """Include document headings while preserving the original content."""
+        headings = list(
+            dict.fromkeys(
+                value
+                for key in ("title", "section")
+                if (value := str(document.get(key) or "").strip())
+            )
+        )
+        content = str(document.get(content_key) or "")
+        return "\n\n".join([*headings, content]) if headings else content
 
     @staticmethod
     def _attach_scores(
@@ -251,9 +223,7 @@ class CrossEncoderReranker:
             documents,
             scores,
         ):
-            document[
-                "cross_encoder_score"
-            ] = float(score)
+            document["cross_encoder_score"] = float(score)
 
     @staticmethod
     def _log_result_summary(
@@ -281,8 +251,7 @@ class CrossEncoderReranker:
         )
 
         logger.info(
-            "Reranking done: {} → {} documents | "
-            "top={:.4f} | bottom={:.4f}",
+            "Reranking done: {} → {} documents | " "top={:.4f} | bottom={:.4f}",
             total_count,
             reranked_count,
             top_score,
