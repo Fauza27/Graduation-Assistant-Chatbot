@@ -223,12 +223,16 @@ class CrossEncoderReranker:
                 )
                 or ""
             )
+            document["rerank_original_chars"] = len(content)
+            document["rerank_truncated"] = len(content) > self.max_content_chars
 
             if len(content) > self.max_content_chars:
                 content = content[
                     : self.max_content_chars
                 ]
                 truncated_count += 1
+
+            document["rerank_input_chars"] = len(content)
 
             pairs.append(
                 [query, content]

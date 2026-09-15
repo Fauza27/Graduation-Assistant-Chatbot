@@ -282,39 +282,18 @@ def run_retrieval(
         reranked = CrossEncoderReranker().rerank(
             query=rerank_query,
             documents=candidate_parents,
+            # Keep every scored candidate for diagnosis. Final selection still
+            # applies rerank_top_n below, so retrieval behavior is unchanged.
+            top_n=len(candidate_parents),
         )
 
         for document in reranked:
             document["score_source"] = "cross_encoder"
             document["rerank_method"] = "cross_encoder"
 
-        if not reranked:
-            reason = "No documents reranked"
-        else:
-            top_score = float(
-                reranked[0].get(
-                    "cross_encoder_score",
-                    0.0,
-                )
-            )
-
-            if top_score < settings.rerank_min_top_score:
-                final_results = []
-                reason = "Minimum Evidence Triggered"
-            else:
-                min_accepted_score = top_score - settings.rerank_relative_gap
-
-                final_results = [
-                    document
-                    for document in reranked
-                    if document.get(
-                        "cross_encoder_score",
-                        0.0,
-                    )
-                    >= min_accepted_score
-                ][: settings.rerank_top_n]
-
-                reason = "Adaptive Relative Gap"
+        final_results, reason, top_score = _select_reranked_documents(
+            reranked, settings
+        )
 
     except Exception as exc:
         logger.warning(
@@ -386,6 +365,41 @@ def run_retrieval(
 # ============================================================================
 
 
+def _select_reranked_documents(
+    reranked: list[dict], settings
+) -> tuple[list[dict], str, float]:
+    """Apply existing evidence gates and annotate every scored candidate."""
+    if not reranked:
+        return [], "No documents reranked", 0.0
+
+    top_score = float(reranked[0].get("cross_encoder_score", 0.0))
+    minimum_triggered = top_score < settings.rerank_min_top_score
+    minimum_score = top_score - settings.rerank_relative_gap
+    final_results = (
+        []
+        if minimum_triggered
+        else [
+            document
+            for document in reranked
+            if document.get("cross_encoder_score", 0.0) >= minimum_score
+        ][: settings.rerank_top_n]
+    )
+    accepted_ids = {str(item.get("parent_id", "")) for item in final_results}
+    for rank, document in enumerate(reranked, start=1):
+        if str(document.get("parent_id", "")) in accepted_ids:
+            document["selection_reason"] = "accepted"
+        elif minimum_triggered:
+            document["selection_reason"] = "minimum_top_score"
+        elif document.get("cross_encoder_score", 0.0) < minimum_score:
+            document["selection_reason"] = "relative_gap"
+        elif rank > settings.rerank_top_n:
+            document["selection_reason"] = "outside_top_n"
+    reason = (
+        "Minimum Evidence Triggered" if minimum_triggered else "Adaptive Relative Gap"
+    )
+    return final_results, reason, top_score
+
+
 def _serialize_search_candidates(
     candidates: list[HybridSearchResult],
     matched_queries: dict[str, set[str]] | None = None,
@@ -414,7 +428,6 @@ def _serialize_parent_candidates(
     accepted_ids: set[str] | None = None,
 ) -> list[dict]:
     """Serialize parent candidates without duplicating full document content."""
-    accepted_ids = accepted_ids or set()
     return [
         {
             "rank": rank,
@@ -428,9 +441,13 @@ def _serialize_parent_candidates(
             "rerank_score": candidate.get("cross_encoder_score"),
             "score_source": candidate.get("score_source", ""),
             "rerank_method": candidate.get("rerank_method", ""),
+            "selection_reason": candidate.get("selection_reason", ""),
+            "rerank_original_chars": candidate.get("rerank_original_chars"),
+            "rerank_input_chars": candidate.get("rerank_input_chars"),
+            "rerank_truncated": candidate.get("rerank_truncated"),
             "accepted": (
                 str(candidate.get("parent_id", "")) in accepted_ids
-                if accepted_ids
+                if accepted_ids is not None
                 else True
             ),
         }

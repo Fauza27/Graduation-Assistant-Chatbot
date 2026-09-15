@@ -23,6 +23,7 @@ from src.monitoring.context import (
     start_stage,
 )
 from src.monitoring.errors import OpenAIServiceError, RetrievalError, classify_exception
+from src.monitoring.pipeline_snapshot import capture_pipeline_snapshot
 from src.monitoring.writer import persist_metrics
 from src.services.retrieval_cache import RevisionedRetrievalCache
 from src.retrieval.query_planner import QueryPlan, build_query_plan
@@ -135,20 +136,7 @@ def _prepare_query_plan_and_memory(
             "complexity": plan.complexity.value,
             "is_decomposed": plan.is_decomposed,
         },
-        pipeline_snapshot={
-            "app_version": settings.VERSION,
-            "llm_model": settings.llm_model,
-            "embedding_model": settings.embedding_model,
-            "cross_encoder_model": settings.cross_encoder_model,
-            "retrieval_top_k": settings.retrieval_top_k,
-            "max_parent_for_rerank": settings.max_parent_for_rerank,
-            "rerank_top_n": settings.rerank_top_n,
-            "rerank_min_top_score": settings.rerank_min_top_score,
-            "rerank_relative_gap": settings.rerank_relative_gap,
-            "bm25_weight": settings.bm25_weight,
-            "dense_weight": settings.dense_weight,
-            "max_context_tokens": settings.MAX_CONTEXT_TOKENS,
-        },
+        pipeline_snapshot=capture_pipeline_snapshot(settings),
     )
 
     if plan.rewrite_method.value != "None":
