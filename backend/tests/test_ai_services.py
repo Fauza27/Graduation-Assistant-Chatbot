@@ -10,8 +10,6 @@ from src.services.ai_services import (
     get_or_create_memory,
     clear_session,
     get_session_stats,
-    cleanup_sessions,
-    preload_models,
 )
 from src.generation.memory import ConversationMemory
 from src.retrieval.pipeline import RetrievalResult

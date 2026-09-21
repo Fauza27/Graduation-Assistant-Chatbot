@@ -3,10 +3,10 @@
 Mutation functions are re-exported for the existing admin API.
 """
 
-from typing import Dict, List, Optional, Any, Tuple
-from loguru import logger
-from supabase import Client
 from dataclasses import dataclass
+from typing import Any, Dict, List, Optional, Tuple
+
+from supabase import Client
 
 from src.admin.auth import ResourceNotFoundError
 from src.admin.chunk_mutations import (
@@ -16,6 +16,18 @@ from src.admin.chunk_mutations import (
     save_chunk,
     trigger_reembed,
 )
+from src.utils.page_sorting import smart_page_sort_key as _smart_page_sort_key
+
+__all__ = [
+    "ChunkConflictError",
+    "delete_chunk",
+    "get_chunk_detail",
+    "get_edit_status",
+    "list_knowledge_tree",
+    "process_chunk_reembed",
+    "save_chunk",
+    "trigger_reembed",
+]
 
 
 # === DATA STRUCTURES FOR CLARITY ===
@@ -26,7 +38,7 @@ class ChunkSummary:
     total_documents: int
     total_parents: int
     total_children: int
-    last_updated_at: Optional[str] = None
+    last_updated_at: str | None = None
 
 
 @dataclass
@@ -35,14 +47,14 @@ class ParentChunk:
     parent_id: str
     title: str
     child_count: int
-    children: List[Dict]
+    children: list[dict[str, Any]]
 
 
 @dataclass
 class DocumentSection:
     """Represents a section within a document"""
     section: str
-    parents: List[ParentChunk]
+    parents: list[ParentChunk]
 
 
 @dataclass
@@ -50,12 +62,7 @@ class Document:
     """Represents a complete document with all sections"""
     domain: str
     source: str
-    chapters: List[DocumentSection]
-
-
-# === UTILITY FUNCTIONS ===
-
-from src.utils.page_sorting import smart_page_sort_key as _smart_page_sort_key
+    chapters: list[DocumentSection]
 
 
 def format_pages_for_frontend(pages: Any) -> str:
@@ -77,7 +84,7 @@ def format_pages_for_frontend(pages: Any) -> str:
     return str(pages)
 
 
-def parse_pages_from_frontend(pages_string: str) -> List[str]:
+def parse_pages_from_frontend(pages_string: str) -> list[str]:
     """
     Convert user input pages string to database array.
     
@@ -94,7 +101,10 @@ def parse_pages_from_frontend(pages_string: str) -> List[str]:
     return [page for page in pages if page]  # Remove empty strings
 
 
-def calculate_last_updated_time(parents_data: List[Dict], children_data: List[Dict]) -> Optional[str]:
+def calculate_last_updated_time(
+    parents_data: list[dict[str, Any]],
+    children_data: list[dict[str, Any]],
+) -> str | None:
     """
     Find the most recent update time from both parents and children.
     """

@@ -33,6 +33,20 @@ from src.monitoring.tracing import trace_span
 
 retrieval_cache = RevisionedRetrievalCache()
 
+_RETRIEVAL_METRIC_FIELDS = (
+    "domain_detected",
+    "is_no_relevant_doc",
+    "num_docs_after_rerank",
+    "top_cross_encoder_score",
+    "avg_cross_encoder_score",
+    "retrieved_parent_ids",
+    "retrieval_detail",
+    "self_query_results",
+    "search_candidates",
+    "parent_candidates",
+    "reranked_candidates",
+)
+
 
 @functools.lru_cache(maxsize=1)
 def get_session_store_strategy() -> SessionStore:
@@ -206,39 +220,40 @@ def _get_retrieval_documents(
         retrieval.parent_documents if not retrieval.is_empty else []
     )
 
-    # Snapshot retrieval monitoring fields from collector for future cache hits
-    metrics_snapshot = {
-        "domain_detected": getattr(collector, "domain_detected", "UNKNOWN"),
-        "is_no_relevant_doc": getattr(collector, "is_no_relevant_doc", False),
-        "num_docs_after_rerank": getattr(
-            collector, "num_docs_after_rerank", len(retrieval_docs)
-        ),
-        "top_cross_encoder_score": getattr(
-            collector, "top_cross_encoder_score", None
-        ),
-        "avg_cross_encoder_score": getattr(
-            collector, "avg_cross_encoder_score", None
-        ),
-        "retrieved_parent_ids": getattr(
-            collector, "retrieved_parent_ids", []
-        ),
-        "retrieval_detail": getattr(collector, "retrieval_detail", []),
-        "self_query_results": getattr(collector, "self_query_results", []),
-        "search_candidates": getattr(collector, "search_candidates", []),
-        "parent_candidates": getattr(collector, "parent_candidates", []),
-        "reranked_candidates": getattr(collector, "reranked_candidates", []),
-    }
-
     retrieval_cache.store_if_current(
         revision,
         plan.cache_key,
         plan.rerank_query,
         retrieval_docs,
-        metrics_snapshot,
+        _snapshot_retrieval_metrics(collector, len(retrieval_docs)),
     )
     set_field(cache_hit=False)
 
     return retrieval_docs
+
+
+def _snapshot_retrieval_metrics(
+    collector: Any,
+    document_count: int,
+) -> dict[str, Any]:
+    """Copy retrieval monitoring data needed to restore a cache hit."""
+    defaults = {
+        "domain_detected": "UNKNOWN",
+        "is_no_relevant_doc": False,
+        "num_docs_after_rerank": document_count,
+        "top_cross_encoder_score": None,
+        "avg_cross_encoder_score": None,
+        "retrieved_parent_ids": [],
+        "retrieval_detail": [],
+        "self_query_results": [],
+        "search_candidates": [],
+        "parent_candidates": [],
+        "reranked_candidates": [],
+    }
+    return {
+        field: getattr(collector, field, defaults[field])
+        for field in _RETRIEVAL_METRIC_FIELDS
+    }
 
 
 def _generate_answer(
@@ -249,7 +264,7 @@ def _generate_answer(
 ) -> str:
     """Generate answer from LLM with retrieved context and conversation history."""
     start_stage("generation")
-    t_gen_start = time.time()
+    started_at = time.perf_counter()
     try:
         with trace_span("rag.generation", document_count=len(retrieval_docs)):
             result = get_rag_generator().generate(
@@ -260,13 +275,11 @@ def _generate_answer(
             )
     except Exception as exc:
         raise OpenAIServiceError("Layanan pembuat jawaban tidak tersedia") from exc
-    t_gen_end = time.time()
-    end_stage()
-    logger.info(
-        "[session={}] Generation time [⏱️ {:.2f}s]",
-        session_id,
-        t_gen_end - t_gen_start,
-    )
+    finally:
+        end_stage()
+
+    elapsed = time.perf_counter() - started_at
+    logger.info("[session={}] Generation time [⏱️ {:.2f}s]", session_id, elapsed)
     return result.get("answer", "")
 
 
@@ -322,21 +335,47 @@ def _persist_conversation(
     _compact_memory_if_needed(memory)
 
     start_stage("db_save")
-    _save_memory_if_needed(
-        session_id,
-        memory,
-        channel=channel,
-        mahasiswa_id=mahasiswa_id,
-    )
+    try:
+        _save_memory_if_needed(
+            session_id,
+            memory,
+            channel=channel,
+            mahasiswa_id=mahasiswa_id,
+        )
+        get_session_store_strategy().log_chat_interaction(
+            user_id=str(mahasiswa_id or session_id),
+            username=username,
+            question=question,
+            answer=answer,
+        )
+    finally:
+        end_stage()
 
-    user_id_log = str(mahasiswa_id) if mahasiswa_id else str(session_id)
-    get_session_store_strategy().log_chat_interaction(
-        user_id=user_id_log,
-        username=username,
-        question=question,
-        answer=answer,
-    )
-    end_stage()
+
+def _build_sources(documents: list[dict]) -> list[dict[str, Any]]:
+    """Return the compact source metadata exposed by the chat API."""
+    return [
+        {
+            "section": document.get("section", ""),
+            "title": document.get("title", ""),
+            "parent_id": document.get("parent_id", ""),
+            "score": document.get(
+                "cross_encoder_score", document.get("best_child_score", 0.0)
+            ),
+            "score_source": document.get("score_source", "cross_encoder"),
+            "pages": document.get("matched_pages", []),
+        }
+        for document in documents[:3]
+    ]
+
+
+def _persist_error_metrics(collector: Any, exc: Exception) -> None:
+    """Classify and persist a failed request consistently."""
+    error_source, error_type = classify_exception(exc)
+    collector.status = "error"
+    collector.error_source = error_source
+    collector.error_type = error_type
+    persist_metrics(collector)
 
 
 # ============================================================================
@@ -410,23 +449,7 @@ def chat(
         )
 
         # Prepare top sources metadata
-        sources_list = (
-            [
-                {
-                    "section": p.get("section", ""),
-                    "title": p.get("title", ""),
-                    "parent_id": p.get("parent_id", ""),
-                    "score": p.get(
-                        "cross_encoder_score", p.get("best_child_score", 0.0)
-                    ),
-                    "score_source": p.get("score_source", "cross_encoder"),
-                    "pages": p.get("matched_pages", []),
-                }
-                for p in retrieval_docs[:3]
-            ]
-            if retrieval_docs
-            else []
-        )
+        sources_list = _build_sources(retrieval_docs)
 
         # 5 & 6. Persist conversation state & interaction log
         _persist_conversation(
@@ -441,11 +464,10 @@ def chat(
             question=question,
         )
 
-        t_total_end = time.time()
         logger.info(
             "[session={}] Total process time [⏱️ {:.2f}s]",
             session_id,
-            t_total_end - t_start,
+            time.time() - t_start,
         )
 
         collector.status = "success"
@@ -464,11 +486,7 @@ def chat(
         # Re-raise SessionAccessError to let global handler convert to HTTP 403
         raise
     except (RetrievalError, OpenAIServiceError) as exc:
-        error_source, error_type = classify_exception(exc)
-        collector.status = "error"
-        collector.error_source = error_source
-        collector.error_type = error_type
-        persist_metrics(collector)
+        _persist_error_metrics(collector, exc)
         raise
     except Exception as exc:
         logger.error(
@@ -478,11 +496,7 @@ def chat(
             exc_info=True,
         )
 
-        error_source, error_type = classify_exception(exc)
-        collector.status = "error"
-        collector.error_source = error_source
-        collector.error_type = error_type
-        persist_metrics(collector)
+        _persist_error_metrics(collector, exc)
 
         return {
             "request_id": collector.request_id,

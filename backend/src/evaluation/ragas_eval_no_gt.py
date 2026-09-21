@@ -17,7 +17,7 @@ from ragas.metrics import (
     answer_relevancy,
 )
 from ragas.metrics._context_precision import LLMContextPrecisionWithoutReference
-from ragas.metrics import SimpleCriteriaScore, RubricsScore
+from ragas.metrics import SimpleCriteriaScore
 from ragas.llms import LangchainLLMWrapper
 from ragas.embeddings import LangchainEmbeddingsWrapper
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings

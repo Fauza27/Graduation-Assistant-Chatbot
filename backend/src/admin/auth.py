@@ -1,13 +1,15 @@
 import bcrypt
-from fastapi import Header, HTTPException, Depends
+from fastapi import Header, HTTPException
 from loguru import logger
 from supabase import Client
 
 from src.auth.jwt_utils import create_access_token, verify_access_token
-from config.settings import get_settings
+
 
 class ResourceNotFoundError(Exception):
-    pass
+    """Raised when an admin resource cannot be found."""
+
+
 
 def hash_password(plain_password: str) -> str:
     """Hashes a password using bcrypt."""
@@ -22,10 +24,20 @@ def verify_password(plain_password: str, password_hash: str) -> bool:
     except ValueError:
         return False
 
-def authenticate_admin(username: str, plain_password: str, supabase: Client) -> dict | None:
+def authenticate_admin(
+    username: str,
+    plain_password: str,
+    supabase: Client,
+) -> dict | None:
     """Authenticates an admin and returns their profile without the password hash."""
-    response = supabase.table("admin_users").select("*").eq("username", username).limit(1).execute()
-    
+    response = (
+        supabase.table("admin_users")
+        .select("*")
+        .eq("username", username)
+        .limit(1)
+        .execute()
+    )
+
     if not response.data:
         return None
         
@@ -35,19 +47,21 @@ def authenticate_admin(username: str, plain_password: str, supabase: Client) -> 
     if not password_hash or not verify_password(plain_password, password_hash):
         return None
         
-    # Fire and forget update last_login
     try:
-        supabase.table("admin_users").update({"last_login": "now()"}).eq("admin_id", admin_data["admin_id"]).execute()
-    except Exception as e:
-        logger.warning(f"Failed to update last_login for admin {username}: {e}")
-        
-    # Remove password hash before returning
-    admin_profile = {
+        (
+            supabase.table("admin_users")
+            .update({"last_login": "now()"})
+            .eq("admin_id", admin_data["admin_id"])
+            .execute()
+        )
+    except Exception as exc:
+        logger.warning("Failed to update last_login for admin {}: {}", username, exc)
+
+    return {
         "admin_id": admin_data["admin_id"],
         "username": admin_data["username"],
-        "full_name": admin_data.get("full_name")
+        "full_name": admin_data.get("full_name"),
     }
-    return admin_profile
 
 def issue_admin_token(admin: dict) -> str:
     """Issues a JWT token for the authenticated admin."""
@@ -63,7 +77,6 @@ def get_current_admin(authorization: str = Header(None)) -> dict:
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Invalid or missing authorization header")
         
-    # Safe token extraction to prevent IndexError
     token = authorization[len("Bearer "):].strip()
     if not token:
         raise HTTPException(status_code=401, detail="Empty token")
@@ -73,12 +86,11 @@ def get_current_admin(authorization: str = Header(None)) -> dict:
     if not payload:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
         
-    # Consistent role validation with detailed error message  
     actual_role = payload.get("role")
     if actual_role != "admin":
         raise HTTPException(
-            status_code=403, 
-            detail=f"Insufficient permissions: admin role required, got {actual_role}"
+            status_code=403,
+            detail=f"Insufficient permissions: admin role required, got {actual_role}",
         )
-        
+
     return payload

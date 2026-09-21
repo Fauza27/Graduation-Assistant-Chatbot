@@ -5,8 +5,6 @@ from datetime import datetime
 import math
 from statistics import mean
 
-warnings.filterwarnings("ignore", category=DeprecationWarning)
-
 from ragas import evaluate, EvaluationDataset, SingleTurnSample
 from ragas.metrics import (
     faithfulness,
@@ -22,6 +20,8 @@ from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from loguru import logger
 
 from config.settings import get_settings
+
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 
 # Threshold targets

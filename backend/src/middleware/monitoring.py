@@ -107,10 +107,10 @@ class MetricsMiddleware(BaseHTTPMiddleware):
                 try:
                     data = json.loads(body.decode())
                     session_id = data.get("session_id")
-                except:
-                    pass
-            except:
-                pass
+                except (UnicodeDecodeError, ValueError):
+                    logger.debug("Unable to parse session_id from request body")
+            except Exception:
+                logger.debug("Unable to read request body for metrics")
         
         # Process request
         response = await call_next(request)
