@@ -58,6 +58,9 @@ performance.
   synchronous Supabase probe off the event loop. Focused validation: 48 tests
   passed.
 - Initial maintained documentation structure under `documentation/`.
+- Session-list title generation and message serialization are now pure shared
+  functions, used by database and in-memory session strategies. Their output
+  is covered by unit tests.
 
 ## Next Slice
 

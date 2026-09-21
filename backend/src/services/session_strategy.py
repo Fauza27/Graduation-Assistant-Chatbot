@@ -24,6 +24,7 @@ from loguru import logger
 from config.settings import get_settings
 from src.generation.memory import ConversationMemory, create_conversation_memory
 from src.monitoring.errors import SessionAccessError
+from src.services.session_views import build_session_title, serialize_messages
 
 if TYPE_CHECKING:
     from src.services.session_store import DatabaseSessionStore
@@ -434,27 +435,23 @@ class InMemorySessionStrategy(SessionStore):
     ) -> list[dict[str, Any]]:
         """List all sessions for a specific user (in-memory implementation)."""
         with self._lock:
-            sessions = []
-            
-            for session_id, entry in self._sessions.items():
-                if entry.owner_id != mahasiswa_id:
-                    continue
-                
-                # Extract title from first user message
-                title = "Sesi Tanpa Judul"
-                for turn in entry.memory.turns:
-                    if turn.role == "user":
-                        content = turn.content
-                        title = content[:40] + ("..." if len(content) > 40 else "")
-                        break
-                
-                sessions.append({
+            sessions = [
+                {
                     "session_id": session_id,
-                    "title": title,
-                    "last_access": datetime.fromtimestamp(entry.last_access, tz=timezone.utc).isoformat(),
-                })
-            
-            # Sort by last access (most recent first)
+                    "title": build_session_title(
+                        [
+                            {"role": turn.role, "content": turn.content}
+                            for turn in entry.memory.turns
+                        ]
+                    ),
+                    "last_access": datetime.fromtimestamp(
+                        entry.last_access,
+                        tz=timezone.utc,
+                    ).isoformat(),
+                }
+                for session_id, entry in self._sessions.items()
+                if entry.owner_id == mahasiswa_id
+            ]
             sessions.sort(key=lambda s: s["last_access"], reverse=True)
             return sessions
 
@@ -470,19 +467,18 @@ class InMemorySessionStrategy(SessionStore):
             if entry is None or entry.owner_id != mahasiswa_id:
                 return None
             
-            messages = []
-            for turn in entry.memory.turns:
-                role = turn.role
-                if role == "assistant":
-                    role = "bot"
-
-                messages.append({
-                    "role": role,
-                    "text": turn.content,
-                    "sources": turn.sources,
-                })
-
-            return {"messages": messages}
+            return {
+                "messages": serialize_messages(
+                    [
+                        {
+                            "role": turn.role,
+                            "content": turn.content,
+                            "sources": turn.sources,
+                        }
+                        for turn in entry.memory.turns
+                    ]
+                )
+            }
 
 
 def create_session_store() -> SessionStore:

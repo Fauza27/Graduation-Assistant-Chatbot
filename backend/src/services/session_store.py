@@ -14,6 +14,7 @@ from src.generation.memory import (
     create_conversation_memory,
     get_memory_config,
 )
+from src.services.session_views import build_session_title, serialize_messages
 
 
 settings = get_settings()
@@ -360,25 +361,16 @@ class DatabaseSessionStore:
                 .execute()
             )
 
-            sessions = []
-            for row in result.data or []:
-                turns = ConversationMemory.serialized_turns(row.get("turns"))
-                title = "Sesi Tanpa Judul"
-                
-                # Extract title from first user message
-                for turn in turns:
-                    if turn.get("role") == "user":
-                        content = turn.get("content", "")
-                        title = content[:40] + ("..." if len(content) > 40 else "")
-                        break
-
-                sessions.append({
+            return [
+                {
                     "session_id": row.get("session_id"),
-                    "title": title,
+                    "title": build_session_title(
+                        ConversationMemory.serialized_turns(row.get("turns"))
+                    ),
                     "last_access": row.get("last_access"),
-                })
-
-            return sessions
+                }
+                for row in result.data or []
+            ]
 
         except Exception as exc:
             logger.error(
@@ -412,20 +404,7 @@ class DatabaseSessionStore:
             turns = ConversationMemory.serialized_turns(
                 result.data[0].get("turns")
             )
-            messages = []
-            
-            for turn in turns:
-                role = turn.get("role")
-                if role == "assistant":
-                    role = "bot"
-
-                messages.append({
-                    "role": role,
-                    "text": turn.get("content"),
-                    "sources": turn.get("sources", turn.get("retrieved_doc_contents", [])),
-                })
-
-            return {"messages": messages}
+            return {"messages": serialize_messages(turns)}
 
         except Exception as exc:
             logger.error(
