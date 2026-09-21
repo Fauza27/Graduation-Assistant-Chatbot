@@ -50,7 +50,7 @@ def test_explicit_multi_part_query_is_decomposed_without_llm():
     assert plan.search_queries == (
         "Apa syarat skripsi",
         "berapa SKS minimalnya terkait skripsi",
-        "bagaimana proses pendadaran",
+        "bagaimana proses pendadaran terkait skripsi",
     )
 
 
@@ -71,7 +71,7 @@ def test_non_skripsi_domain_is_carried_to_following_clause():
     )
 
     assert plan.search_queries == (
-        "Apa syarat non skripsi",
+        "Apa syarat Tugas Akhir Non Skripsi",
         "bagaimana proses pengajuannya terkait tugas akhir non skripsi",
     )
 
@@ -85,3 +85,33 @@ def test_more_than_three_clauses_are_capped_without_dropping_content():
     assert len(plan.search_queries) == 3
     assert "bagaimana prosesnya" in plan.search_queries[-1]
     assert "kapan ujiannya" in plan.search_queries[-1]
+
+
+def test_shared_exam_terms_do_not_invent_a_skripsi_domain():
+    plan = build_query_plan(
+        "Apa syarat seminar hasil dan bagaimana proses pendadaran?",
+        ConversationMemory(),
+    )
+
+    assert plan.search_queries == (
+        "Apa syarat seminar hasil",
+        "bagaimana proses pendadaran",
+    )
+
+
+def test_non_skripsi_track_is_carried_to_following_clause():
+    plan = build_query_plan(
+        "Apa syarat jalur karya ilmiah dan bagaimana penilaiannya?",
+        ConversationMemory(),
+    )
+
+    assert plan.search_queries[-1].endswith("terkait tugas akhir non skripsi")
+
+
+def test_explicit_skripsi_domain_wins_over_generic_track_term():
+    plan = build_query_plan(
+        "Apa format karya ilmiah untuk skripsi dan bagaimana penilaiannya?",
+        ConversationMemory(),
+    )
+
+    assert plan.search_queries[-1].endswith("terkait skripsi")

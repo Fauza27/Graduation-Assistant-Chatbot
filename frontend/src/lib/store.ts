@@ -8,9 +8,9 @@ export interface CitationSource {
   score?: number;
   pages?: number[];
 }
-
+export type MessageRole = 'user' | 'bot';
 export interface ChatMessage {
-  role: 'user' | 'bot';
+  role: MessageRole;
   text: string;
   sources?: (CitationSource | string)[];
 }
@@ -19,13 +19,14 @@ interface AppState {
   session_id: string | null;
   messages: ChatMessage[];
   hasHydrated: boolean;
-  
-  // DocPanel State
   isDocPanelOpen: boolean;
   activeDoc: string | null;
-  
-  // Actions
-  addMessage: (role: 'user' | 'bot', text: string, sources?: string[]) => void;
+  isSidebarOpen: boolean;
+  isSidebarCollapsed: boolean;
+}
+
+interface AppActions {
+  addMessage: (role: MessageRole, text: string, sources?: (CitationSource | string)[]) => void;
   setMessages: (messages: ChatMessage[]) => void;
   resetSession: () => void;
   setHydrated: (state: boolean) => void;
@@ -33,14 +34,27 @@ interface AppState {
   setDocPanelOpen: (isOpen: boolean) => void;
   setActiveDoc: (docUrl: string | null) => void;
   openDocument: (docUrl: string | null) => void;
+  setSidebarOpen: (isOpen: boolean) => void;
+  setSidebarCollapsed: (isCollapsed: boolean) => void;
+  toggleSidebar: () => void;
 }
 
-export const useAppStore = create<AppState>()(
+export type AppStore = AppState & AppActions;
+
+const initialState: AppState = {
+  session_id: null,
+  messages: [],
+  hasHydrated: false,
+  isDocPanelOpen: false,
+  activeDoc: null,
+  isSidebarOpen: true,
+  isSidebarCollapsed: false,
+};
+
+export const useAppStore = create<AppStore>()(
   persist(
     (set) => ({
-      session_id: null,
-      messages: [],
-      hasHydrated: false,
+      ...initialState,
 
       addMessage: (role, text, sources) =>
         set((state) => ({
@@ -55,27 +69,27 @@ export const useAppStore = create<AppState>()(
           messages: [],
         }),
 
-      setHydrated: (state) => set({ hasHydrated: state }),
-      
-      setSessionId: (id) => set({ session_id: id }),
+      setHydrated: (hasHydrated) => set({ hasHydrated }),
+      setSessionId: (session_id) => set({ session_id }),
 
-      isDocPanelOpen: false,
-      activeDoc: null,
-      setDocPanelOpen: (isOpen) => set({ isDocPanelOpen: isOpen }),
-      setActiveDoc: (docUrl) => set({ activeDoc: docUrl }),
-      openDocument: (docUrl) => set({ isDocPanelOpen: true, activeDoc: docUrl }),
+      setDocPanelOpen: (isDocPanelOpen) => set({ isDocPanelOpen }),
+      setActiveDoc: (activeDoc) => set({ activeDoc }),
+      openDocument: (activeDoc) => set({ isDocPanelOpen: true, activeDoc }),
+      setSidebarOpen: (isSidebarOpen) => set({ isSidebarOpen, isSidebarCollapsed: !isSidebarOpen }),
+      setSidebarCollapsed: (isSidebarCollapsed) => set({ isSidebarCollapsed, isSidebarOpen: !isSidebarCollapsed }),
+      toggleSidebar: () => set((state) => ({ 
+        isSidebarOpen: !state.isSidebarOpen, 
+        isSidebarCollapsed: state.isSidebarOpen 
+      })),
     }),
     {
-      name: 'wcd-chat-storage', // key in localStorage
-      partialize: (state) => ({ 
-        session_id: state.session_id, 
-        messages: state.messages, 
-        hasHydrated: state.hasHydrated 
+      name: 'wcd-chat-storage',
+      partialize: (state) => ({
+        session_id: state.session_id,
+        messages: state.messages,
       }),
       onRehydrateStorage: () => (state) => {
-        if (state) {
-          state.setHydrated(true);
-        }
+        state?.setHydrated(true);
       },
     }
   )

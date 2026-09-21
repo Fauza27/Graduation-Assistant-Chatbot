@@ -3,13 +3,12 @@ Tests for QueryReformulator and deterministic rewrite rules.
 Prevents regressions such as NameError or missing variables during rule-based query reformulation.
 """
 
-import pytest
 from unittest.mock import Mock
 
 from src.generation.intent_classifier.reformulator import (
     QueryReformulator,
     RewriteMethod,
-    _extract_last_topic,
+    normalize_query,
 )
 from src.generation.memory import ConversationMemory
 
@@ -118,3 +117,36 @@ class TestQueryReformulatorRules:
 
         assert method == RewriteMethod.NONE
         assert "KKP" in rewritten
+
+    def test_normalize_query_does_not_treat_bare_praktik_as_kkp(self):
+        assert normalize_query("bagaimana praktik anti plagiarisme?") == (
+            "bagaimana praktik anti plagiarisme?"
+        )
+        assert "KKP" in normalize_query("apa syarat praktik kerja lapangan?")
+
+    def test_normalize_non_skripsi_spelling_variants(self):
+        assert normalize_query("syarat non-skripsi") == (
+            "syarat Tugas Akhir Non Skripsi"
+        )
+        assert normalize_query("alur nonskripsi") == (
+            "alur Tugas Akhir Non Skripsi"
+        )
+
+    def test_rule_resolves_tersebut_and_detail_without_llm(self):
+        llm = Mock()
+        reformulator = QueryReformulator(llm=llm)
+        memory = ConversationMemory()
+        memory.add_user_turn("Apa syarat jalur wirausaha?")
+        memory.add_assistant_turn("Jalur wirausaha merupakan Non Skripsi.")
+
+        rewritten, method = reformulator.reformulate(
+            "bagaimana proses tersebut?",
+            memory,
+        )
+        assert method is RewriteMethod.RULE
+        assert "Tugas Akhir Non Skripsi" in rewritten
+
+        rewritten, method = reformulator.reformulate("jelaskan lagi", memory)
+        assert method is RewriteMethod.RULE
+        assert rewritten == "jelaskan lagi terkait Tugas Akhir Non Skripsi?"
+        llm.invoke.assert_not_called()

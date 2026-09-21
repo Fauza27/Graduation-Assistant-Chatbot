@@ -139,6 +139,7 @@ class EvaluationRepository:
         expected_evidence: dict | None,
         review_notes: str | None,
         created_by: str,
+        queue_reason: str = "manual_admin",
     ) -> dict:
         metric_result = (
             self.client.table("request_metrics")
@@ -159,6 +160,7 @@ class EvaluationRepository:
                     "question": metric.get("question") or "",
                     "actual_answer": trace.get("answer"),
                     "review_status": review_status,
+                    "queue_reason": queue_reason,
                     "expected_answer": expected_answer,
                     "expected_evidence": expected_evidence,
                     "review_notes": review_notes,

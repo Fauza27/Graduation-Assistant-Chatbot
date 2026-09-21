@@ -3,7 +3,10 @@ from unittest.mock import Mock, patch
 from langchain_core.documents import Document
 
 from src.retrieval.hybrid_search import HybridSearchResult
-from src.retrieval.pipeline import run_retrieval
+from src.retrieval.pipeline import (
+    _deduplicate_equivalent_child_content,
+    run_retrieval,
+)
 
 
 def _child(child_id: str, parent_id: str, score: float) -> HybridSearchResult:
@@ -48,3 +51,15 @@ def test_multi_query_results_are_merged_before_parent_fetch(
     assert merged_children[0].hybrid_score > merged_children[1].hybrid_score
     assert merged_children[0].score_source == "multi_query_rrf"
     assert result.num_docs == 2
+
+
+def test_exact_child_content_duplicates_do_not_consume_candidate_slots():
+    first = _child("pi-format", "pi-parent", 0.9)
+    second = _child("kkp-format", "kkp-parent", 0.8)
+    distinct = _child("distinct", "other-parent", 0.7)
+    first.document.page_content = "Margin kiri empat sentimeter"
+    second.document.page_content = "  MARGIN kiri   empat SENTIMETER "
+
+    result = _deduplicate_equivalent_child_content([first, second, distinct])
+
+    assert [child.child_id for child in result] == ["pi-format", "distinct"]

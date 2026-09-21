@@ -33,7 +33,16 @@ from src.monitoring.tracing import trace_span
 
 retrieval_cache = RevisionedRetrievalCache()
 
-_session_store_strategy: SessionStore = create_session_store()
+
+@functools.lru_cache(maxsize=1)
+def get_session_store_strategy() -> SessionStore:
+    """Initialize the session store only when the application starts using it.
+
+    Uvicorn's development reloader imports the application in its supervisor
+    process.  Eager initialization used to open and test the remote database in
+    both the supervisor and the actual worker, doubling startup work.
+    """
+    return create_session_store()
 
 
 # ============================================================================
@@ -66,7 +75,10 @@ def get_or_create_memory(
     mahasiswa_id: Optional[str] = None,
 ) -> ConversationMemory:
     """Get or create conversation memory for a session."""
-    return _session_store_strategy.load_memory(session_id, mahasiswa_id=mahasiswa_id)
+    return get_session_store_strategy().load_memory(
+        session_id,
+        mahasiswa_id=mahasiswa_id,
+    )
 
 
 def _save_memory_if_needed(
@@ -77,7 +89,7 @@ def _save_memory_if_needed(
 ) -> None:
     """Save memory to persistent storage."""
     try:
-        _session_store_strategy.save_memory(
+        get_session_store_strategy().save_memory(
             session_id,
             memory,
             channel=channel,
@@ -89,17 +101,17 @@ def _save_memory_if_needed(
 
 def clear_session(session_id: str) -> bool:
     """Clear conversation memory for a session."""
-    return _session_store_strategy.delete_session(session_id)
+    return get_session_store_strategy().delete_session(session_id)
 
 
 def get_session_stats() -> Dict[str, Any]:
     """Get statistics about active sessions."""
-    return _session_store_strategy.get_session_stats()
+    return get_session_store_strategy().get_session_stats()
 
 
 def cleanup_sessions() -> int:
     """Bersihkan cache session tanpa menghapus data session persisten."""
-    return _session_store_strategy.cleanup_cache()
+    return get_session_store_strategy().cleanup_cache()
 
 
 # ============================================================================
@@ -318,7 +330,7 @@ def _persist_conversation(
     )
 
     user_id_log = str(mahasiswa_id) if mahasiswa_id else str(session_id)
-    _session_store_strategy.log_chat_interaction(
+    get_session_store_strategy().log_chat_interaction(
         user_id=user_id_log,
         username=username,
         question=question,

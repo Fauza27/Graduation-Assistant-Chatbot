@@ -1,8 +1,11 @@
-# Pemetaan keyword → section dokumen panduan KKP/PI.
+# Pemetaan keyword → section untuk panduan PI, KKP, Skripsi, dan Non-Skripsi.
 #
 # Format: setiap key adalah nama section, value adalah list keyword yang
 # menandai section tersebut. Keyword yang mengandung spasi dianggap frasa
 # (substring match), keyword satu kata dimatch dengan word boundary.
+# Filter hanya diterapkan saat kolom section pada database mendukung nama
+# kelompok tersebut. Metadata JSON lama dapat berbeda, tetapi RPC retrieval
+# menggunakan kolom section utama.
 
 Front Matter:
   - kata pengantar
@@ -27,6 +30,7 @@ Surat Keputusan:
 BAB I:
   - latar belakang panduan
   - tujuan panduan
+  - tujuan pembuatan buku panduan
   - pendahuluan panduan
   - pentingnya panduan
   - fokus panduan
@@ -53,6 +57,9 @@ BAB II:
   # Syarat
   - syarat pi
   - syarat kkp
+  - syarat skripsi
+  - syarat non skripsi
+  - syarat tugas akhir
   - sks minimal
   - ipk minimal
   - ip kumulatif
@@ -70,8 +77,11 @@ BAB II:
   - pengajuan judul
   - pengajuan pi
   - pengajuan kkp
+  - pengajuan proposal
+  - bimbingan proposal
   - proses penyusunan
   - tahap awal
+  - tahap akhir
   - pendaftaran mata kuliah
   - surat pengantar
   - surat balasan
@@ -102,7 +112,14 @@ BAB II:
   - pendadaran
   - seminar hasil
   - seminar proposal
+  - alur seminar proposal
+  - alur seminar hasil
+  - alur pendadaran
   - ujian skripsi
+  - ujian pendadaran
+  - poster seminar
+  - video seminar
+  - durasi video
   # Penilaian
   - sistem penilaian
   - komponen penilaian
@@ -118,6 +135,7 @@ BAB II:
   - syarat lulus
   - karya otentik
   - perbaikan naskah
+  - revisi naskah
   - jilid
   - perpustakaan
   - transkrip
@@ -143,12 +161,33 @@ BAB III:
   - sistematika laporan
   - bentuk tugas akhir
   - karya ilmiah
+  - jalur karya ilmiah
+  - ketentuan karya ilmiah
+  - kategori kualitas karya ilmiah
   - jurnal
   - prosiding
+  - sinta
+  - scopus
+  - web of science
+  - identitas publikasi
+  - letter of acceptance
+  - lembar persetujuan loa
+  - proses submit
+  - sertifikat author
+  - sertifikat presenter
   - profesional
   - jalur profesional
+  - pekerja profesional
+  - it profesional
+  - kualifikasi profesional
   - wirausaha
   - jalur wirausaha
+  - kualifikasi usaha
+  - legalitas usaha
+  - akta pendirian
+  - nomor induk berusaha
+  - npwp perusahaan
+  - company profile
   - startup
 
 BAB IV:
@@ -209,6 +248,19 @@ BAB IV:
   - lampiran pendukung
   - isi lampiran
   - dokumen lampiran
+  # Isi khusus laporan Non-Skripsi jalur Profesional/Wirausaha
+  - profil perusahaan
+  - lokasi kerja
+  - struktur organisasi
+  - bidang pekerjaan
+  - masa kerja
+  - produk jasa
+  - business model canvas
+  - analisis swot
+  - analisis pesaing
+  - target pasar
+  - strategi pemasaran
+  - rencana pengembangan usaha
 
 BAB V:
   # Format Naskah
@@ -313,6 +365,9 @@ Lampiran:
   - contoh daftar gambar
   - contoh daftar lampiran
   - contoh daftar pustaka
+  - contoh identitas publikasi
+  - contoh lembar persetujuan
+  - contoh poster
   # Tugas dan Bimbingan
   - rincian tugas
   - daftar hadir kkp

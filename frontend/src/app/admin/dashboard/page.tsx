@@ -35,7 +35,7 @@ export default function AdminDashboardPage() {
   const selectedParent = getSelectedParent();
 
   return (
-    <div className="view active">
+    <div className="admin-view active">
       <header className="main-header">
         <button 
           className="icon-btn mobile-only" 

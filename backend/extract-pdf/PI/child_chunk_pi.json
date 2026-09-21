@@ -2,657 +2,835 @@
   {
     "id": "pi-001",
     "title": "Kata Pengantar",
-    "content": "Puji syukur kami panjatkan ke hadirat Tuhan Yang Maha Esa atas Rahmat dan Karunia-Nya sehingga buku panduan penyusunan PI ini dapat diselesaikan dengan baik. Buku panduan ini disusun sebagai acuan bagi seluruh civitas akademika dalam pelaksanaan panduan penyusunan PI yang digunakan sebagai syarat akademik yang harus dipenuhi oleh mahasiswa dalam menyelesaikan studi jenjang program sarjana.\n\nPanduan ini dirancang dengan memperhatikan setiap ketentuan dan prosedur yang telah disesuaikan dengan Buku Pedoman Akademik STMIK Widya Cipta Dharma tahun 2025. Dengan adanya panduan ini diharapkan mahasiswa mendapatkan keterampilan dalam melakukan PI yang menjadi salah satu kompetensi lulusan di STMIK Widya Cipta Dharma.\n\nPenulisan Ilmiah memiliki tujuan utama yaitu memberikan pemahaman terhadap mahasiswa agar dapat berpikir secara logis dan ilmiah dalam menguraikan dan membahas suatu permasalahan serta dapat membandingkan antara teori yang didapatkan dengan praktik kehidupan nyata serta dapat menuangkannya dalam bentuk tulisan secara sistematis dan terstruktur.\n\nKami mengucapkan terima kasih kepada semua pihak yang telah berkontribusi dalam penyusunan panduan ini, baik secara langsung maupun tidak langsung. Kami juga menyadari bahwa buku panduan ini masih jauh dari sempurna. Oleh karena itu, kami sangat mengharapkan saran dari berbagai pihak untuk penyempurnaan panduan ini di masa mendatang.\n\nAkhir kata, kami berharap semoga buku panduan ini dapat memberikan manfaat yang besar bagi seluruh civitas akademika, khususnya para mahasiswa yang tengah menempuh pendidikan di STMIK Widya Cipta Dharma.\n\nSamarinda, Maret 2025\nTim Penyusun",
+    "content": "# KATA PENGANTAR\n\nPuji syukur kami panjatkan ke hadirat Tuhan Yang Maha Esa atas Rahmat dan Karunia-Nya sehingga buku panduan penyusunan PI ini dapat diselesaikan dengan baik. Buku panduan ini disusun sebagai acuan bagi seluruh civitas akademika dalam pelaksanaan panduan penyusunan PI yang digunakan sebagai syarat akademik yang harus dipenuhi oleh mahasiswa dalam menyelesaikan studi jenjang program sarjana.\n\nPanduan ini dirancang dengan memperhatikan setiap ketentuan dan prosedur yang telah disesuaikan dengan Buku Pedoman Akademik STMIK Widya Cipta Dharma tahun 2025. Dengan adanya panduan ini diharapkan mahasiswa mendapatkan keterampilan dalam melakukan PI yang menjadi salah satu kompetensi lulusan di STMIK Widya Cipta Dharma.\n\nPenulisan Ilmiah memiliki tujuan utama yaitu memberikan pemahaman terhadap mahasiswa agar dapat berpikir secara logis dan ilmiah dalam menguraikan dan membahas suatu permasalahan serta dapat membandingkan antara teori yang didapatkan dengan praktik kehidupan nyata serta dapat menuangkannya dalam bentuk tulisan secara sistematis dan terstruktur.\n\nKami mengucapkan terima kasih kepada semua pihak yang telah berkontribusi dalam penyusunan panduan ini, baik secara langsung maupun tidak langsung. Kami juga menyadari bahwa buku panduan ini masih jauh dari sempurna. Oleh karena itu, kami sangat mengharapkan saran dari berbagai pihak untuk penyempurnaan panduan ini dimasa mendatang.\n\nAkhir kata, kami berharap semoga buku panduan ini dapat memberikan manfaat yang besar bagi seluruh civitas akademika, khususnya para mahasiswa yang tengah menempuh pendidikan di STMIK Widya Cipta Dharma.\n\nSamarinda, Maret 2025\n\n**Tim Penyusun**",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "Front Matter",
-    "pages": ["i"]
+    "pages": [
+      "i"
+    ]
   },
   {
     "id": "pi-002",
     "title": "Daftar Isi (Ringkas)",
-    "content": "Struktur isi panduan:\n- Kata Pengantar\n- Daftar Isi, Daftar Tabel, Daftar Gambar\n- Surat Keputusan\n- BAB I Pendahuluan (1.1 Latar Belakang, 1.2 Tujuan)\n- BAB II Ketentuan Umum (2.1 s.d. 2.8)\n- BAB III Sistematika Penyusunan Penulisan Ilmiah (3.1 s.d. 3.2)\n- BAB IV Penjelasan Sistematika Penulisan Laporan (4.1 s.d. 4.3)\n- BAB V Format dan Tata Cara Penulisan (5.1 s.d. 5.5)\n- Lampiran 1 sampai 25 (contoh format dan formulir)",
+    "content": "# DAFTAR ISI\n\n**KATA PENGANTAR** i\n**DAFTAR ISI** ii\n**DAFTAR TABEL** iv\n**DAFTAR GAMBAR** v\n**SURAT KEPUTUSAN** vi\n**BAB I PENDAHULUAN** 1\n1.1 LATAR BELAKANG 1\n1.2 TUJUAN 1\n**BAB II KETENTUAN UMUM** 3\n2.1 DOSEN PEMBIMBING 3\n2.2 DOSEN PENGUJI 3\n2.3 PENGGANTIAN DOSEN PEMBIMBING DAN DOSEN PENGUJI 4\n2.4 MAHASISWA BIMBINGAN 5\n2.5 SYARAT DAN KETENTUAN 6\n2.6 TEMPAT PENELITIAN 6\n2.7 PROSES PENYUSUNAN 6\n2.8 SISTEM PENILAIAN 10\n**BAB III SISTEMATIKA PENYUSUNAN PENULISAN ILMIAH** 13\n3.1 PENULISAN LAPORAN 13\n3.2 SISTEMATIKA PENULISAN LAPORAN 13\n**BAB IV PENJELASAN SISTEMATIKA PENULISAN LAPORAN** 15\n4.1. BAGIAN AWAL 15\n4.2. BAGIAN UTAMA 16\n4.3. BAGIAN AKHIR 18\n**BAB V FORMAT DAN TATA CARA PENULISAN** 19\n5.1. JENIS DAN UKURAN KERTAS 19\n5.2. ATURAN PENULISAN 19\n5.3. BAHASA 22\n5.4. HURUF MIRING 22\n5.5. ATURAN PENULISAN PUSTAKA ATAU SUMBER RUJUKAN 22\n\nLampiran 1. Contoh Halaman Sampul Depan 25\nLampiran 2. Contoh Halaman Pengesahan 26\nLampiran 3. Contoh Abstrak 27\nLampiran 4. Contoh Kata Pengantar 28\nLampiran 5. Contoh Daftar Isi 29\nLampiran 6. Contoh Daftar Tabel 30\nLampiran 7. Contoh Daftar Gambar 31\nLampiran 8. Contoh Daftar Lampiran 32\nLampiran 9. Contoh Daftar Pustaka 33\nLampiran 10. Contoh Jadwal Penelitian 34\nLampiran 11. Contoh Lembar Wawancara 35\nLampiran 12. Form Bimbingan Laporan 36\nLampiran 13. Form Daftar Hadir Menyaksikan Ujian 37\nLampiran 14. Form Pengecekan Syarat Administrasi Ujian 38\nLampiran 15. Form Permohonan Ujian 39\nLampiran 16. Form Pendaftaran Ujian 40\n\nLampiran 17. Contoh Lembar Persetujuan Ujian 41\nLampiran 18. Contoh Lembar Persetujuan Waktu Ujian 42\nLampiran 19. Contoh Lembar Perbaikan Ujian 43\nLampiran 20. Contoh Berita Acara 44\nLampiran 21. Contoh Form Penilaian Ujian 45\nLampiran 22 Rekap Rekapitulasi Penilaian Ujian 46\nLampiran 23. Form Permohonan Penggantian Dosen Pembimbing 47\nLampiran 24. Surat Penugasan Dosen Pengganti Dosen Pembimbing 48\nLampiran 25. Form Permohonan Penggantian Judul 49",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "Front Matter",
-    "pages": ["ii", "iii"]
+    "pages": [
+      "ii",
+      "iii"
+    ]
   },
   {
     "id": "pi-003",
     "title": "Daftar Tabel",
-    "content": "Daftar tabel yang tercantum dalam panduan:\n- Tabel 2.1 Panduan Penilaian PI\n- Tabel 2.2 Indikator Penilaian Ujian PI\n- Tabel 2.3 Capaian Pembelajaran Mata Kuliah\n- Tabel 3.1 Sistematika Penulisan Laporan PI\n- Tabel 5.1 Judul Tabel",
+    "content": "# DAFTAR TABEL\n\nTabel 2. 1 Penduan Penilaian PI 10\nTabel 2.2 Indikator Penilaian Ujian PI 10\nTabel 2.3 Capaian Pembelajaran Mata Kuliah 10\nTabel 3.1 Sistematika Penulisan Laporan PI 13\nTabel 5.1 Judul Tabel 21",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "Front Matter",
-    "pages": ["iv"]
+    "pages": [
+      "iv"
+    ]
   },
   {
     "id": "pi-004",
     "title": "Daftar Gambar",
-    "content": "Daftar gambar yang tercantum dalam panduan:\n- Gambar 5.1 Judul Gambar",
+    "content": "# DAFTAR GAMBAR\n\nGambar 5.1 Judul Gambar 21",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "Front Matter",
-    "pages": ["v"]
+    "pages": [
+      "v"
+    ]
   },
   {
     "id": "pi-005",
     "title": "Surat Keputusan: Menimbang dan Mengingat",
-    "content": "Menimbang:\n- Bahwa dalam rangka memperlancar dan mempromosikan Penulisan KKP dan PI sebagai syarat akademik yang harus dipenuhi mahasiswa dalam penyelesaian studi jenjang program sarjana.\n- Bahwa diperlukan Buku Panduan Penulisan KKP dan PI di lingkungan STMIK Widya Cipta Dharma.\n- Bahwa untuk maksud tersebut perlu disahkan dan diterbitkan dalam Surat Keputusan Ketua STMIK Widya Cipta Dharma.\n\nMengingat:\n1. Undang-Undang Republik Indonesia Nomor 12 Tahun 2012 tentang Pendidikan Tinggi.\n2. Undang-Undang Nomor 20 Tahun 2003 tentang Sistem Pendidikan Nasional.\n3. Peraturan Pemerintah Nomor 4 Tahun 2014 tentang Penyelenggaraan Pendidikan Tinggi dan Pengelolaan Perguruan Tinggi.\n4. Peraturan Pemerintah Nomor 16 Tahun 2018 tentang Perubahan atas Peraturan Menteri Pendidikan dan Kebudayaan Nomor 47 Tahun 2016 tentang Pedoman Organisasi Perangkat Bidang Organisasi dan Kebudayaan.\n5. Keputusan Mendikbud RI Nomor 0686/U/1991 tentang Pedoman Pendirian Perguruan Tinggi.\n6. Keputusan Mendikbud RI Nomor 05/D/O/1995 tentang perubahan bentuk AMIK-WCD menjadi STMIK-WCD.\n7. Statuta STMIK Widya Cipta Dharma tahun 2024.",
+    "content": "## Surat Keputusan\n\n## Ketua STMIK Widya Cipta Dharma\n\n**Nomor : 001/SK-KT/ST.WCD/I/2026**\n\n**Tentang**\n\n**Penetapan Buku Panduan Penulisan**\n**Kuliah Kerja Praktik (KKP) dan Penulisan Ilmiah (PI)**\n**Di lingkungan STMIK Widya Cipta Dharma**\n\n**Ketua STMIK Widya Cipta Dharma**\n\n**Menimbang** : a. Bahwa dalam rangka memperlancar dan mempromosikan Penulisan Kuliah Kerja Praktik (KKP) dan Penulisan Ilmiah (PI) sebagai syarat akademik yang harus dipenuhi mahasiswa dalam penyelesaian studi jenjang program sarjana.\nb. Bahwa diperlukan Buku Panduan Penulisan Kuliah Kerja Praktik (KKP) dan Penulisan Ilmiah (PI) di lingkungan STMIK Widya Cipta Dharma.\nc. Bahwa untuk maksud tersebut perlu disahkan dan diterbitkan dalam Surat Keputusan Ketua STMIK Widya Cipta Dharma.\n\n**Mengingat** : 1. Undang-Undang Republik Indonesia Nomor 12 Tahun 2012 tentang Pendidikan Tinggi. 2. Undang-Undang No: 20 tahun 2003 tentang Sistem Pendidikan Nasional 3. Peraturan Pemerintah Nomor 4 tahun 2014 tentang Penyelenggaraan Pendidikan Tinggi dan Pengelolaan Perguruan Tinggi. 4. Peraturan Pemerintah Nomor 16 tahun 2018 tentang Perubahan atas Peraturan Menteri Pendidikan dan Kebudayaan Nomor 47 tahun 2016 tentang Pedoman Organisasi Perangkat Bidang Organisasi dan Kebudayaan. 5. Keputusan Mendikbud RI Nomor : 0686/U/1991 tentang Pedoman Pendirian Perguruan Tinggi. 6. Keputusan Mendikbud RI Nomor : 05/D/0/1995 tentang perubahan bentuk AMIK-WCD menjadi STMIK-WCD. 7. Statuta STMIK Widya Cipta Dharma tahun 2024.",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "Surat Keputusan",
-    "pages": ["vi"]
+    "pages": [
+      "vi"
+    ]
   },
   {
     "id": "pi-006",
     "title": "Surat Keputusan: Menetapkan",
-    "content": "Menetapkan:\n- Pertama: Memberlakukan buku panduan penulisan kuliah kerja praktik (KKP) dan penulisan ilmiah (PI).\n- Kedua: Buku panduan penulisan KKP dan PI di lingkungan STMIK Widya Cipta Dharma sebagaimana dalam lampiran.\n- Ketiga: Surat keputusan ini berlaku sejak ditetapkan dan apabila di kemudian hari ternyata terdapat kekeliruan dalam penetapannya, maka akan diperbaiki sebagaimana mestinya.\n\nDitetapkan di Samarinda, 20 Januari 2026.\nKetua: H. Tommy Bustomi, S.Kom., M.Kom (NIK 97.09.1.007).\nTembusan: Wakil Ketua I, II dan III; Ketua Program Studi TI, SI dan Bisdig; Pertinggal.",
+    "content": "# MEMUTUSKAN\n\n**Menetapkan** :\n\n**Pertama** : Memberlakukan buku panduan penulisan kuliah kerja praktik (KKP) dan penulisan ilmiah (PI).\n\n**Kedua** : Buku panduan penulisan kuliah kerja praktik (KKP) dan penulisan ilmiah (PI) di lingkungan STMIK Widya Cipta Dharma sebagaimana dalam lampiran.\n\n**Ketiga** : Surat Keputusan ini berlaku sejak ditetapkan dan apabila dikemudian hari ternyata terdapat kekeliruan dalam penetapannya, maka akan diperbaiki sebagaimana mestinya.\n\nDitetapkan di : Samarinda\nPada tanggal : 20 Januari 2026\n<u>Ketua,</u>\n\n[signature]\n**<u>H. Tommy Bustomi, S.Kom., M.Kom</u>**\n**NIK. 97.09.1.007**\n\nTembusan disampaikan Kepada :\n\n1. Wakil Ketua I, II dan III\n2. Ketua Program Studi TI, SI dan Bisdig\n3. Pertinggal",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "Surat Keputusan",
-    "pages": ["vii"]
+    "pages": [
+      "vii"
+    ]
   },
   {
     "id": "pi-007",
     "title": "BAB I: Latar Belakang",
-    "content": "Penulisan Ilmiah (PI) merupakan salah satu kegiatan penting dalam kurikulum pendidikan tinggi yang bertujuan memberikan pengalaman dan keterampilan kepada mahasiswa sehingga perlu dibuat Panduan PI yang disusun untuk memberikan arahan yang jelas dan terstruktur bagi mahasiswa dalam menyusun PI.\n\nPanduan ini bertujuan menstandarisasi format dan gaya PI di lingkungan kampus agar semua PI memiliki kualitas dan format yang konsisten. Dengan panduan yang komprehensif, mahasiswa lebih mudah memahami dan menerapkan prinsip-prinsip PI yang baik, serta memudahkan dosen pembimbing dalam memberikan arahan dan evaluasi.\n\nFokus panduan mencakup pentingnya orisinalitas dan etika penulisan, termasuk cara menghindari plagiarisme melalui teknik pengutipan dan referensi yang benar. Panduan ini juga mengembangkan kemampuan menulis mahasiswa secara umum untuk konteks akademik dan profesional.",
+    "content": "# BAB I\n\n# PENDAHULUAN\n\n## 1.1 LATAR BELAKANG\n\nPenulisan Ilmiah (PI) merupakan salah satu kegiatan penting dalam kurikulum pendidikan tinggi yang bertujuan memberikan pengalaman dan keterampilan kepada mahasiswa sehingga, perlu dibuat Panduan PI yang disusun dengan tujuan untuk memberikan arahan yang jelas dan terstruktur bagi mahasiswa dalam menyusun PI.\n\nSelain itu panduan ini bertujuan untuk menstandarisasi format dan gaya PI di lingkungan kampus. Dengan adanya standar yang jelas, diharapkan semua PI yang dihasilkan memiliki kualitas dan format yang konsisten.\n\nDengan memberikan panduan yang komprehensif, mahasiswa dapat lebih mudah memahami dan menerapkan prinsip-prinsip PI yang baik. Hal ini diharapkan dapat meningkatkan kualitas PI yang dihasilkan. Panduan ini juga memudahkan dosen pembimbing dalam memberikan arahan dan evaluasi terhadap PI mahasiswa. Dengan adanya acuan yang sama, proses pembimbingan dapat berjalan lebih efektif dan efisien.\n\nSalah satu fokus dari panduan ini adalah memberikan pemahaman tentang pentingnya orisinalitas dan etika penulisan. Panduan ini mencakup cara-cara untuk menghindari plagiarisme, termasuk teknik pengutipan dan referensi yang benar. Selain aspek teknis, panduan ini juga bertujuan untuk mengembangkan kemampuan menulis mahasiswa secara umum. Kemampuan menulis yang baik sangat penting tidak hanya dalam konteks akademik, tetapi juga dalam karir profesional di masa depan. Dengan latar belakang ini, panduan PI di STMIK Widya Cipta Dharma diharapkan dapat menjadi alat yang efektif dalam mendukung proses pembelajaran dan penelitian mahasiswa.",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "BAB I > 1.1",
-    "pages": ["1"]
+    "pages": [
+      "1"
+    ]
   },
   {
     "id": "pi-008",
     "title": "BAB I: Tujuan",
-    "content": "Buku panduan PI disusun untuk memberikan arahan yang jelas dan terperinci mengenai tata cara PI, meliputi format, struktur, dan gaya penulisan yang harus diikuti oleh mahasiswa. Dengan adanya panduan ini, diharapkan kualitas PI meningkat dan mahasiswa memahami standar akademik yang harus dipenuhi.\n\nPanduan ini dirancang untuk memfasilitasi pembelajaran mandiri, mengurangi kesalahan umum dalam PI (format, pengutipan, referensi), dan mendorong etika akademik termasuk orisinalitas dan kejujuran dalam penulisan. Panduan ini juga membantu mahasiswa memenuhi persyaratan publikasi ilmiah dan memudahkan dosen pembimbing dalam proses bimbingan serta evaluasi.",
+    "content": "## 1.2 TUJUAN\n\nBuku panduan PI di STMIK Widya Cipta Dharma disusun dengan berbagai tujuan yang berfokus pada peningkatan kualitas akademik dan kemampuan mahasiswa. Buku panduan ini bertujuan untuk memberikan arahan yang jelas dan terperinci mengenai tata cara PI. Hal ini mencakup format, struktur, dan gaya penulisan yang harus diikuti oleh mahasiswa. Dengan adanya panduan ini, diharapkan kualitas PI yang dihasilkan oleh mahasiswa dapat meningkat. Panduan ini membantu mahasiswa memahami standar akademik yang harus dipenuhi dalam PI. Buku panduan ini dirancang untuk memfasilitasi pembelajaran mandiri bagi mahasiswa.\n\nDengan panduan yang komprehensif, mahasiswa dapat belajar dan memahami proses PI secara mandiri.\n\nPanduan ini bertujuan untuk mengurangi kesalahan umum dalam PI, seperti kesalahan format, pengutipan, dan referensi. Dengan mengikuti panduan, mahasiswa dapat menghindari kesalahan-kesalahan tersebut. Salah satu tujuan penting dari panduan ini adalah untuk mendorong etika akademik, termasuk pentingnya orisinalitas dan kejujuran dalam penulisan. Panduan ini memberikan arahan tentang cara menghindari plagiarisme dan pentingnya memberikan kredit yang tepat kepada sumber. Dengan mengikuti panduan ini, mahasiswa dapat memastikan bahwa karya mereka memenuhi persyaratan publikasi ilmiah. Panduan ini memudahkan dosen pembimbing dalam memberikan arahan dan evaluasi terhadap Penulisan PI mahasiswa. Dengan adanya acuan yang sama, proses pembimbingan dapat berjalan lebih efektif dan efisien.",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "BAB I > 1.2",
-    "pages": ["1", "2"]
+    "pages": [
+      "1",
+      "2"
+    ]
   },
   {
     "id": "pi-009",
     "title": "BAB II: Dosen Pembimbing (Ketentuan)",
-    "content": "Dosen Pembimbing adalah dosen yang bertugas membimbing mahasiswa mulai dari pengajuan judul hingga menyelesaikan PI. Ketentuan Dosen Pembimbing:\n1. Membimbing mahasiswa dengan penuh tanggung jawab, loyalitas, dan dedikasi selama proses bimbingan.\n2. Memenuhi segala peraturan yang dibuat oleh STMIK Widya Cipta Dharma.\n3. Dosen Pembimbing PI adalah Dosen Pembimbing Akademik (Dosen Wali).\n4. Jika tidak dapat menjalankan tugas, Ketua Program Studi dapat mengambil alih atau menunjuk pengganti.\n5. Bertanggung jawab terhadap kegiatan PI sesuai kompetensinya.\n6. Bertanggung jawab terhadap kualitas tulisan sesuai bahasa Indonesia yang disempurnakan dan panduan penyusunan PI.\n7. Ketua Program Studi berhak memberi saran apabila naskah tidak sesuai roadmap penelitian dan panduan penyusunan.",
+    "content": "# BAB II\n\n# KETENTUAN UMUM\n\n## 2.1 DOSEN PEMBIMBING\n\nDosen Pembimbing adalah dosen yang yang bertugas membimbing mahasiswa mulai dari pengajuan judul hingga menyelesaikan PI.\n\n### 2.1.1 Ketentuan Dosen Pembimbing\n\n1. Dosen Pembimbing harus membimbing mahasiswa dengan penuh tanggung jawab, menunjukkan loyalitas dan dedikasi yang baik selama proses pembimbingan.\n2. Dosen Pembimbing harus memenuhi segala peraturan yang dibuat oleh STMIK Widya Cipta Dharma\n3. Dosen Pembimbing PI adalah Dosen Pembimbing Akademik (Dosen Wali).\n4. Apabila Dosen Pembimbing tidak dapat melaksanakan tugasnya, maka Ketua Program Studi dapat mengambil alih Tugas tersebut sebagai pembimbing, penguji atau menunjuk penggantinya.\n5. Dosen Pembimbing bertanggung jawab terhadap kegiatan PI secara keseluruhan yang sesuai dengan kompetensinya.\n6. Dosen Pembimbing juga bertanggung jawab terhadap tulisan yang sesuai dengan bahasa Indonesia yang disempurnakan dan panduan penyusunan PI.\n7. Ketua Program Studi berhak memberikan saran apabila naskah tidak sesuai dengan roadmap penelitian dan panduan penyusunan.",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "BAB II > 2.1 > 2.1.1",
-    "pages": ["3"]
+    "pages": [
+      "3"
+    ]
   },
   {
     "id": "pi-010",
     "title": "BAB II: Syarat Dosen Pembimbing",
-    "content": "Syarat Dosen Pembimbing:\n1. Terdaftar sebagai dosen STMIK Widya Cipta Dharma.\n2. Memiliki jabatan fungsional minimal asisten ahli atau lektor dengan kualifikasi pendidikan S2 atau S3 dan kompetensi relevan dengan PI.\n3. Penetapan pengangkatan Dosen Pembimbing dilakukan melalui Surat Keputusan Ketua STMIK Widya Cipta Dharma.",
+    "content": "### 2.1.2 Syarat Dosen Pembimbing\n\n1. Terdaftar sebagai dosen STMIK Widya Cipta Dharma.\n2. Telah memiliki jabatan fungsional minimal asisten ahli atau lektor dengan kualifikasi pendidikan S2 atau kualifikasi pendidikan S3, dan memiliki kompetensi yang relevan dengan PI yang dilakukan mahasiswa.\n3. Penetapan pengangkatan Dosen Pembimbing dilakukan melalui Surat Keputusan Ketua STMIK Widya Cipta Dharma.",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "BAB II > 2.1 > 2.1.2",
-    "pages": ["3"]
+    "pages": [
+      "3"
+    ]
   },
   {
     "id": "pi-011",
     "title": "BAB II: Dosen Penguji (Ketentuan)",
-    "content": "Ketentuan Dosen Penguji:\n1. Dosen Penguji bertugas menguji mahasiswa pada saat ujian PI.\n2. Bertanggung jawab, menunjukkan loyalitas dan dedikasi selama ujian.\n3. Mematuhi peraturan yang dibuat oleh STMIK Widya Cipta Dharma.\n4. Berhak memberikan masukan apabila naskah mahasiswa tidak sesuai panduan penyusunan PI dan data yang diperoleh.",
+    "content": "## 2.2 DOSEN PENGUJI\n\n### 2.2.1 Ketentuan Dosen Penguji\n\n1. Dosen Penguji adalah dosen yang bertugas menguji mahasiswa pada saat ujian PI.\n2. Dosen Penguji harus bertanggung jawab, menunjukkan loyalitas, dan dedikasi yang baik selama ujian berlangsung.\n\n3. Dosen Penguji harus mematuhi segala peraturan yang dibuat oleh STMIK Widya Cipta Dharma\n\n4. Dosen Penguji berhak memberikan masukan apabila naskah mahasiswa tidak sesuai dengan panduan penyusunan PI dan data yang diperoleh.",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "BAB II > 2.2 > 2.2.1",
-    "pages": ["3", "4"]
+    "pages": [
+      "3",
+      "4"
+    ]
   },
   {
     "id": "pi-012",
     "title": "BAB II: Syarat Dosen Penguji",
-    "content": "Syarat Dosen Penguji:\n1. Terdaftar sebagai dosen STMIK Widya Cipta Dharma.\n2. Memiliki jabatan fungsional minimal asisten ahli atau lektor dengan kualifikasi pendidikan S2 atau S3 dan kompetensi relevan dengan materi PI.\n3. Penetapan pengangkatan Dosen Penguji dilakukan melalui Surat Keputusan Ketua STMIK Widya Cipta Dharma.",
+    "content": "**2.2.2 Syarat Dosen Penguji**\n\n1. Terdaftar sebagai dosen STMIK Widya Cipta Dharma\n\n2. Telah memiliki jabatan fungsional minimal asisten ahli atau lektor dengan kualifikasi pendidikan S2 atau kualifikasi pendidikan S3, dan memiliki kompetensi yang relevan dengan materi PI\n\n3. Penetapan pengangkatan Dosen Penguji dilakukan melalui Surat Keputusan Ketua STMIK Widya Cipta Dharma.\n\n**2.3 PENGGANTIAN DOSEN PEMBIMBING DAN DOSEN PENGUJI**",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "BAB II > 2.2 > 2.2.2",
-    "pages": ["4"]
+    "pages": [
+      "4"
+    ]
   },
   {
     "id": "pi-013",
     "title": "BAB II: Penggantian Dosen Pembimbing dan Dosen Penguji",
-    "content": "Mahasiswa dapat mengajukan penggantian Dosen Pembimbing dan Dosen Penguji dengan mengisi formulir permohonan kepada Ketua Program Studi apabila terjadi: (1) meninggal dunia, (2) sakit dan harus istirahat panjang, (3) cuti di luar tanggungan, atau (4) pindah tugas.\n\nDosen Pembimbing dan Dosen Penguji dapat mengajukan pengunduran diri secara tertulis jika terjadi: (1) sakit dan harus istirahat panjang, (2) cuti di luar tanggungan, (3) pindah tugas, atau (4) alasan lainnya.\n\nPenggantian dilakukan berdasarkan kebijakan Ketua Program Studi dengan pertimbangan masa studi mahasiswa. Ketua Program Studi mengeluarkan surat tugas pengganti dan mahasiswa dapat melanjutkan bimbingan dengan Dosen Pembimbing pengganti.",
+    "content": "1. Mahasiswa dapat mengajukan penggantian Dosen Pembimbing dan Dosen Penguji dengan mengisi formulir (_Contoh Form terlampir_) permohonan kepada Ketua Program Studi, apabila terjadi salah satu dari hal-hal berikut:\n   1. Meninggal dunia.\n   2. Sakit, sehingga yang bersangkutan harus istirahat panjang.\n   3. Cuti di luar tanggungan.\n   4. Pindah tugas.\n\n2. Dosen Pembimbing dan Dosen Penguji dapat mengajukan permohonan pengunduran diri secara tertulis apabila terjadi salah satu dari hal berikut:\n   1. Sakit sehingga yang bersangkutan harus istirahat panjang.\n   2. Cuti di luar tanggungan\n   3. Pindah tugas.\n   4. Alasan lainnya.\n\n3. Penggantian Dosen Pembimbing dan Dosen Penguji dilakukan berdasarkan kebijakan Ketua Program Studi dengan pertimbangan masa studi mahasiswa.\n\n4. Ketua Program Studi mengeluarkan surat tugas Dosen Pembimbing atau Dosen Penguji pengganti.\n\n5. Mahasiswa dapat melanjutkan kembali bimbingannya dibawah bimbingan Dosen Pembimbing pengganti.",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "BAB II > 2.3",
-    "pages": ["4"]
+    "pages": [
+      "4"
+    ]
   },
   {
     "id": "pi-014",
     "title": "BAB II: Hak Mahasiswa Bimbingan",
-    "content": "Hak mahasiswa bimbingan:\n1. Mendapatkan bimbingan, arahan, masukan, dan bantuan proporsional dari Dosen Pembimbing untuk penyusunan dan ujian PI.\n2. Mendapatkan tanda tangan persetujuan Dosen Pembimbing setelah persyaratan dan tanggung jawab terpenuhi.\n3. Mendapat perlakuan yang baik dari semua pihak yang terlibat dalam proses bimbingan.\n4. Mendapatkan hasil penilaian yang proporsional atas usaha dan pekerjaannya.",
+    "content": "# 2.4 MAHASISWA BIMBINGAN\n\n## 2.4.1 Hak Mahasiswa Bimbingan\n\n1. Mendapatkan bimbingan, arahan, masukan, dan bantuan yang proporsional dari Dosen Pembimbing untuk penyusunan dan Ujian PI.\n\n2. Mendapatkan tanda tangan persetujuan Dosen Pembimbing setelah segala persyaratan dan tangggung jawab terpenuhi\n\n3. Mendapat perlakuan yang baik dari semua pihak yang terlibat terkait dengan proses bimbingan.\n\n4. Mendapatkan hasil penilaian yang proporsional atas usaha dan pekerjaannya.",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "BAB II > 2.4 > 2.4.1",
-    "pages": ["5"]
+    "pages": [
+      "5"
+    ]
   },
   {
     "id": "pi-015",
     "title": "BAB II: Bukti Pembimbingan",
-    "content": "Bukti pembimbingan:\n1. Mahasiswa wajib membawa lembar bimbingan setiap kali bimbingan dan lembar diisi Dosen Pembimbing sesuai bimbingan yang dilakukan.\n2. Lembar bimbingan berisi masukan untuk setiap pertemuan.\n3. Pertemuan dengan Dosen Pembimbing dijadwalkan minimal 8 kali (minimal 2 kali saat pelaksanaan PI dan 6 kali saat penyusunan laporan akhir), atau minimal 8 kali selama tahap pelaksanaan hingga penyusunan laporan akhir.",
+    "content": "## 2.4.2 Bukti Pembimbingan\n\n1. Mahasiswa diwajibkan membawa lembar bimbingan setiap akan melakukan bimbingan dan lembar tersebut akan diisi oleh Dosen Pembimbing sesuai dengan bimbingan yang dilakukan.\n\n2. Lembar bimbingan berisi masukan untuk setiap kali pertemuan dengan Dosen Pembimbing.\n\n3. Pertemuan dengan Dosen Pembimbing PI dijadwalkan minimal 8 kali terdiri dari minimal 2 kali selama tahap pelaksanaan kegiatan PI dan 6 kali selama tahap penyusunan laporan akhir PI.\n\nPertemuan dengan Dosen Pembimbing PI dijadwalkan minimal 8 kali selama tahap pelaksanaan kegiatan PI hingga tahap penyusunan laporan akhir PI.",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "BAB II > 2.4 > 2.4.2",
-    "pages": ["5"]
+    "pages": [
+      "5"
+    ]
   },
   {
     "id": "pi-016",
     "title": "BAB II: Mekanisme Pembimbingan",
-    "content": "Mekanisme pembimbingan:\n1. Bimbingan dilaksanakan di kampus atau online/daring berdasarkan kesepakatan dosen pembimbing dan mahasiswa.\n2. Maksimal masa bimbingan 6 bulan (1 semester); perpanjangan dapat diberikan dengan persetujuan Ketua Program Studi setelah rekomendasi Dosen Pembimbing.\n3. Setiap bimbingan, mahasiswa wajib membawa lembar bimbingan yang memuat materi bimbingan, tanggal, dan tanda tangan Dosen Pembimbing.\n4. Dosen Pembimbing menekankan standar penulisan PI.\n5. Dosen Pembimbing dapat menyempurnakan judul sepanjang tidak mengubah inti permasalahan.\n6. Mahasiswa yang kesulitan dapat mengubah judul dengan mengajukan permohonan judul baru kepada Ketua Program Studi.\n7. Ketua Program Studi mengawasi bimbingan dari aspek tanggung jawab, efisiensi, dan efektivitas.",
+    "content": "## 2.4.3 Mekanisme Pembimbingan\n\n1. Bimbingan dilaksanakan di kampus STMIK Widya Cipta Dharma atau Online/Daring (Berdasarkan kesepakatan antaran dosen pembimbing dan mahasiswa).\n\n2. Maksimal masa bimbingan berlangsung selama 6 bulan (1 semester). Perpanjangan masa bimbingan dapat diberikan kepada mahasiswa dengan persetujuan Ketua Program Studi setelah mendengar pertimbangan (rekomendasi) dari Dosen Pembimbing.\n\n3. Pada setiap kegiatan pembimbingan, mahasiswa wajib membawa lembar bimbingan yang harus diisi materi bimbingan, tanggal bimbingan, dan ditandatangani oleh Dosen Pembimbing.\n\n4. Dosen Pembimbing dalam memberikan bimbingan kepada mahasiswa menekankan kepada standar penulisan PI.\n\n5. Dosen Pembimbing dapat menyempurnakan judul sepanjang tidak merubah inti permasalahannya.\n\n6. Apabila mahasiswa mengalami kesulitan dalam menyelesaikan PI, mahasiswa yang bersangkutan dapat mengubah judul dengan mengajukan permohonan judul baru kepada\n\nKetua Program Studi.\n\n7. Ketua Program Studi mengawasi pelaksanaan pembimbingan dari aspek tanggung jawab, efisiensi, dan efektivitas bimbingan.",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "BAB II > 2.4 > 2.4.3",
-    "pages": ["5"]
+    "pages": [
+      "5"
+    ]
   },
   {
     "id": "pi-017",
     "title": "BAB II: Syarat dan Ketentuan",
-    "content": "Syarat dan ketentuan PI:\n1. Mahasiswa yang berhak mengambil PI telah menyelesaikan mata kuliah dengan jumlah SKS minimal 100 SKS dan IP Kumulatif minimal 2,00.\n2. PI adalah riset mandiri pada organisasi/instansi atau studi literatur pada buku dan jurnal ilmiah yang berhubungan dengan Teknologi Informasi, Bisnis, dan Manajemen.\n3. Tujuan PI adalah memberi pemahaman agar mahasiswa berpikir logis dan ilmiah, membandingkan teori dengan praktik, serta menuangkannya secara sistematis dan terstruktur.\n4. Setiap kegiatan PI dibimbing oleh 1 Dosen Pembimbing dan diuji oleh 2 Dosen Penguji.",
+    "content": "## 2.5 SYARAT DAN KETENTUAN\n\n1. Mahasiswa yang berhak mengambil PI adalah mahasiswa yang telah menyelesaikan mata kuliah dengan jumlah SKS minimal 100 SKS dengan IP Kumulatif minimal 2,00.\n\n2. PI adalah riset mandiri yang dilakukan oleh mahasiswa pada sebuah organisasi, badan usaha, instansi pemerintah atau swasta atau melakukan studi literatur pada buku dan jurnal ilmiah yang berhubungan dengan Teknologi Informasi, Bisnis, dan Manajemen.\n\n3. Tujuan dalam PI adalah memberikan pemahaman terhadap mahasiswa agar dapat berpikir secara logis dan ilmiah dalam menguraikan dan membahas suatu permasalahan serta dapat membandingkan antara teori yang didapatkan dengan praktek kehidupan nyata serta dapat menuangkannya dalam bentuk tulisan secara sistematis dan terstruktur.\n\n4. Setiap kegiatan PI dibimbing oleh 1 (satu) orang Dosen Pembimbing dan diuji oleh 2 (dua) orang Dosen Penguji.",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "BAB II > 2.5",
-    "pages": ["6"]
+    "pages": [
+      "6"
+    ]
   },
   {
     "id": "pi-018",
     "title": "BAB II: Tempat Penelitian",
-    "content": "Tempat Penelitian PI adalah instansi, perusahaan, lembaga, atau organisasi resmi yang menjadi lokasi penelitian sebagai bagian dari penyusunan laporan PI. Tempat ini menyediakan kondisi kerja yang sesuai dengan bidang keilmuan mahasiswa dan mendukung pelaksanaan penelitian secara mandiri dengan memanfaatkan teori, keterampilan, dan kompetensi akademik. Penelitian juga dapat dilakukan tanpa tempat/instansi, berasal dari riset mandiri berbasis studi literatur.",
+    "content": "## 2.6 TEMPAT PENELITIAN\n\nTempat Penelitian PI adalah instansi, perusahaan, lembaga, atau organisasi resmi yang menjadi lokasi bagi mahasiswa untuk melakukan kegiatan penelitian sebagai bagian dari penyusunan laporan PI. Tempat ini menyediakan kondisi kerja yang sesuai dengan bidang keilmuan mahasiswa dan mendukung mahasiswa dalam melaksanakan penelitian secara mandiri dengan memanfaatkan teori, keterampilan, dan kompetensi akademik yang dimilikinya. Atau dapat dilaksanakan tanpa tempat/instansi serta bisa berasal dari riset mandiri dengan sumber studi literatur.",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "BAB II > 2.6",
-    "pages": ["6"]
+    "pages": [
+      "6"
+    ]
   },
   {
     "id": "pi-019",
     "title": "BAB II: Pengajuan Judul PI (Pengajuan Tempat Penelitian)",
-    "content": "Langkah pengajuan judul PI dan tempat penelitian:\n1. Mahasiswa mendaftarkan Mata Kuliah PI pada Rencana Studi.\n2. Dosen pembimbing PI adalah Dosen Pembimbing Akademik (Dosen Wali).\n3. PI dapat dilaksanakan tanpa tempat/instansi atau berbasis studi literatur.\n4. Jika memerlukan tempat penelitian, disarankan konsultasi dengan Bursa Kerja Khusus (BKK) untuk memperoleh tempat yang memiliki MoU dengan STMIK Widya Cipta Dharma.\n5. Setelah form usulan PI disetujui pembimbing dan Ketua Program Studi, mahasiswa menyerahkan form ke BAAK untuk mendapatkan surat pengantar.\n6. Mahasiswa menyerahkan surat pengantar BAAK ke instansi/tempat penelitian (kecuali penelitian tanpa tempat/instansi).\n7. Mahasiswa wajib mendapatkan surat balasan dari instansi/tempat penelitian.\n8. Setelah mendapat surat balasan, mahasiswa mengunggah surat balasan pada laman web BAAK untuk mendapatkan lembar kehadiran PI (kecuali penelitian tanpa tempat/instansi).\n9. Kegiatan penelitian PI di perusahaan/instansi minimal selama 7 hari kerja.",
+    "content": "## 2.7 PROSES PENYUSUNAN\n\n### 2.7.1 Pengajuan Judul PI\n\n### Pengajuan Tempat Penelitian\n\n1. Setiap mahasiswa yang akan menempuh PI harus mendaftarkan Mata Kuliah PI pada Rencana Studi.\n\n2. Dosen pembimbing PI adalah dosen pembimbing akademik (Dosen Wali).\n\n3. Penulisan Ilmiah dapat dilaksanakan tanpa tempat/instansi serta bisa berasal dari riset mandiri dengan sumber studi literatur.\n\n4. Bila pelaksanaan Penulisan Ilmiah memerlukan tempat/instansi penelitian, maka mahasiswa disarankan untuk berkonsultasi dengan Bursa Kerja Khusus (BKK) sebelum memulai PI guna memperoleh tempat Penelitian yang telah menjalin kerja sama (MoU) dengan STMIK Widya Cipta Dharma.\n\n5. Setelah mengisi form usulan PI, dan disetujui oleh pembimbing dan Ketua Program Studi, mahasiswa menyerahkan form tersebut ke BAAK untuk mendapatkan surat pengantar yang ditujukan kepada tempat penelitian atau penelitian yang dilakukan tanpa tempat/instansi.\n\n6. Mahasiswa menyerahkan surat pengantar yang diterbitkan oleh BAAK ke Instansi/tempat penelitian, kecuali penelitian yang dilakukan tanpa tempat/instansi.\n\n7. Mahasiswa wajib mendapatkan surat balasan dari instansi/tempat penelitian tersebut.\n\n8. Setelah mendapatkan surat balasan, mahasiswa dapat mengunggah surat balasan tersebut pada laman Web BAAK untuk mendapatkan lembar kehadiran PI, kecuali penelitian yang dilakukan tanpa tempat/instansi.\n\n9. Kegiatan penelitian untuk PI dapat dilaksanakan pada suatu Perusahaan atau Instansi minimal selama 7 ( Tujuh) hari kerja.",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "BAB II > 2.7.1",
-    "pages": ["6", "7"]
+    "pages": [
+      "6",
+      "7"
+    ]
   },
   {
     "id": "pi-020",
     "title": "BAB II: Tahap Pelaksanaan (Selama Kegiatan Penelitian)",
-    "content": "Selama kegiatan penelitian:\n1. Mahasiswa mendiskusikan implementasi rencana kerja dengan pembimbing lapangan.\n2. Mahasiswa wajib menemui Dosen Pembimbing paling lambat satu minggu setelah form usulan PI disetujui.\n3. Mahasiswa melaporkan kegiatan penelitian kepada Dosen Pembimbing minimal 2 kali selama pelaksanaan PI untuk mendapatkan arahan.\n4. Saat berkonsultasi dengan Dosen Pembimbing, mahasiswa mulai menyusun laporan PI.\n5. Setiap bimbingan, mahasiswa wajib membawa lembar bimbingan yang diisi materi bimbingan, tanggal, dan ditandatangani Dosen Pembimbing.",
+    "content": "## 2.7.2 Tahap Pelaksanaan\n\n1. Selama kegiatan Penelitian\n   1. Mahasiswa mendiskusikan implementasi rencana kerja yang telah dibuat dengan pembimbing lapangan.\n\n2. Mahasiswa wajib menemui Dosen Pembimbing paling lambat satu minggu setelah form usulan PI disetujui.\n\n3. Mahasiswa secara berkala melaporkan kegiatan Penelitian kepada dosen pembimbing minimal 2 kali selama pelaksanaan PI, untuk mendapatkan arahan terkait kegiatan selama PI.\n\n4. Ketika berkonsultasi dengan Dosen Pembimbing, mahasiswa diwajibkan mulai menyusun laporan PI.\n\n5. Untuk setiap kali melaksanakan bimbingan, mahasiswa wajib membawa lembar bimbingan yang harus diisi materi bimbingan, tanggal bimbingan, dan ditandatangani oleh Dosen Pembimbing.",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "BAB II > 2.7.2",
-    "pages": ["7"]
+    "pages": [
+      "7"
+    ]
   },
   {
     "id": "pi-021",
     "title": "BAB II: Tahap Pelaksanaan (Setelah Selesai Kegiatan)",
-    "content": "Setelah selesai kegiatan penelitian:\n1. Mahasiswa membuat laporan pelaksanaan PI sesuai panduan, melampirkan jadwal/rencana kegiatan kerja PI.\n2. Mahasiswa memprogramkan mata kuliah PI pada Kartu Rencana Studi.\n3. Laporan hasil PI diseminarkan dan dapat dihadiri mahasiswa lain.\n4. Untuk melaksanakan seminar PI, mahasiswa wajib menghadiri seminar laporan PI minimal 3 kali.\n5. Pelaksanaan seminar PI diatur oleh Program Studi.",
+    "content": "2. Setelah Selesai kegiatan Penelitian\n   1. Mahasiswa membuat laporan pelaksanaan PI dengan mengikuti panduan penyusunan laporan PI dengan melampirkan jadwal/rencana kegiatan/kerja PI\n\n2. Mahasiswa memprogramkan matakuliah PI pada Kartu Rencana Studi.\n\n3. Laporan hasil PI diseminarkan dan dapat dihadiri oleh mahasiswa lain.\n\n4. Untuk bisa melaksanakan seminar PI, Mahasiswa wajib menghadiri kegiatan seminar Laporan PI minimal 3 (tiga) kali.\n\n5. Pelaksanaan seminar PI, diatur oleh Program Studi.",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "BAB II > 2.7.2",
-    "pages": ["7", "8"]
+    "pages": [
+      "7",
+      "8"
+    ]
   },
   {
     "id": "pi-022",
     "title": "BAB II: Prosedur Pendaftaran Ujian PI (Berkas)",
-    "content": "Mekanisme pendaftaran ujian PI - berkas yang dilampirkan:\n1. Form Pengecekan Syarat Administrasi, Form Pendaftaran Ujian PI, dan Form Permohonan Ujian PI.\n2. Lembar Persetujuan Ujian PI yang ditandatangani Pembimbing dan Ketua Program Studi.\n3. Form Bimbingan Laporan PI yang di-ACC Pembimbing dan Form Daftar Hadir Menyaksikan Ujian PI.\n4. Transkrip Nilai Terakhir, jumlah SKS minimal 100 SKS, dan IP Kumulatif minimal 2.00.\n5. Kuitansi BPP dan SKS pada semester ujian PI, tervalidasi BAUK.\n6. Kartu Rencana Studi (KRS) yang mencantumkan PI dan tervalidasi BAAK.\n7. Surat keterangan penelitian/surat balasan dari tempat penelitian yang ditandatangani dan distempel.\n8. Daftar wawancara yang ditandatangani responden dan distempel perusahaan/lembaga tempat penelitian.\n9. Draf laporan PI.\n10. Lembar Persetujuan Waktu Ujian PI.\n11. Bukti pemeriksaan anti-plagiarisme dengan tingkat kemiripan maksimal 30% dari perangkat lunak/aplikasi pendeteksi plagiarisme yang valid.",
+    "content": "### 2.7.3 Prosedur Pendaftaran dan Ujian PI\n\n#### A. Mekanisme pendaftaran Ujian sebagai berikut:\n\n1. Naskah PI telah disetujui oleh Dosen Pembimbing\n\n2. Mahasiswa mendaftar dan melengkapi berkas di laman web KPST STMIK Widya Cipta Dharma, dengan melampirkan berkas sebagai berikut:\n   1. Form Pengecekan Syarat Administrasi, Form Pendaftaran Ujian PI, dan Form Permohonan Ujian PI.\n\n2. Lembar Persetujuan Ujian PI yang sudah ditandatangani oleh Pembimbing dan Ketua Program Studi.\n\n3. Form Bimbingan Laporan PI yang sudah di ACC Pembimbing dan Form Daftar Hadir Menyaksikan Ujian PI.\n\n4. Transkrip Nilai Terakhir, Jumlah SKS Minimal 100 SKS dan IP Kumulatif minimal 2.00.\n\n5. Kuitansi BPP dan SKS disemester saat Ujian PI dilaksanakan dan telah divalidasi BAUK.\n\n6. Kartu Rencana Studi (KRS) yang mencantumkan PI dan telah divalidasi BAAK.\n\n7. Surat keterangan penelitian/Surat balasan dari tempat penelitian yang ditandatangani dan distempel.\n\n8. Daftar wawancara yang sudah ditandatangani oleh responden dan distempel oleh perusahaan/tempat penelitian.\n\n9. Draf laporan PI.\n\n10. Lembar Persetujuan Waktu Ujian PI\n\n11. Bukti pemeriksaan anti-plagiarisme dengan tingkat kemiripan maksimal 30%, berupa hasil dari perangkat lunak atau aplikasi pendeteksi plagiarisme yang valid, seperti Turnitin, Plagscan, atau alat sejenis lainnya. Bukti harus mencantumkan persentase kemiripan dan sumber kecocokan yang terdeteksi.",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "BAB II > 2.7.3 > A",
-    "pages": ["8"]
+    "pages": [
+      "8"
+    ]
   },
   {
     "id": "pi-023",
     "title": "BAB II: Prosedur Pendaftaran Ujian PI (Penunjukan Penguji)",
-    "content": "Setelah berkas lengkap:\n- Ketua Program Studi menunjuk satu dosen sebagai Ketua Penguji dan satu dosen sebagai Anggota Penguji.\n- Mahasiswa menyerahkan berkas/naskah PI lengkap kepada tim dosen (Pembimbing, Ketua Penguji, Anggota Penguji).\n- Seminar PI merupakan forum bagi mahasiswa untuk mempresentasikan hasil PI.",
+    "content": "3. Ketua Program Studi menunjuk satu dosen sebagai Ketua Penguji dan satu dosen sebagai Anggota Penguji.\n\n4. Mahasiswa menyerahkan berkas/naskah PI lengkap ke tim dosen yang terdiri dari Pembimbing, Ketua Penguji, dan Anggota Penguji.\n\n5. Seminar PI merupakan forum bagi mahasiswa untuk mempresentasikan hasil PInya.\n\n**B. Mekanisme pelaksanaan ujian sebagai berikut:**",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "BAB II > 2.7.3 > A",
-    "pages": ["8", "9"]
+    "pages": [
+      "8",
+      "9"
+    ]
   },
   {
     "id": "pi-024",
     "title": "BAB II: Mekanisme Pelaksanaan Ujian PI",
-    "content": "Mekanisme pelaksanaan ujian PI:\n1. Seminar PI dilakukan paling lambat 15 hari setelah persetujuan Dosen Pembimbing.\n2. Laporan PI minimal 40 halaman (di luar cover, daftar isi, daftar tabel, daftar gambar, daftar lampiran, daftar pustaka, dan lampiran).\n3. Mahasiswa menyiapkan bahan presentasi dan mempresentasikan di depan Dosen Pembimbing dan Dosen Penguji dengan media presentasi (LCD).\n4. Seminar bersifat terbuka, dihadiri Dosen Pembimbing, Dosen Penguji, dan mahasiswa lain; ujian dipimpin Dosen Pembimbing sebagai ketua panitia ujian.\n5. Pakaian ujian: pria kemeja putih berdasi, almamater, celana hitam kain, sepatu tertutup hitam; wanita kemeja putih berdasi, almamater, rok hitam di bawah lutut, sepatu tertutup hitam (jilbab hitam bagi mahasiswi berjilbab).\n6. Ujian PI maksimal 60 menit (10 menit presentasi, 50 menit tanya jawab).\n7. Masing-masing penguji memberi pertanyaan, klarifikasi, saran, perbaikan, dan penilaian.\n8. Pembimbing mengumumkan keputusan lulus/mengulang setelah nilai diinput dan didiskusikan oleh tim penguji.\n9. Seminar PI dilaksanakan sesuai Kalender Akademik pada semester tersebut.",
+    "content": "1. Seminar PI dilakukan paling lambat 15 hari setelah mendapatkan persetujuan Dosen Pembimbing.\n\n2. Laporan PI dibuat minimal 40 halaman (tidak termasuk cover, daftar isi, daftar tabel, daftar gambar, daftar lampiran, daftar pustaka, dan lampiran).\n\n3. Mahasiswa menyiapkan bahan presentasi hasil penelitian dan wajib mempresentasikan di depan Dosen Pembimbing dan Dosen Penguji menggunakan media/alat bantu presentasi (LCD).\n\n4. Seminar bersifat terbuka yang dihadiri oleh Dosen Pembimbing, Dosen Penguji, dan mahasiswa lain. Ujian dipimpin oleh Dosen Pembimbing sebagai ketua panitia ujian.\n\n5. Pada saat ujian PI, mahasiswa diwajibkan berpakai rapi. Pria mengenakan kemeja putih, berdasi, menggunakan almamater, celana hitam kain, serta menggunakan sepatu tertutup berwarna hitam. Wanita menggunakan kemeja putih, berdasi, menggunakan almamater, rok hitam berukuran di bawah lutut serta menggunakan sepatu tertutup berwarna hitam. (Bagi mahasiswi berjilbab, dapat menggunakan jilbab berwarna hitam).\n\n6. Setelah Ketua panitia ujian menanyakan kesiapan fisik dan mental kepada mahasiswa yang diuji, Mahasiswa diberi kesempatan untuk mempresentasikan hasil PI. Ujian PI dilaksanakan paling lama 60 menit, terdiri dari 10 menit untuk presentasi dan 50 menit untuk tanya jawab.\n\n7. Masing-masing penguji diberikan kesempatan untuk bertanya, mengklarifikasi, memberikan saran dan perbaikan, serta memberikan penilaian.\n\n8. Pembimbing mengumumkan hasil keputusan ujian apakah mahasiswa dinyatakan lulus atau mengulang setelah tim penguji menginput nilai di aplikasi dan mendiskusikan keputusan kelulusan.\n\n9. Seminar PI dilaksanakan sesuai dengan Kalender Akademik yang berlaku pada semester tersebut",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "BAB II > 2.7.3 > B",
-    "pages": ["9"]
+    "pages": [
+      "9"
+    ]
   },
   {
     "id": "pi-025",
     "title": "BAB II: Tahap Akhir (Perbaikan Naskah PI)",
-    "content": "Mekanisme perbaikan naskah PI:\n1. Mahasiswa memperbaiki naskah berdasarkan saran atau revisi dari Dosen Pembimbing dan Dosen Penguji saat ujian.\n2. Mahasiswa mengajukan hasil perbaikan kepada Pembimbing dan Penguji dengan membawa naskah yang sudah dikoreksi saat ujian.\n3. Dosen Penguji memeriksa perbaikan; jika memenuhi syarat, menandatangani halaman pengesahan PI.\n4. Naskah PI yang selesai diperiksa dan diperbaiki ditandatangani Dosen Pembimbing.\n5. Nilai PI tercantum dalam transkrip setelah mahasiswa menyerahkan surat keterangan pengumpulan berkas jilid PI dari perpustakaan ke program studi.",
+    "content": "**2.7.4 Tahap Akhir**\n\nMekanisme perbaikan naskah PI dilakukan dengan prosedur sebagai berikut:\n\n1. Mahasiswa memperbaiki naskah PI berdasarkan saran atau revisi dari Dosen Pembimbing dan Dosen Penguji pada saat ujian.\n\n2. Mahasiswa mengajukan hasil perbaikan kepada Dosen Pembimbing dan Dosen Penguji dengan membawa naskah PI yang sudah dikoreksi pada saat ujian.\n\n3. Dosen Penguji menerima dan memeriksa perbaikan naskah PI. Apabila perbaikan sudah memenuhi syarat maka dosen penguji menandatangani halaman pengesahan PI.\n\n4. Naskah PI yang telah selesai diperiksa dan diperbaiki kemudian ditandatangani oleh Dosen Pembimbing.\n\n5. Nilai PI akan tercantum dalam transkrip setelah mahasiswa menyerahkan surat keterangan pengumpulan berkas jilid PI dari perpustakaan ke program studi.",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "BAB II > 2.7.4",
-    "pages": ["9", "10"]
+    "pages": [
+      "9",
+      "10"
+    ]
   },
   {
     "id": "pi-026",
     "title": "BAB II: Sistem Penilaian (Skala dan Predikat)",
-    "content": "Nilai akhir PI menggunakan skala 100 dengan predikat sebagai berikut:\n- 80-100: A (Sangat Baik) - Lulus\n- 70-79: B (Baik) - Lulus\n- 60-69: C (Cukup) - Lulus\n- 40-59: D (Kurang) - Tidak Lulus\n- 0-39: E (Sangat Kurang) - Tidak Lulus",
+    "content": "## 2.8 SISTEM PENILAIAN\n\nNilai akhir PI didasarkan pada kriteria berikut:\n\n1. Penentuan skor menggunakan skala 100.\n\n2. Pemberian nilai hasil ujian PI didasarkan pada predikat seperti tertera pada tabel 2.1\n\nTabel 2. 1 Panduan Penilaian Ujian PI\n\nRentang Nilai\n        Nilai Huruf\n        Predikat\n        Status Kelulusan\n\n80 ≤ Nilai ≤ 100\n        A\n        Sangat Baik\n        Lulus\n\n70 ≤ Nilai ≤ 79\n        B\n        Baik\n        Lulus\n\n60 ≤ Nilai ≤ 69\n        C\n        Cukup\n        Lulus\n\n40 ≤ Nilai ≤ 59\n        D\n        Kurang\n        Tidak Lulus\n\n0 ≤ Nilai ≤ 39\n        E\n        Sangat Kurang\n        Tidak Lulus",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "BAB II > 2.8",
-    "pages": ["10"]
+    "pages": [
+      "10"
+    ]
   },
   {
     "id": "pi-027",
     "title": "BAB II: Sistem Penilaian (Komponen dan Indikator)",
-    "content": "Nilai PI diperoleh dari penilaian naskah PI dan unjuk kerja (performance) mahasiswa saat ujian. Komponen penilaian meliputi:\n- Orisinalitas Penulisan\n- Sistematika dan Tata Cara Penulisan Laporan\n- Penguasaan Materi Sesuai Capaian Pembelajaran Mata Kuliah\n- Kemampuan Argumentasi dan Presentasi\n- Penampilan/Etika\n\nSetiap komponen diberi nilai dalam rentang 0-100, dan nilai akhir merupakan rata-rata dari seluruh komponen tersebut.",
+    "content": "Nilai PI diperoleh dari hasil penilaian naskah PI dan unjuk kerja (_performance_) mahasiswa saat ujian. Komponen penilaian PI meliputi: Orisinalitas Penulisan, Sistematika dan Tata Cara Penulisan Laporan, Penguasaan Materi Sesuai Capaian Pembelajaran Mata Kuliah, Kemampuan Argumentasi dan Presentasi, serta Penampilan/Etika.\n\nTabel 2.2 Indikator Penilaian Ujian PI\n\nIndikator\n        Penilaian\n\nOrisinalitas Penulisan\n        Setiap komponen diberi nilai dalam rentang (0-100). Nilai yang digunakan adalah hasil rata-rata dari seluruh nilai komponen tersebut\n\nSistematika dan Tata Cara Penulisan Laporan",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "BAB II > 2.8",
-    "pages": ["10"]
+    "pages": [
+      "10"
+    ]
   },
   {
     "id": "pi-028",
     "title": "BAB II: Capaian Pembelajaran (Sistem Informasi)",
-    "content": "Program Studi Sistem Informasi memiliki capaian pembelajaran sebagai berikut:\n- Mampu berkomunikasi dan melakukan presentasi untuk menyajikan gagasan secara lisan maupun tertulis.\n- Mampu bekerja sama dalam tim.",
+    "content": "Penguasaan Materi Sesuai Capaian Pembelajaran Mata Kuliah\n\nKemampuan Argumentasi dan Presentasi\n\nPenampilan/Etika\n\nTabel 2.3 Capaian Pembelajaran Mata Kuliah\n\nProgram Studi\n        Capaian Pembelajaran Mata Kuliah\n\nSistem Informasi\n        Mampu berkomunikasi dan melakukan presentasi untuk menyajikan gagasan secara lisan maupun tertulis<br/>Mampu bekerja sama dalam tim",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "BAB II > 2.8 > Capaian Pembelajaran",
-    "pages": ["10"]
+    "pages": [
+      "10"
+    ]
   },
   {
     "id": "pi-029",
     "title": "BAB II: Capaian Pembelajaran (Teknik Informatika)",
-    "content": "Program Studi Teknik Informatika memiliki capaian pembelajaran sebagai berikut:\n- Mampu mengelola kelompok maupun diri sendiri dalam menyelesaikan proyek sistem informasi.\n- Mampu menunjukkan sikap profesional melalui kepatuhan dan respon terhadap etika profesi, isu sosial, serta perkembangan teknologi.\n- Mampu bekerjasama dalam tim multidisiplin dan memahami pembelajaran sepanjang hayat.\n- Mampu berkomunikasi dan melakukan presentasi secara lisan maupun tulisan.\n- Mampu bekerja sama dalam tim.",
+    "content": "Program Studi\n        Capaian Pembelajaran Mata Kuliah\n\nTeknik Informatika\n        Mampu mengelola kelompok maupun diri sendiri dalam menyelesaikan proyek sistem informasi\n\nMampu menunjukkan sikap profesional melalui kepatuhan dan respon terhadap etika profesi, isu sosial serta perkembangan teknologi.\n\nMampu bekerjasama dalam tim multidispilin dan pemahaman tentang pembelajaran sepanjang hayat\n\nMampu berkomunikasi dan melakukan presentasi dengan baik secara lisan maupun tulisan\n\nMampu bekerja sama dalam tim",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "BAB II > 2.8 > Capaian Pembelajaran",
-    "pages": ["11"]
+    "pages": [
+      "11"
+    ]
   },
   {
     "id": "pi-030",
     "title": "BAB II: Capaian Pembelajaran (Bisnis Digital)",
-    "content": "Program Studi Bisnis Digital memiliki capaian pembelajaran sebagai berikut:\n- Mampu menerapkan pemikiran logis, kritis, sistematis, dan inovatif sesuai kaidah, tata cara, dan etika ilmiah untuk menghasilkan solusi, gagasan, desain, atau kritik seni dalam KKP/PI.\n- Mampu menunjukkan kinerja mandiri, bermutu, dan terukur dalam bentuk laporan KKP/PI serta mengunggahnya pada laman perguruan tinggi.\n- Mampu mengambil keputusan secara tepat berdasarkan analisis informasi dan data yang disusun menjadi deskripsi saintifik hasil kajian dalam bentuk laporan KKP/PI serta mengunggahnya pada laman perguruan tinggi.\n- Mampu memelihara dan mengembangkan hubungan jaringan kerja dengan pembimbing, kolega tempat KKP/PI, dan sejawat di dalam maupun di luar lembaga.",
+    "content": "Bisnis Digital\n        Mahasiswa mampu menerapkan pemikiran logis, kritis, sistematis, dan inovatif dalam implementasi ilmu pengetahuan teknologi sesuai dengan keahliannya berdasarkan kaidah, tata cara dan etika ilmiah dalam rangka menghasilkan solusi, gagasan, desain atau kritik seni dalam menjalankan Kuliah Kerja Praktik/Penulisan Ilmiah.\n\nMahasiswa mampu menunjukkan kinerja mandiri, bermutu, dan terukur dalam bentuk Laporan Kuliah Kerja Praktik/Penulisan Ilmiah dan mengunggahnya dalam laman perguruan tinggi\n\nMahasiswa mampu mengambil keputusan secara tepat dalam konteks penyelesaian masalah di bidang keahliannya, berdasarkan hasil analisis informasi dan data yang disusun menjadi deskripsi saintifik hasil kajian dalam bentuk laporan Kuliah Kerja Praktik/Penulisan Ilmiah dan mengunggahnya dalam laman perguruan tinggi\n\nMahasiswa mampu memelihara dan mengembangkan hubungan jaringan kerja dengan pembimbing, kolega tempat Kuliah Kerja Praktik/Penulisan Ilmiah, dan sejawat baik di dalam maupun di luar lembaga",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "BAB II > 2.8 > Capaian Pembelajaran",
-    "pages": ["11"]
+    "pages": [
+      "11"
+    ]
   },
   {
     "id": "pi-031",
     "title": "BAB II: Syarat Kelulusan Ujian PI",
-    "content": "Mahasiswa dinyatakan lulus ujian PI apabila:\n1. Penulisan Ilmiah yang diujikan merupakan hasil karya otentik yang dibuat dan diselesaikan sendiri; jika terbukti duplikasi, jiplakan, atau terjemahan karya orang lain, dianggap pelanggaran akademik dan harus mengajukan judul baru.\n2. Memperoleh nilai minimal C.\n3. Telah memperbaiki PI sesuai saran dan arahan Pembimbing dan Penguji, dibuktikan dengan penandatanganan halaman pengesahan PI.\n4. Telah menyerahkan jilid laporan PI ke Perpustakaan STMIK Widya Cipta Dharma untuk mendapatkan surat keterangan penyerahan jilid PI dan menyerahkannya ke Program Studi sesuai kalender akademik.",
+    "content": "3. Mahasiswa dinyatakan lulus ujian apabila:\n\n1) Penulisan Ilmiah yang diujikan merupakan hasil karya otentik yang dibuat dan diselesaikan sendiri. Apabila ditemukan bukti bahwa PI yang ditulis merupakan duplikasi, jiplakan, atau terjemahan hasil karya orang lain, maka dianggap sebagai pelanggaran akademik dan mahasiswa harus mengajukan judul baru.\n\n2) Memperoleh nilai minimal C.\n\n3) Telah memperbaiki PI sesuai saran dan arahan dari Dosen Pembimbing dan Dosen Penguji yang dibuktikan dengan penandatanganan pada halaman pengesahan PI.\n\n4. Telah Menyerahkan jilid laporan PI ke Perpustakaan STMIK Widya Cipta Dharma untuk mendapatkan surat keterangan penyerahan jilid PI, selanjutnya surat keterangan tersebut diserahkan ke Program Studi sesuai dengan kalender akademik yang berlaku.",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "BAB II > 2.8",
-    "pages": ["11", "12"]
+    "pages": [
+      "11",
+      "12"
+    ]
   },
   {
     "id": "pi-032",
     "title": "BAB III: Gambaran Umum Laporan PI",
-    "content": "Laporan PI adalah dokumen penting untuk menyampaikan hasil penelitian atau kajian. Laporan berfungsi mengkomunikasikan temuan, analisis, dan kesimpulan kepada pembaca akademik maupun umum.\n\nDalam menyusun laporan ilmiah, mahasiswa mengikuti struktur sistematis yang mencakup judul, abstrak, pendahuluan, tinjauan pustaka, metodologi, hasil, pembahasan, kesimpulan, dan daftar pustaka. Setiap bagian menjelaskan konteks, metode, serta hasil penelitian.\n\nLaporan ilmiah harus ditulis dengan bahasa formal dan objektif serta berbasis data dan fakta. Mengikuti panduan PI membantu meningkatkan kemampuan menulis dan berpikir kritis serta berkontribusi pada pengembangan ilmu pengetahuan.",
+    "content": "# BAB III\n\n# SISTEMATIKA PENYUSUNAN PENULISAN ILMIAH\n\n## 3.1 PENULISAN LAPORAN\n\n### 3.1.1 Gambaran Umum\n\nLaporan PI adalah dokumen penting yang disusun oleh mahasiswa untuk menyampaikan hasil penelitian atau kajian yang telah dilakukan. Laporan ini berfungsi sebagai sarana untuk mengkomunikasikan temuan, analisis, dan kesimpulan dari penelitian kepada pembaca, baik di kalangan akademik maupun masyarakat umum. Dalam menyusun laporan ilmiah, mahasiswa diharapkan mengikuti struktur yang sistematis, yang umumnya mencakup bagian-bagian seperti judul, abstrak, pendahuluan, tinjauan pustaka, metodologi, hasil, pembahasan, kesimpulan, dan daftar pustaka. Setiap bagian memiliki peran penting dalam menjelaskan konteks penelitian, metode yang digunakan, serta hasil yang diperoleh. Selain itu, laporan ilmiah harus ditulis dengan bahasa yang formal dan objektif, serta mengedepankan data dan fakta yang dapat dipertanggungjawabkan. Dengan memahami dan mengikuti panduan PI, mahasiswa tidak hanya dapat meningkatkan kemampuan menulis dan berpikir kritis, tetapi juga berkontribusi pada pengembangan ilmu pengetahuan di bidang yang mereka geluti.",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "BAB III > 3.1",
-    "pages": ["13"]
+    "pages": [
+      "13"
+    ]
   },
   {
     "id": "pi-033",
     "title": "BAB III: Sistematika Penulisan Laporan",
-    "content": "Sistematika penulisan terdiri atas Bagian Awal, Bagian Utama, dan Bagian Akhir.\n\nBagian Awal berisi: Halaman Sampul Depan (Cover), Halaman Pengesahan, Abstrak, Kata Pengantar, Daftar Isi, Daftar Tabel, Daftar Gambar, Daftar Lampiran.\n\nBagian Utama berisi: BAB I Pendahuluan (1.1 Latar Belakang Masalah, 1.2 Rumusan Masalah, 1.3 Batasan Masalah, 1.4 Tujuan Penelitian, 1.5 Manfaat Penelitian, 1.6 Sistematika Penulisan); BAB II Tinjauan Pustaka (2.1 Kajian Empiris, 2.2 Landasan Teori); BAB III Metode Penelitian (3.1 Tempat dan Waktu Penelitian, 3.2 Teknik Pengumpulan Data, 3.3 Metode Pengembangan Sistem); BAB IV Hasil Penelitian dan Pembahasan (4.1 Hasil Penelitian, 4.2 Pembahasan); BAB V Penutup (5.1 Kesimpulan, 5.2 Saran).\n\nBagian Akhir berisi: Daftar Pustaka dan Lampiran.",
+    "content": "## 3.2 SISTEMATIKA PENULISAN LAPORAN\n\nSistematika penulisan terdiri atas Bagian Awal, Bagian Utama dan Bagian Akhir. Sistematika penulisan tersebut dapat dilihat dalam Tabel 3.1\n\nTabel 3.1 Sistematika Penulisan Laporan\n\nBagian\n        Keterangan Isi\n\nBagian Awal\n        Halaman Sampul Depan (Cover)\n\nHalaman Pengesahan\n\nAbstrak\n\nKata Pengantar\n\nDaftar Isi\n\nDaftar Tabel\n\nDaftar Gambar\n\nDaftar Lampiran\n\nBagian Utama\n        **BAB I PENDAHULUAN**\n\n**1.1. Latar Belakang Masalah**\n\n**1.2. Rumusan Masalah**\n\n**1.3. Batasan Masalah**\n\n**1.4. Tujuan Penelitian**\n\n**1.5. Manfaat Penelitian**\n\n**1.6. Sistematika Penulisan**\n\nBagian\n        Keterangan Isi\n\n**BAB II TINJAUAN PUSTAKA**<br/>**2.1. Kajian Empiris**<br/>**2.2. Landasan Teori**<br/><br/>**BAB III METODE PENELITIAN**<br/>**3.1. Tempat dan Waktu Penelitian**<br/>**3.2. Teknik Pengumpulan Data**<br/>**3.3. Metode Pengembangan Sistem**<br/><br/>**BAB IV HASIL PENELITIAN DAN PEMBAHASAN**<br/>**4.1. Hasil Penelitian**<br/>**4.2. Pembahasan**<br/><br/>**BAB V PENUTUP**<br/>**5.1. Kesimpulan**<br/>**5.2. Saran**\n\n**Bagian Akhir**\n        Daftar Pustaka<br/>Lampiran\n\nPenjelasan sistematika penulisan secara umum dapat dilihat pada BAB IV",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "BAB III > 3.2",
-    "pages": ["13", "14"]
+    "pages": [
+      "13",
+      "14"
+    ]
   },
   {
     "id": "pi-034",
     "title": "BAB IV: Bagian Awal - Sampul Depan",
-    "content": "Sampul Depan (Cover) memuat judul, jenis usulan, identitas mahasiswa, lambang, program studi, nama institusi, dan tahun terbit. Ketentuan:\n1. Judul dibuat jelas, mengungkapkan masalah dan objek yang dipelajari, diketik huruf besar (kapital) dan tidak disingkat.\n2. Jenis usulan dapat ditulis Penulisan Ilmiah.\n3. Identitas mahasiswa: Nama dan NIM diletakkan di tengah halaman tanpa garis bawah; nama tidak disingkat dan derajat kesarjanaan tidak dicantumkan; NIM di bawah nama.\n4. Memuat lambang STMIK Widya Cipta Dharma.\n5. Memuat Program Studi, Nama Institusi, dan Tahun Diterbitkan.",
+    "content": "# BAB IV\n\n# PENJELASAN SISTEMATIKA PENULISAN LAPORAN\n\n## 4.1. BAGIAN AWAL\n\n### 1. Sampul Depan (Cover)\n\nHalaman ini merupakan halaman identitas yang memuat judul, jenis usulan, identitas mahasiswa, lambang, program studi, nama institusi, dan tahun diterbitkan.\n\n1. **Judul** yang baik dibuat dengan jelas dan harus dapat mengungkapkan masalah serta objek yang sedang dihadapi dan yang akan dipelajari, diketik dengan huruf besar (kapital) dan tidak disingkat.\n\n2. **Jenis Usulan** dapat ditulis Penulisan Ilmiah.\n\n3. **Identitas Mahasiswa**: Nama dan Nomor Induk Mahasiswa (NIM) diletakkan ditengah halaman judul tanpa disertai garis bawah, nama tidak boleh disingkat dan derajat kesarjanaan tidak boleh disertakan. Nomor induk mahasiswa ditempatkan di bawah nama mahasiswa.\n\n4. **Lambang STMIK Widya Cipta Dharma**\n\n5. **Program Studi, Nama Institusi, dan Tahun Diterbitkan**",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "BAB IV > 4.1",
-    "pages": ["15"]
+    "pages": [
+      "15"
+    ]
   },
   {
     "id": "pi-035",
     "title": "BAB IV: Bagian Awal - Halaman Pengesahan dan Abstrak",
-    "content": "Halaman Pengesahan memuat judul, nama, NIM, jenjang, program studi, tanda tangan Dosen Pembimbing dan Dosen Penguji, Mengetahui Ketua Program Studi, dan Ketua STMIK Widya Cipta Dharma.\n\nAbstrak memuat latar belakang masalah, metode yang digunakan, dan hasil penelitian. Umumnya terdiri dari 3 alinea, panjangnya tidak lebih dari satu halaman, ditulis dengan jarak 1 spasi, dan dibuat dalam dua bahasa (Indonesia dan Inggris).",
+    "content": "### 2. Halaman Pengesahan\n\nPada halaman ini memuat Judul, Nama, NIM, Jenjang, Program Studi, Tanda Tangan Dosen Pembimbing dan Dosen Penguji, Mengetahui Ketua Program Studi, dan Ketua STMIK Widya Cipta Dharma.\n\n### 3. Abstrak\n\nPada halaman ini merupakan uraian yang memuat latar belakang masalah yang diteliti, metode yang digunakan dan hasil penelitian. Pada umumnya abstrak terdiri dari 3 alinea, dan panjangnya tidak lebih dari satu halaman, ditulis dengan jarak 1 spasi, dan dibuat dalam 2 bahasa yaitu bahasa Indonesia dan bahasa Inggris.",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "BAB IV > 4.1",
-    "pages": ["15"]
+    "pages": [
+      "15"
+    ]
   },
   {
     "id": "pi-036",
     "title": "BAB IV: Bagian Awal - Kata Pengantar dan Daftar",
-    "content": "Kata Pengantar dibuat ringkas satu atau dua halaman, mengantarkan pembaca pada masalah dan kekhususan PI serta berisi ucapan terima kasih yang mencantumkan nama, jabatan, dan jasa. Bahasa mengikuti kaidah bahasa Indonesia baku. Kata Pengantar diakhiri dengan kota dan tanggal penulisan serta nama penulis tanpa tanda tangan.\n\nDaftar Isi memuat urutan bab, sub-bab, dan anak-sub-bab beserta nomor halaman. Daftar Tabel memuat nomor urut, judul, dan nomor halaman tabel. Daftar Gambar memuat nomor urut, judul, dan nomor halaman gambar. Daftar Lampiran memuat seluruh lampiran yang ditulis dalam naskah.",
+    "content": "### 4. Kata Pengantar\n\nHalaman Kata Pengantar dibuat ringkas dalam satu atau dua halaman. Fungsi utama kata pengantar adalah mengantarkan pembaca pada masalah yang akan dicari jawabannya dan kekhususan-kekhususan tertentu dari PI. Dilanjutkan dengan ucapan terimakasih kepada pihak-pihak yang telah membantu dalam penyusunan PI. Ucapan terima kasih didalamnya harus memuat nama, jabatan, dan jasa yang telah diberikan. Bahasa yang digunakan harus mengikuti kaidah bahasa Indonesia yang baku. Kata Pengantar diakhiri dengan mencantumkan kota dan tanggal penulisan diikuti di bawahnya nama penulis tanpa perlu tanda tangan.\n\n# 5. Daftar Isi\n\nDaftar isi memuat urutan bab, sub-bab dan anak-sub-bab beserta nomor halaman naskah.\n\n# 6. Daftar Tabel\n\nDaftar tabel memuat nomor urut, judul dan nomor halaman tabel.\n\n# 7. Daftar Gambar\n\nDaftar tabel memuat nomor urut, judul dan nomor halaman gambar.\n\n# 8. Daftar Lampiran\n\nDaftar lampiran berisi seluruh lampiran-lampiran dokumen yang ditulis pada naskah.",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "BAB IV > 4.1",
-    "pages": ["15", "16"]
+    "pages": [
+      "15",
+      "16"
+    ]
   },
   {
     "id": "pi-037",
     "title": "BAB IV: Bagian Utama - BAB I Pendahuluan",
-    "content": "BAB I Pendahuluan berisi:\n1. Latar Belakang Masalah: uraian timbulnya masalah yang memerlukan pemecahan, didukung logika dan teori yang mendasari gagasan pemecahan.\n2. Rumusan Masalah: dirumuskan dalam kalimat tanya atau pernyataan yang tegas dan jelas. Contoh pertanyaan: \"Bagaimana merancang aplikasi data akademik pada XYZ?\" Contoh pernyataan: \"Berdasarkan latar belakang masalah xyz terdapat permasalahan pengolahan data yang belum efektif dan efisien\".\n3. Batasan Masalah: ruang lingkup masalah dibatasi agar pembahasan terperinci dan memungkinkan keputusan definitif; variabel penelitian ditentukan.\n4. Tujuan Penelitian: uraian spesifik maksud dan tujuan penelitian.\n5. Manfaat Penelitian: kegunaan produk bagi tempat penelitian dan masyarakat umum.\n6. Sistematika Penulisan: uraian garis besar isi PI dari Bab I sampai Bab V.",
+    "content": "## 4.2. BAGIAN UTAMA\n\n### 1. BAB I PENDAHULUAN\n\n1. **Latar Belakang Masalah**, memuat uraian secara jelas timbulnya masalah yang memerlukan pemecahan dengan didukung oleh logika-logika dan teori-teori yang mendasari timbulnya gagasan pemecahan/pembahasan masalah. Dengan mengemukakan latar belakang masalah akan mempermudah rumusan masalah\n\n2. **Rumusan Masalah**, yang akan dicari pemecahannya melalui penelitian yang akan diajukan hendaknya dirumuskan dalam bentuk kalimat tanya atau penyataan yang tegas dan jelas, untuk menambah ketajaman masalah. Adapun contoh rumusan masalah sebagai berikut:\n\n#### (1) Pertanyaan\n\n“Bagaimana merancang aplikasi data akademik pada XYZ?”\n\n#### (2) Pernyataan\n\n“Berdasarkan latar belakang masalah xyz terdapat permasalahan pengolahan data yang belum efektif dan efisien”\n\n3. **Batasan Masalah**, pada bagian ini masalah yang akan dicari pemecahan masalahnya harus terbatas ruang lingkupnya agar pembahasannya dapat lebih terperinci dan dapat dimungkinkan pengambilan keputusan definitif. Adapun variabel-variabel yang terlibat dalam penelitian harus ditentukan.\n\n4. **Tujuan Penelitian**, memuat uraian yang menyebutkan secara spesifik maksud atau tujuan yang hendak dicapai dari penelitian yang dilakukan. Maksud-maksud yang terkandung didalam kegiatan tersebut baik maksud utama maupun tambahan, harus dikemukakan dengan jelas.\n\n5. **Manfaat Penelitian**, pada bagian ini ditunjukkan kegunaan atau pentingnya produk yang dihasilkan bagi tempat penelitian dan masyarakat umum.\n\n6. **Sistematika Penulisan**, berisi sistematika penulisan PI yang memuat uraian secara garis besar isi PI untuk tiap-tiap bab dari Bab I sampai dengan Bab V.",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "BAB IV > 4.2 > BAB I",
-    "pages": ["16", "17"]
+    "pages": [
+      "16",
+      "17"
+    ]
   },
   {
     "id": "pi-038",
     "title": "BAB IV: Bagian Utama - BAB II Tinjauan Pustaka",
-    "content": "BAB II Tinjauan Pustaka berisi:\n1. Kajian Empiris: kajian dari penelitian sebelumnya yang relevan dengan penelitian yang dilakukan.\n2. Landasan Teori: ilmu-ilmu dasar relevan yang disusun sistematis sebagai landasan penelitian.\n\nSemua sumber pada kajian empiris dan landasan teori harus dicantumkan dengan nama penulis dan tahun terbit, maksimal 5 tahun terakhir.",
+    "content": "## 2. Bab II TINJAUAN PUSTAKA\n\n1. **Kajian Empiris**, adalah kajian yang didapatkan dari penelitian yang telah dilakukan sebelumnya oleh peneliti lain dan berhubungan dengan penelitian yang dilakukan,\n\n2. **Landasan Teori**, memuat ilmu-ilmu dasar yang relevan dengan parameter-parameter penelitian yang disusun secara sistematis. Landasan teori ini akan menjadi sebuah landasan yang kuat dan akan menentukan kesahihan penelitian.\n\nSemua sumber yang dipakai pada kajian empiris dan landasan teori harus disebutkan dengan mencantumkan nama penulis dan tahun terbit maksimal 5 tahun terakhir",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "BAB IV > 4.2 > BAB II",
-    "pages": ["17"]
+    "pages": [
+      "17"
+    ]
   },
   {
     "id": "pi-039",
     "title": "BAB IV: Bagian Utama - BAB III Metode Penelitian",
-    "content": "Metode penelitian memuat tahapan penelitian secara sistematis, antara lain:\n1. Tempat dan Waktu Penelitian: menjelaskan lokasi penelitian dan waktu pelaksanaan.\n2. Teknik Pengumpulan Data: uraian cara dan proses pengumpulan data secara rinci, dapat berupa studi pustaka dan studi lapangan (observasi, wawancara, dokumentasi).\n3. Metode Pengembangan Sistem: tahapan metode pengembangan sistem yang digunakan.\n4. Jadwal Penelitian: pelaksanaan jadwal mulai dari pengajuan PI, pengumpulan data, analisis data, perancangan dan implementasi, ujian hasil, dan pendadaran.",
+    "content": "## 3. BAB III METODE PENELITIAN\n\nMetode penelitian berisi tentang uraian tahapan penelitian yang sistematis, antara lain:\n\n### 1) Tempat dan Waktu Penelitian\n\n(1) Tempat menjelaskan mengenai tempat penelitian dilakukan.\n\n(2) Waktu menjelaskan mengenai kapan penelitian dilaksanakan di suatu instansi\n\n2. **Teknik Pengumpulan Data**, memuat uraian tentang cara dan proses pengumpulan data secara rinci, dengan menunjukkan urutan langkah-langkah yang ditempuh, teknik pengumpulan data dapat berupa :\n\n(1) **Studi Pustaka**, adalah suatu teknik pengumpulan data yang dilakukan oleh peneliti dengan menelaah teori-teori, pendapat pendapat serta pokok-pokok pikiran yang terdapat dalam media cetak, khususnya buku-buku yang menunjang dan relevan dengan masalah yang dibahas dalam penelitian.\n\n(2) **Studi lapangan** adalah pengumpulan data secara langsung dengan mempergunakan teknik pengumpulan data secara observasi, wawancara, dan dokumentasi\n\n3. **Metode Pengembangan Sistem**, menjelaskan atau menguraikan tahapan metode pengembangan sistem yang digunakan\n\n4. **Jadwal Penelitian**, tentang pelaksanaan jadwal penelitian mulai dari pengajuan PI (PI), pengumpulan data, analisis data, perancangan dan implementasi, ujian hasil dan pendadaran.",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "BAB IV > 4.2 > BAB III",
-    "pages": ["17"]
+    "pages": [
+      "17"
+    ]
   },
   {
     "id": "pi-040",
     "title": "BAB IV: Bagian Utama - BAB IV Hasil Penelitian dan Pembahasan",
-    "content": "BAB IV berisi:\n1. Hasil Penelitian: gambaran umum objek penelitian (misalnya struktur organisasi, jabatan, tugas, wewenang), gambaran umum produk, serta data yang digunakan untuk memecahkan masalah yang dihadapi.\n2. Pembahasan: memaparkan hasil dari metode pengembangan sistem yang digunakan.",
+    "content": "## 4. BAB IV HASIL PENELITIAN DAN PEMBAHASAN\n\n1. **Hasil Penelitian**, yang menguraikan tentang gambaran umum objek penelitian, misalnya gambaran umum perusahaan (struktur organisasi, jabatan tugas dan wewenang), atau gambaran umum produk, serta data yang dipergunakan untuk memecahkan masalah-masalah yang dihadapi, berkaitan dengan kegiatan penelitian\n\n2. **Pembahasan**, pada Bab ini akan memaparkan hasil dari metode pengembangan sistem yang digunakan",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "BAB IV > 4.2 > BAB IV",
-    "pages": ["17", "18"]
+    "pages": [
+      "17",
+      "18"
+    ]
   },
   {
     "id": "pi-041",
     "title": "BAB IV: Bagian Utama - BAB V Penutup",
-    "content": "BAB V Penutup berisi:\n1. Kesimpulan: mengemukakan kembali masalah penelitian (menjawab rumusan masalah), menyimpulkan bukti yang diperoleh, dan menarik kesimpulan apakah hasil layak diimplementasikan. Tidak diperkenankan menyimpulkan masalah jika pembuktian tidak ada dalam hasil penelitian.\n2. Saran: manifestasi penelitian untuk dilaksanakan (sesuatu yang belum ditempuh dan layak dilaksanakan); saran terkait ruang lingkup penelitian untuk objek penelitian maupun pembaca yang akan mengembangkan hasil penelitian.",
+    "content": "# 5. BAB V PENUTUP\n\n1. **Kesimpulan**, dapat mengemukakan kembali masalah penelitian (mampu menjawab pertanyaan dalam rumusan masalah), menyimpulkan bukti-bukti yang diperoleh dan akhirnya menarik kesimpulan apakah hasil yang didapat (dikerjakan), layak untuk digunakan (diimplementasikan). Tidak diperkenankan menyimpulkan masalah jika pembuktian tidak terdapat dalam hasil penelitian\n\n2. **Saran**, merupakan manifestasi dari penelitian untuk dilaksanakan (sesuatu yang belum ditempuh dan layak untuk dilaksanakan). Saran dicantumkan karena peneliti melihat adanya jalan keluar untuk mengatasi masalah (kelemahan yang ada), saran yang diberikan tidak terlepas dari ruang lingkup penelitian (untuk objek penelitian maupun pembaca yang akan mengembangkan hasil penelitian).",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "BAB IV > 4.2 > BAB V",
-    "pages": ["18"]
+    "pages": [
+      "18"
+    ]
   },
   {
     "id": "pi-042",
     "title": "BAB IV: Bagian Akhir",
-    "content": "Bagian Akhir berisi:\n1. Daftar Pustaka: referensi/literatur penelitian yang disusun sesuai aturan penulisan daftar pustaka dalam PI.\n2. Lampiran: keterangan pelengkap dari tubuh utama, misalnya daftar pertanyaan atau contoh formulir data sesuai keperluan penelitian.",
+    "content": "## 4.3. BAGIAN AKHIR\n\n1. **Daftar Pustaka**, merupakan referensi/literatur atas penelitian yang dilakukan dan hendaknya dikemukaan secara jelas, daftar pustaka tersebut disusun dengan aturan penulisan daftar pustaka seperti lazimnya digunakan dalam penulisan PI.\n\n2. **Lampiran**, berupa keterangan pelengkap atau tambahan dari tubuh utama yang berupa daftar pertanyaan atau contoh formulir data yang sesuai dengan penelitian dan sebagainya sesuai dengan keperluan penelitian.",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "BAB IV > 4.3",
-    "pages": ["18"]
+    "pages": [
+      "18"
+    ]
   },
   {
     "id": "pi-043",
     "title": "BAB V: Jenis dan Ukuran Kertas",
-    "content": "Spesifikasi kertas laporan hardcover PI: jenis HVS A4 (21 cm x 29,7 cm) berat 80 gram, warna putih polos. Halaman judul hardcover menggunakan kertas cover warna yang ditentukan STMIK Widya Cipta Dharma. Penulisan pada satu sisi kertas dengan tinta hitam yang tidak mudah luntur, kecuali lambang dan gambar yang harus berwarna.",
+    "content": "# BAB V\n\n# FORMAT DAN TATA CARA PENULISAN\n\n## 5.1. JENIS DAN UKURAN KERTAS\n\nSpesifikasi kertas yang digunakan dalam penyajian laporan Hardcover PI adalah jenis HVS-A4 (21 cm x 29,7 cm) dengan berat 80 gram berwarna putih polos. Untuk halaman judul hardcover menggunakan kertas cover warna yang telah ditentukan oleh STMIK Widya Cipta Dharma. Penulisan dilakukan pada satu sisi halaman kertas dan menggunakan tinta HITAM yang tidak mudah luntur untuk mencetak, kecuali untuk lambang dan gambar yang harus disajikan berwarna.",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "BAB V > 5.1",
-    "pages": ["19"]
+    "pages": [
+      "19"
+    ]
   },
   {
     "id": "pi-044",
     "title": "BAB V: Aturan Penulisan (Margin, Huruf, Spasi, Alinea, Bab)",
-    "content": "Aturan penulisan:\n1. Margin: atas 3 cm, bawah 3 cm, kiri 4 cm, kanan 3 cm; naskah rata kiri dan kanan.\n2. Jenis huruf: Times New Roman ukuran 12 untuk seluruh naskah; dalam tabel boleh lebih kecil dari 12.\n3. Spasi: 1,5 spasi untuk naskah; daftar isi, daftar tabel, daftar gambar, daftar lampiran, judul tabel, judul gambar, dan daftar pustaka menggunakan 1 spasi.\n4. Alinea baru: baris pertama menjorok 6 ketukan dari margin kiri atau sekitar 1,2 cm.\n5. Bab dan sub-bab: nama bab huruf kapital dengan jarak 3 cm dari tepi atas; nomor bab huruf romawi di tengah atas nama bab; sub-bab dimulai dari tepi kiri; nama bab dan sub-bab ditebalkan.",
+    "content": "## 5.2. ATURAN PENULISAN\n\n### 1. Margin\n\nNaskah diketik rata kiri dan kanan dengan batas margin pengetikan naskah ditentukan sebagai berikut: Margin Atas: 3 cm Margin Bawah: 3 cm Margin Kiri: 4 cm Margin Kanan: 3 cm\n\n### 2. Jenis huruf\n\nNaskah PI (PI) diketik dengan huruf standar (_Times New Roman_) dan ukuran (_font size_) yang sama, untuk seluruh naskah _font size_ 12, kecuali bila didalam tabel ukuran huruf tersebut dapat dikecilkan menjadi kurang dari 12 point.\n\n### 3. Spasi Pengetikan\n\nJarak antara baris satu dengan yang lain dibuat 1,5 spasi, kecuali daftar isi, daftar tabel, daftar gambar, daftar lampiran, judul tabel, judul gambar dan daftar pustaka menggunakan spasi tunggal atau 1 spasi.\n\n### 4. Pengetikan Alinea Baru\n\nTiap-tiap baris dari suatu alinea dimulai dengan ketukan huruf pertama agak menjorok kedalam (kearah kanan) sebanyak 6 ketukan huruf dari margin/batas kiri atau + 1,2 cm\n\n### 5. Pengetikan Bab dan sub-bab\n\nNama bab diketik dengan huruf kapital dengan jarak 3 cm dari tepi atas kertas. Nomor urut bab ditulis dengan huruf romawi dan ditulis ditengah-tengah kertas di atas nama bab. Pengetikan nama sub-bab dan nomor sub-bab dimulai dari tepi kiri. Nama bab dan sub-bab diketik dengan huruf tebal.",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "BAB V > 5.2",
-    "pages": ["19"]
+    "pages": [
+      "19"
+    ]
   },
   {
     "id": "pi-045",
     "title": "BAB V: Aturan Penulisan (Angka)",
-    "content": "Aturan angka:\n1. Angka dalam PI menggunakan pembulatan dua angka atau lebih di belakang koma sesuai keperluan.\n2. Bilangan desimal ditandai dengan koma (,), bukan titik (.).\n3. Satuan dinyatakan dengan singkatan resmi dan diakhiri tanpa tanda titik.",
+    "content": "# 6. Angka\n\n1. Angka dalam PI menggunakan pembulatan dua angka atau lebih di belakang koma disesuaikan dengan keperluan.\n\n2. Bilangan desimal ditandai dengan tanda koma (,) bukan titik (.).\n\n3. Satuan dinyatakan dengan singkatan resminya dan diakhiri tanpa tanda titik",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "BAB V > 5.2",
-    "pages": ["20"]
+    "pages": [
+      "20"
+    ]
   },
   {
     "id": "pi-046",
     "title": "BAB V: Aturan Penulisan (Penomoran Halaman)",
-    "content": "Penomoran halaman:\n1. Bagian awal (halaman judul sampai daftar gambar) memakai angka Romawi kecil di tengah bawah.\n2. Bagian utama dan akhir (Bab I sampai akhir) memakai angka Arab di kanan atas.\n3. Jika ada judul atau bab di bagian atas, nomor halaman ditulis di tengah bawah.\n4. Nomor halaman kanan atas berjarak 3 cm dari tepi kanan dan 1,5 cm dari tepi atas; nomor tengah bawah berjarak 1,5 cm dari tepi bawah.",
+    "content": "# 7. Penomoran Halaman\n\n1. Bagian awal PI, mulai dari halaman judul sampai daftar gambar, diberi nomor halaman dengan angka Romawi kecil (i, ii, iii, ... dst) dan diletakkan di tengah bawah.\n\n2. Bagian utama dan akhir, mulai dari Bab I sampai ke halaman terakhir, memulai angka Arab (1,2,3,4, ... dst) sebagai nomor halaman.\n\n3. Nomor halaman ditempatkan di sebelah kanan atas, kecuali bila ada judul atau bab pada bagian atas halaman tersebut. Untuk halaman yang demikian nomornya ditulis di tengah bawah.\n\n4. Nomor halaman diketik dengan jarak 3 cm dari tepi kanan dan 1,5 cm dari tepi atas. Sedangkan nomor pada tengah bawah berjarak 1,5 cm dari bawah",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "BAB V > 5.2",
-    "pages": ["20"]
+    "pages": [
+      "20"
+    ]
   },
   {
     "id": "pi-047",
     "title": "BAB V: Aturan Penulisan (Tabel)",
-    "content": "Aturan tabel:\n1. Nomor tabel/gambar menggunakan format dua angka: angka pertama bab, angka kedua urutan (contoh: Gambar 4.1).\n2. Nomor tabel dan keterangannya ditempatkan simetris di atas tabel tanpa titik.\n3. Tabel tidak boleh terpotong; jika panjang, header tetap ditampilkan di tiap halaman.\n4. Isi tabel menggunakan spasi 1.\n5. Tabel yang lebih lebar dari kertas dibuat landscape dengan bagian atas di sisi kiri kertas.\n6. Judul tabel ditulis setelah nomor tabel, huruf tidak tebal, kapital di awal kata, tanpa titik; jika lebih dari satu baris, baris kedua dimulai tepat di bawah huruf pertama judul dengan spasi 1 dan font 11.\n7. Sumber pustaka ditulis setelah judul tabel dengan format nama pengarang dan tahun, font 11.\n\nContoh isi tabel (Tabel 5.1):\nAlgoritma | Waktu | Ketelitian | Memori\nA | 120 ms | 98% | 200 KB\nB | 105 ms | 98% | 200 KB\nSumber: Nama Pengarang, Nama Pustaka (Tahun)",
+    "content": "# 8. Tabel dan Gambar\n\n## 1) Tabel\n\n(1) Tabel dan gambar diberi nomor urut dengan angka Arab dengan format berupa 2 angka. Angka pertama menunjukkan bab dan angka kedua menunjukkan urutan nomor tabel/gambar (Contoh: Gambar 4.1 artinya gambar pada bab 4 dengan urutan nomor 1).\n\n(2) Nomor tabel (daftar) yang diikuti dengan keterangan, ditempatkan simetris diatas (daftar), tanpa diakhiri titik.\n\n(3) Tabel tidak boleh terpotong, kecuali jika panjangnya tidak memungkinkan untuk diketik dalam satu halaman. Pada halaman lanjutan, header tabel harus tetap ditampilkan di setiap halaman.\n\n(4) Penulisan isi tabel menggunakan jarak 1 spasi.\n\n(5) Jika tabel memiliki ukuran yang lebih besar dari lebar kertas sehingga harus dibuat memanjang, maka bagian atas tabel harus ditempatkan di sisi kiri kertas dengan posisi landscape.\n\n(6) Judul tabel yang ditulis setelah nomor tabel letaknya di atas tabelnya. huruf tidak tebal dengan diawali oleh huruf kapital di setiap awal kata (kecuali kata depan dan kata penghubung) tanpa diakhiri dengan tanda titik. Bila judul lebih dari satu baris,\n\nbaris kedua dimulai tepat di bawah huruf pertama judul dengan jarak 1 (satu) spasi, dengan ukuran huruf _Font Size_ adalah 11.\n\n(7) Sumber pustaka dari tabel tersebut diletakkan setelah judul tabel dengan format nama pengarang pustaka yang dikutip, dan tahun dengan ukuran huruf _font size_ adalah 11. Contoh dapat dilihat pada tabel 5.1.\n\nTabel 5.1 Judul Tabel\n\n(jarak 1 (satu) spasi, dengan ukuran huruf 11)\n\nAlgoritma\n        Waktu\n        Ketelitian\n        Memori\n\nA\n        120 ms\n        98%\n        200 KB\n\nB\n        105 ms\n        98%\n        200 KB\n\n**Sumber**: Nama Pengarang, Nama Pustaka (Tahun)\n\n(jarak 1 (satu) spasi, dengan ukuran huruf 11)",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "BAB V > 5.2",
-    "pages": ["20", "21"]
+    "pages": [
+      "20",
+      "21"
+    ]
   },
   {
     "id": "pi-048",
     "title": "BAB V: Aturan Penulisan (Gambar)",
-    "content": "Aturan gambar:\n1. Sajian data dalam grafik, diagram alir, bagan, peta, foto, atau gambar harus relevan dengan topik penelitian.\n2. Nomor gambar dan judul diletakkan simetris di bawah gambar tanpa titik; jika judul lebih dari satu baris, baris kedua dimulai tepat di bawah huruf pertama judul dengan spasi 1 dan font 11.\n3. Ukuran gambar diusahakan proporsional dan jelas.\n4. Letak gambar diatur supaya simetris.\n5. Sumber pustaka gambar ditulis setelah judul gambar dengan format nama pengarang, nama pustaka, dan tahun.",
+    "content": "## 2) Gambar\n\n(1) Pemilihan sajian data hasil penelitian dalam bentuk grafik, diagram alir, bagan, peta, foto, atau gambar dalam karya ilmiah perlu dipertimbangkan dengan memperhatikan relevansinya dengan topik penelitian yang dilakukan.\n\n(2) Nomor gambar yang diikuti dengan judul diletakkan simetris di bawah gambar tanpa diakhiri dengan titik, ditulis di bawah, tidak di halaman lain. Bila judul lebih dari satu baris, baris kedua dimulai tepat di bawah huruf pertama judul dengan jarak 1 (satu) spasi, dengan ukuran huruf _font size_ adalah 11.\n\n(3) Ukuran gambar (lebar dan tinggi) diusahakan proporsional dan jelas.\n\n(4) Letak gambar diatur supaya simetris.\n\n(5) Sumber pustaka dari gambar tersebut diletakkan setelah judul gambar dengan format nama pengarang, nama pustaka, dan tahun. Contoh dapat dilihat pada gambar 5.1\n\nGambar 5.1 Judul Gambar\n\n**Sumber**: Nama Pengarang, Nama Pustaka (Tahun)\n\n(jarak 1 (satu) spasi, dengan ukuran huruf _Font Size_ adalah 11)",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "BAB V > 5.2",
-    "pages": ["21"]
+    "pages": [
+      "21"
+    ]
   },
   {
     "id": "pi-049",
     "title": "BAB V: Bahasa",
-    "content": "Bahasa yang digunakan mengikuti EYD Edisi Kelima. Bentuk kalimat tidak menampilkan orang pertama atau orang kedua (misal: saya, aku, kita, engkau, peneliti, penulis), tetapi menggunakan kalimat pasif. Istilah yang digunakan adalah istilah Indonesia atau istilah asing yang sudah diindonesiakan. Jika harus menggunakan istilah asing, dicetak miring dan konsisten.",
+    "content": "# 5.3. BAHASA\n\n1. Bahasa yang digunakan mengikuti EYD (Ejaan yang Disempurnakan) Edisi Kelima.\n\n2. Bentuk dalam kalimat tidak boleh menampilkan orang pertama atau orang kedua (contoh: saya, aku, kita, engkau, peneliti, penulis dan lain-lainnya), tetapi dibuat berbentuk kalimat pasif.\n\n3. Istilah\n\n1) Istilah yang digunakan adalah istilah Indonesia atau istilah asing yang sudah di Indonesiakan\n\n2) Jika harus menggunakan istilah asing, pada istilah tersebut harus dicetak miring, dan konsisten.",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "BAB V > 5.3",
-    "pages": ["22"]
+    "pages": [
+      "22"
+    ]
   },
   {
     "id": "pi-050",
     "title": "BAB V: Huruf Miring",
-    "content": "Penggunaan huruf miring dalam bagian isi PI mengikuti aturan EYD Edisi Kelima. Penggunaan huruf miring dalam penulisan daftar pustaka mengikuti aturan tersendiri seperti contoh pada bagian penulisan daftar pustaka.",
+    "content": "# 5.4. HURUF MIRING\n\nPenggunaan huruf miring dalam bagian isi PI mengikuti aturan yang ditetapkan dalam EYD Edisi ke Kelima. Penggunaan huruf miring dalam penulisan daftar pustaka, mengikuti aturan tersendiri seperti yang dicontohkan dalam bagian penulisan daftar Pustaka",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "BAB V > 5.4",
-    "pages": ["22"]
+    "pages": [
+      "22"
+    ]
   },
   {
     "id": "pi-051",
     "title": "BAB V: Aturan Penulisan Pustaka (Penyusunan Daftar Pustaka)",
-    "content": "Aturan penyusunan daftar pustaka:\n1. Menggunakan American Psychological Association (APA); disarankan menggunakan Mendeley atau tools reference lainnya.\n2. Jumlah referensi minimal 15; 80% berasal dari buku dan jurnal.\n3. Disarankan merujuk referensi kurang dari 5 tahun kecuali yang sangat penting.\n4. Disarankan terdapat rujukan dari penulis dosen STMIK Widya Cipta Dharma.\n5. Nama penulis: nama belakang diikuti inisial nama depan; jika lebih dari satu penulis, pisahkan dengan koma dan sebelum penulis terakhir gunakan '&'; gelar tidak dicantumkan.\n6. Tahun: diletakkan setelah nama penulis dalam tanda kurung.\n7. Judul: dicetak miring untuk buku dan jurnal; judul artikel tidak miring, namun judul jurnal miring; hanya huruf pertama judul dan subjudul yang kapital.\n8. Informasi publikasi: nama penerbit, volume, halaman, dan DOI jika ada.\n9. Urutan abjad berdasarkan nama penulis pertama.\n10. Hanging indent untuk baris kedua dan seterusnya.\n11. DOI atau URL selalu disertakan untuk referensi elektronik.\n12. Jika tidak ada tanggal, gunakan 'n.d.' (no date).\n13. Setiap pustaka diketik dengan spasi 1 (rata kiri).",
+    "content": "# 5.5. ATURAN PENULISAN PUSTAKA ATAU SUMBER RUJUKAN\n\n## 1. Penyusunan Daftar Pustaka\n\nPenulisan nama dalam kutipan dan daftar pustaka adalah sebagai berikut:\n\n1. Menggunakan American Psychological Association (APA). Disarankan membuat referensi dengan tools Mendeley atau tools reference lainnya.\n\n2. Jumlah referensi minimal 15 dan 80% dari referensi tersebut harus berasal dari buku dan jurnal.\n\n3. Disarankan merujuk pada referensi yang berusia kurang dari 5 tahun kecuali referensi tersebut dianggap sangat penting meskipun berusia lebih dari 5 tahun\n\n4. Disarankan terdapat sumber rujukan dari penulis dosen STMIK Widya Cipta Dharma\n\n5. **Nama Penulis**: Penulisan dimulai dengan nama belakang, diikuti inisial nama depan. Jika ada lebih dari satu penulis, pisahkan dengan koma, dan sebelum penulis terakhir gunakan \"&.\", Gelar tidak perlu disebutkan.\n\n6. **Tahun**: Diletakkan setelah nama penulis dalam tanda kurung.\n\n7. **Judul**: Ditulis miring (_italic_) untuk buku dan jurnal. Untuk artikel, judul artikel tidak dicetak miring, tetapi judul jurnal tetap dicetak miring. Hanya huruf pertama dari judul dan subjudul yang ditulis dengan huruf kapital.\n\n8. **Informasi Publikasi**: Berisi nama penerbit, volume, halaman, dan DOI jika ada.\n\n9. **Urutan Abjad**: Daftar pustaka disusun berdasarkan urutan abjad nama penulis pertama.\n\n10. **Hanging Indent**: Setiap entri dalam daftar pustaka menggunakan hanging indent (baris kedua dan seterusnya menjorok ke dalam).\n\n11. **DOI atau URL**: Jika ada DOI atau URL, selalu sertakan untuk referensi elektronik.\n\n12. **Jika Tidak Ada Tanggal**: Gunakan \"n.d.\" (no date). **Contoh**: Smith, J. (n.d.). _Introduction to psychology_.\n\n13. Setiap pustaka diketik dengan jarak satu spasi (rata kiri)",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "BAB V > 5.5",
-    "pages": ["22", "23"]
+    "pages": [
+      "22",
+      "23"
+    ]
   },
   {
     "id": "pi-052",
     "title": "BAB V: Bentuk Daftar Pustaka - Artikel Jurnal",
-    "content": "Format artikel jurnal:\nPenulis, A. A., & Penulis, B. B. (Tahun). Judul artikel. Nama Jurnal, volume(edisi), halaman. https://doi.org/xx.xxxxx\n\nContoh:\nBryman, A. (2006). Integrating quantitative and qualitative research: How is it done? Qualitative Research, 6(1), 97-113. https://doi.org/10.1177/1468794106058877",
+    "content": "# 2. Bentuk Daftar Pustaka\n\n## 1) Artikel Jurnal\n\nPenulis, A. A., & Penulis, B. B. (Tahun). Judul artikel. _Nama Jurnal, volume_(edisi), halaman. <u>https://doi.org/xx.xxxxx</u>\n\n**Contoh**:\n\nBryman, A. (2006). Integrating quantitative and qualitative research: How is it done? _Qualitative Research, 6_(1), 97–113. https://doi.org/10.1177/1468794106058877",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "BAB V > 5.5 > Bentuk Daftar Pustaka",
-    "pages": ["23"]
+    "pages": [
+      "23"
+    ]
   },
   {
     "id": "pi-053",
     "title": "BAB V: Bentuk Daftar Pustaka - Buku",
-    "content": "Format buku:\nPenulis, A. A. (Tahun). Judul buku: Subjudul jika ada. Penerbit: Kota Terbit.\n\nContoh satu penulis:\nSugiyono. (2016). Metode penelitian kuantitatif, kualitatif, dan R&D. Alfabeta: Bandung.\n\nContoh dua penulis:\nSmith, J. A., & Brown, P. L. (2020). Introduction to database systems. Pearson Education: London.",
+    "content": "## 2) Buku\n\nPenulis, A. A. (Tahun). _Judul buku: Subjudul jika ada_. Penerbit: Kota Terbit.\n\n**Contoh dengan satu penulis**\n\nSugiyono. (2016). _Metode penelitian kuantitatif, kualitatif, dan R&D_. Alfabeta: Bandung.\n\n**Contoh dengan dua penulis**\n\nSmith, J. A., & Brown, P. L. (2020). _Introduction to database systems_. Pearson Education: London.",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "BAB V > 5.5 > Bentuk Daftar Pustaka",
-    "pages": ["23"]
+    "pages": [
+      "23"
+    ]
   },
   {
     "id": "pi-054",
     "title": "BAB V: Bentuk Daftar Pustaka - Artikel di Website",
-    "content": "Format artikel di website:\nPenulis, A. A. (Tahun, Tanggal). Judul artikel. Nama Situs Web. URL\n\nContoh:\nWorld Health Organization. (2021, March 25). Mental health and COVID-19. WHO. https://www.who.int/news-room/mental-health",
+    "content": "## 3) Artikel di Website\n\nPenulis, A. A. (Tahun, Tanggal). Judul artikel. _Nama Situs Web_. URL\n\n**Contoh**:\n\nWorld Health Organization. (2021, March 25). Mental health and COVID-19. _WHO_. <u>https://www.who.int/news-room/mental-health</u>.",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "BAB V > 5.5 > Bentuk Daftar Pustaka",
-    "pages": ["23"]
+    "pages": [
+      "23"
+    ]
   },
   {
     "id": "pi-055",
     "title": "BAB V: Bentuk Daftar Pustaka - Bab Buku",
-    "content": "Format sumber dari bab buku:\nPenulis, A. A. (Tahun). Judul bab. Dalam A. Editor & B. Editor (Ed.), Judul Buku (hal. xx-xx). Penerbit.\n\nContoh:\nJones, G. R. (2019). Organizational design. Dalam J. R. Schermerhorn, Management Foundations (hal. 145-172). Wiley.",
+    "content": "## 4) Sumber dari Bab Buku (Book Chapter)\n\nPenulis, A. A. (Tahun). Judul bab. Dalam A. Editor & B. Editor (Ed.), _Judul Buku_ (hal. xx–xx). Penerbit.\n\n**Contoh**:\n\nJones, G. R. (2019). Organizational design. Dalam J. R. Schermerhorn, _Management Foundations_ (hal. 145–172). Wiley.",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "BAB V > 5.5 > Bentuk Daftar Pustaka",
-    "pages": ["23"]
+    "pages": [
+      "23"
+    ]
   },
   {
     "id": "pi-056",
     "title": "BAB V: Bentuk Daftar Pustaka - Sumber dari PI",
-    "content": "Format sumber dari PI:\nPenulis, A. A. (Tahun). Judul PI (PI tidak dipublikasikan). Institusi.\n\nContoh:\nPratama, R. F. (2020). Pengaruh media pembelajaran berbasis teknologi terhadap hasil belajar siswa (PI tidak dipublikasikan). STMIK Widya Cipta Dharma.",
+    "content": "## 5) Sumber dari PI\n\nPenulis, A. A. (Tahun). _Judul PI_ (PI tidak dipublikasikan). Institusi.\n\n**Contoh**:\n\nPratama, R. F. (2020). _Pengaruh media pembelajaran berbasis teknologi terhadap hasil belajar siswa_ (PI tidak dipublikasikan). STMIK Widya Cipta Dharma.",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "BAB V > 5.5 > Bentuk Daftar Pustaka",
-    "pages": ["23"]
+    "pages": [
+      "23"
+    ]
   },
   {
     "id": "pi-057",
     "title": "BAB V: Bentuk Daftar Pustaka - Media Online Tanpa Penulis",
-    "content": "Format sumber media online tanpa penulis:\nNama Organisasi atau Judul Artikel. (Tahun, Tanggal). Judul artikel. Nama Situs Web. URL\n\nContoh:\nKementerian Pendidikan dan Kebudayaan. (2021, 15 Mei). Peningkatan kompetensi guru di era digital. Kemendikbud. https://www.kemendikbud.go.id",
+    "content": "6. **Sumber dari Media Online (Tanpa Penulis)**\n\nNama Organisasi atau Judul Artikel. (Tahun, Tanggal). Judul artikel. _Nama Situs Web_.\nURL\n\n**Contoh:**\n\nKementerian Pendidikan dan Kebudayaan. (2021, 15 Mei). Peningkatan kompetensi guru di era digital. _Kemendikbud_. https://www.kemendikbud.go.id",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "BAB V > 5.5 > Bentuk Daftar Pustaka",
-    "pages": ["24"]
+    "pages": [
+      "24"
+    ]
   },
   {
     "id": "pi-058",
     "title": "Lampiran 1: Contoh Halaman Sampul Depan",
-    "content": "Contoh elemen halaman sampul depan:\n- JUDUL PENULISAN ILMIAH (Uppercase, Size 14, Bold, Spasi 1,5, Center)\n- PENULISAN ILMIAH (Uppercase, Size 14, Bold, Spasi Single, Center)\n- oleh: NAMA MAHASISWA dan NIM (Uppercase, Size 12, Bold, Spasi Single, Center)\n- Logo STMIK Widya Cipta Dharma\n- PROGRAM STUDI SI/TI/BisDig, SEKOLAH TINGGI MANAJEMEN INFORMATIKA DAN KOMPUTER WIDYA CIPTA DHARMA, TAHUN (Uppercase, Size 12, Bold, Spasi 1, Center)\n- Catatan: pilih salah satu dan nama prodi tidak disingkat.",
+    "content": "**Lampiran 1. Contoh Halaman Sampul Depan**\n\n**JUDUL PENULISAN ILMIAH**\n_(Times New Roman, Uppercase, Size 14, Bold, Spasi 1,5, Center)_\n\n**PENULISAN ILMIAH**\n_(Times New Roman, Uppercase, Size 14, Bold, Spasi Single, Center)_\n\noleh:\n\n**NAMA MAHASISWA**\n**NIM**\n_(Times New Roman, Uppercase, Size 12, Bold, Spasi Single, Center)_\n\n**PROGRAM STUDI SI/TI/BisDig <sup>1</sup>**\n**SEKOLAH TINGGI MANAJEMEN INFORMATIKA DAN KOMPUTER**\n**WIDYA CIPTA DHARMA**\n**TAHUN**\n_(Times New Roman, Uppercase, Size 12, Bold, Spasi 1, Center)_\n\n<sup>1</sup> Pilih Salah Satu dan Nama Prodi Tidak Disingkat\n25",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "Lampiran 1",
-    "pages": ["25"]
+    "pages": [
+      "25"
+    ]
   },
   {
     "id": "pi-059",
     "title": "Lampiran 2: Contoh Halaman Pengesahan",
-    "content": "Form Halaman Pengesahan Penulisan Ilmiah memuat:\n- Judul, Nama Lengkap, NIM, Program Studi, Penempatan\n- Tanggal seminar PI\n- Tanda tangan: Pembimbing Lapangan (NIK), Pembimbing Laporan (NIDN/NUPTK), Ketua Penguji, Anggota Penguji\n- Mengetahui Ketua Program Studi (SI/TI/BisDig) dan Mengesahkan Ketua STMIK Widya Cipta Dharma\n- Catatan: Nomor Induk Karyawan/Pegawai untuk pembimbing lapangan; pilih salah satu program studi dan nama prodi tidak disingkat.",
+    "content": "# Lampiran 2. Contoh Halaman Pengesahan\n\nKode Dokumen: FM/STMIKWICIDA/SPMI-I/5/Ak/091\n\n# HALAMAN PENGESAHAN PENULISAN ILMIAH\n\n_(Font Times New Roman, Uppercase, Size 12, Bold, Spasi 1,5, Center)_\n\n- **Judul**: (Judul PI)\n- **Nama Lengkap**: (Nama Lengkap Mahasiswa)\n- **NIM**: (NIM Mahasiswa)\n- **Program Studi**: (Program Studi)\n- **Penempatan**: (Nama Instansi Penulisan Ilmiah)\n\nSamarinda, < tanggal Seminar Penulisan Ilmiah>\n\n### Menyetujui,\n\n**Pembimbing Lapangan** [tab] **Pembimbing Laporan**\n\n<u>Nama dan Gelar</u>\n        <u>Nama dan Gelar</u>\n\nNIK².\n        NIDN/NUPTK.\n\nKetua Penguji\n        Anggota Penguji\n\n<u>Nama dan Gelar</u>\n        <u>Nama dan Gelar</u>\n\nNIDN/NUPTK.\n        NIDN/NUPTK.\n\nMengetahui,\n        Mengesahkan,\n\nKetua Program Studi\n        Ketua STMIK Widya Cipta Dharma\n\n(SI/TI/BisDig) <sup>3</sup>\n\n<u>Nama dan Gelar</u>\n        <u>Nama dan Gelar</u>\n\nNIK.\n        NIK.\n\n<sup>2</sup> Nomor Induk Karyawan/Pegawai\n\n<sup>3</sup> Pilih Salah Satu dan Nama Prodi Tidak Disingkat",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "Lampiran 2",
-    "pages": ["26"]
+    "pages": [
+      "26"
+    ]
   },
   {
     "id": "pi-060",
     "title": "Lampiran 3: Contoh Abstrak",
-    "content": "Contoh struktur abstrak:\n- Judul: ABSTRAK (Uppercase, Size 12, Bold, Spasi 1,5, Center)\n- Metadata: Nama Mahasiswa, Tahun, Judul PI, STMIK Widya Cipta Dharma, Dosen Pembimbing (disertai gelar)\n- Kata kunci: analisis pola belanja, konsumen, tata letak barang, market basket analysis, data mining\n\nContoh isi abstrak (ringkas):\nDewasa ini hampir setiap aktivitas menghasilkan data, seperti transaksi penjualan yang tersimpan dalam database. Toko ABCD menggunakan POS dan memiliki data transaksi yang menumpuk, tetapi belum diolah untuk strategi penjualan. Data tersebut dapat diolah menjadi informasi untuk menentukan tata letak barang guna meningkatkan impulse buying, menjaga omzet, dan mengurangi penumpukan produk kadaluarsa.\nMetode penelitian menggunakan market basket analysis (association rules) pada data mining untuk menemukan pola pembelian bersamaan.\nHasil analisis dengan aplikasi Rapidminer menghasilkan 25 rules dengan lift ratio > 1 yang menjadi acuan penentuan tata letak barang untuk memudahkan konsumen dan memaksimalkan pemajangan produk.\n\nCatatan: Abstrak terdiri dari tiga alinea, maksimal 300 kata, spasi 1, dibuat dalam dua bahasa (Indonesia dan Inggris), serta memiliki 3-5 kata kunci yang ditulis huruf kecil dan dipisahkan koma.",
+    "content": "# Lampiran 3. Contoh Abstrak\n\n## ABSTRAK\n\n_(Font Times New Roman, Uppercase, Size 12, Bold, Spasi 1,5, Center)_\n\nNama Mahasiswa, Tahun, Judul PI, Sekolah Tinggi Manajemen Informatika dan Komputer Widya Cipta Dharma, Dosen Pembimbing: Nama Dosen Pembimbing disertai gelar.\n\n**Kata Kunci:** analisis pola belanja, konsumen, tata letak barang, market basket analysis, _data mining_\n\nDewasa ini hampir setiap aktivitas selalu menghasilkan data, seperti bidang bisnis data transaksi penjualan yang tersimpan disistem _database_ akan selalu bertambah dan menumpuk. Toko ABCD merupakan usaha kecil dan menengah yang menjual berbagai perlengkapan sekolah dan perlengkapan acara yang menggunakan sistem _POS_ untuk setiap transaksinya. Saat ini data yang ada hanya dijadikan arsip oleh pemilik toko sehingga berdampak pada strategi penjualan yang tidak terlaksana dengan baik, padahal data yang ada dapat diolah menjadi informasi untuk menentukan tata letak barang sehingga dapat meningkatkan _impulse buying_, menaikkan atau mempertahankan omzet, dan meminimalisir produk yang menumpuk hingga kadaluarsa yang dapat merugikan toko.\n\nMetode penelitian ini menggunakan _market basket analysis_ atau disebut juga dengan _association rules_ yang merupakan salah satu teknik pada _data mining_ untuk menemukan pola-pola yang sering muncul secara bersamaan pada data transaksi, sehingga dapat digunakan sebagai metode untuk mencari informasi mengenai barang seperti apa yang sering dibeli oleh konsumen secara bersamaan.\n\nHasil dari penelitian ini berdasarkan hasil analisis data menggunakan Aplikasi Rapidminer didapatkan 25 hubungan asosiatif atau _rules_ dengan nilai _lift ratio_ lebih dari 1, aturan tersebut menjadi acuan dalam menentukan tata letak barang. Pemberian rekomendasi perubahan tata letak bertujuan untuk memudahkan konsumen dalam berbelanja, meningkatkan kemungkinan terjadinya _impulse buying_ oleh konsumen, dan memaksimalkan dalam hal pemajangan produk, sehingga mengurangi penumpukan barang pada gudang Toko.\n\n_(Font Times New Roman, Size 12, Spasi 1)_\n\n**Catatan :**\n\n_Abstrak adalah ringkasan dari PI yang memberikan gambaran umum kepada pembaca mengenai inti penelitian. Abstrak terdiri dari tiga alinea, yakni pengantar (opsional) yang berisi latar belakang topik, diikuti dengan alinea pertama yang menjelaskan tujuan penelitian, alinea kedua yang menguraikan metode penelitian, dan alinea ketiga yang menyajikan hasil penelitian secara ringkas. Panjang abstrak tidak lebih dari satu halaman atau maksimal 300 kata, ditulis dengan jarak 1 spasi, dan dibuat dalam dua bahasa (Bahasa Indonesia dan Bahasa Inggris). Abstrak juga memiliki 3 sampai dengan 5 kata kunci yang berasal dari topik utama penelitian, ditulis dengan huruf kecil dan dipisahkan oleh koma._",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "Lampiran 3",
-    "pages": ["27"]
+    "pages": [
+      "27"
+    ]
   },
   {
     "id": "pi-061",
     "title": "Lampiran 4: Contoh Kata Pengantar",
-    "content": "Contoh kata pengantar dibuat ringkas satu atau dua halaman. Fungsinya mengantarkan pembaca pada masalah yang dicari jawabannya dan kekhususan PI (produk yang dihasilkan), dilanjutkan ucapan terima kasih kepada pihak yang membantu dengan mencantumkan nama, jabatan, dan jasa. Bahasa mengikuti kaidah bahasa Indonesia yang baku.\n\nPenutup contoh kata pengantar:\nSamarinda, <tanggal disetujui daftar ujian>\nPenulis",
+    "content": "**Lampiran 4. Contoh Kata Pengantar**\n\n# KATA PENGANTAR\n\n_(Font Times New Roman, Uppercase, Size 12, Bold, Spasi 1,5, Center)_\n\nHalaman ini sebaiknya dibuat ringkas dalam satu atau dua halaman. Fungsi utama kata pengantar adalah mengantarkan pembaca pada masalah yang akan dicari jawabannya dan kekhususan-kekhususan tertentu dari PI (produk yang dihasilkan). Dilanjutkan dengan ucapan terima kasih kepada pihak-pihak yang telah membantu dalam penyusunan PI. Ucapan terima kasih didalamnya harus memuat nama, jabatan, dan jasa yang telah diberikan. Bahasa yang digunakan harus mengikuti kaidah bahasa Indonesia yang baku. Kata Pengantar diakhiri dengan mencantumkan kota dan tanggal penulisan diikuti di bawahnya nama penulis tanpa perlu tanda tangan.\n\nSamarinda, < tanggal disetujui daftar ujian >\nPenulis\n\n_(Font Times New Roman, Size 12, Spasi 1,5)_",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "Lampiran 4",
-    "pages": ["28"]
+    "pages": [
+      "28"
+    ]
   },
   {
     "id": "pi-062",
     "title": "Lampiran 5: Contoh Daftar Isi",
-    "content": "Contoh daftar isi memuat urutan bagian awal, bab, dan bagian akhir, misalnya:\n- Halaman Judul, Halaman Pengesahan, Abstrak, Kata Pengantar, Daftar Isi, Daftar Tabel, Daftar Gambar, Daftar Lampiran\n- BAB I Pendahuluan (1.1 Latar Belakang Masalah, 1.2 Rumusan Masalah, 1.3 Batasan Masalah, 1.4 Tujuan Penelitian, 1.5 Manfaat Penelitian, 1.6 Sistematika Penulisan)\n- BAB II Tinjauan Pustaka (2.1 Kajian Empiris, 2.2 Landasan Teori)\n- BAB III Metode Penelitian (3.1 Tempat dan Waktu Penelitian, 3.2 Teknik Pengumpulan Data, 3.3 Metode Pengembangan Sistem)\n- BAB IV Hasil Penelitian dan Pembahasan (4.1 Hasil Penelitian, 4.2 Pembahasan)\n- BAB V Penutup (5.1 Kesimpulan, 5.2 Saran)\n- Daftar Pustaka dan Lampiran",
+    "content": "**Lampiran 5. Contoh Daftar Isi**\n\n# **DAFTAR ISI**\n\n_(Font Times New Roman, Uppercase, Size 12, Bold, Spasi 1,5, Center)_\n_(gunakan tools table of content pada menu references di Word)_\n\nHALAMAN JUDUL ................................................................................................... Mulai Hal i dst\nHALAMAN PENGESAHAN .....................................................................................\nABSTRAK .................................................................................................................\nKATA PENGANTAR ...............................................................................................\nDAFTAR ISI ..............................................................................................................\nDAFTAR TABEL ......................................................................................................\nDAFTAR GAMBAR .................................................................................................\nDAFTAR LAMPIRAN ..............................................................................................\n\n**BAB I PENDAHULUAN** Mulai Hal 1 dst\n1.1 Latar Belakang Masalah.......................................................................................\n1.2 Rumusan Masalah................................................................................................\n1.3 Batasan Masalah..................................................................................................\n1.4 Tujuan Penelitian ................................................................................................\n1.5 Manfaat Penelitian ...............................................................................................\n1.6 Sistematika Penulisan ..........................................................................................\n\n**BAB II TINJAUAN PUSTAKA**\n2.1 Kajian Empiris ....................................................................................................\n2.2 Landasan Teori ....................................................................................................\n\n**BAB III METODE PENELITIAN**\n3.1 Tempat dan Waktu Penelitian .............................................................................\n3.2 Teknik Pengumpulan Data ..................................................................................\n3.3 Metode Pengembangan Sistem ............................................................................\n\n**BAB IV HASIL PENELITIAN DAN PEMBAHASAN**\n4.1 Hasil Penelitian ...................................................................................................\n4.2 Pembahasan .........................................................................................................\n\n**BAB V PENUTUP**\n5.1 Kesimpulan .........................................................................................................\n5.2 Saran ...................................................................................................................\n\nDAFTAR PUSTAKA\nLAMPIRAN\n\n_(Font Times New Roman, Size 12, Spasi Single)_",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "Lampiran 5",
-    "pages": ["29"]
+    "pages": [
+      "29"
+    ]
   },
   {
     "id": "pi-063",
     "title": "Lampiran 6: Contoh Daftar Tabel",
-    "content": "Contoh daftar tabel:\n- Tabel 1.1 Pencatatan Daftar Barang (hal. 15)\n- Tabel 2.3 Pembelian Barang (hal. 20)\n- Tabel 2.4 Pengembalian Barang\n- Tabel 3.5 Penjualan Barang\n- Tabel 3.6 Laporan Pembelian Barang",
+    "content": "**Lampiran 6. Contoh Daftar Tabel**\n\n# DAFTAR TABEL\n\n_(Font Times New Roman, Uppercase, Size 12, Bold, Spasi 1,5, Center)_\n\nTabel 1.1 Pencatatan Daftar Barang 15\n\nTabel 2.3 Pembelian Barang 20\nTabel 2.4 Pengembalian Barang\nTabel 3.5 Penjualan Barang\nTabel 3.6 Laporan Pembelian Barang",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "Lampiran 6",
-    "pages": ["30"]
+    "pages": [
+      "30"
+    ]
   },
   {
     "id": "pi-064",
     "title": "Lampiran 7: Contoh Daftar Gambar",
-    "content": "Contoh daftar gambar:\n- Gambar 2.1 Simbol-simbol Flow Of Dokumen (FOD) (hal. 14)\n- Gambar 2.2 Simbol-simbol Diagram Arus Data (DAD) (hal. 16)\n- Gambar 2.3 Notasi simbolik dalam Diagram E-R\n- Gambar 3.4 Rancangan Flow Of Document\n- Gambar 3.5 Diagram Konteks\n- Gambar 3.6 DFD Level 0 Sistem Akuntansi\n- Gambar 3.7 Diagram Entity-Relationship Sistem",
+    "content": "_(Font Times New Roman, Size 12, Spasi Single)_\n\n**Lampiran 7. Contoh Daftar Gambar**\n\n# DAFTAR GAMBAR\n\n_(Font Times New Roman, Uppercase, Size 12, Bold, Spasi 1,5, Center)_\n\nGambar 2.1 Simbol – simbol Flow Of Dokumen (FOD) ................................... 14\nGambar 2.2 Simbol – simbol Diagram Arus Data (DAD) ................................... 16\nGambar 2.3 Notasi simbolik dalam Diagram E-R\nGambar 3.4 Rancangan Flow Of Document\nGambar 3.5 Diagram Konteks\nGambar 3.6 DFD Level 0 Sistem Akuntansi\nGambar 3.7 Diagram Entity - Relationship Sistem\n\n_(Font Times New Roman, Size 12, Spasi Single)_",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "Lampiran 7",
-    "pages": ["31"]
+    "pages": [
+      "31"
+    ]
   },
   {
     "id": "pi-065",
     "title": "Lampiran 8: Contoh Daftar Lampiran",
-    "content": "Contoh daftar lampiran:\n- Lampiran 1 Struktur Organisasi\n- Lampiran 2 Form Pembelian Barang\n- Lampiran 3 Form Transaksi Penjualan\n- Lampiran 4 Kuisioner",
+    "content": "**Lampiran 8. Contoh Daftar Lampiran**\n\n# DAFTAR LAMPIRAN\n\n_(Font Times New Roman, Uppercase, Size 12, Bold, Spasi 1,5, Center)_\n\nLampiran 1 Struktur Organisasi\n\nLampiran 2 Form Pembelian Barang\n\nLampiran 3 Form Transaksi Penjualan\n\nLampiran 4 Kuisioner\n\n_(Font Times New Roman, Size 12, Spasi Single)_\n\n**Lampiran 9. Contoh Daftar Pustaka**",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "Lampiran 8",
-    "pages": ["32"]
+    "pages": [
+      "32"
+    ]
   },
   {
     "id": "pi-066",
     "title": "Lampiran 9: Contoh Daftar Pustaka",
-    "content": "Contoh daftar pustaka (APA):\n- Darmawan, D. (2018). Metode penelitian kuantitatif. Bandung: Alfabeta.\n- Kurniawan, A. W., & Yulianto, A. (2020). Pengaruh teknologi informasi terhadap peningkatan produktivitas kerja di sektor pendidikan. Jurnal Teknologi dan Pendidikan Indonesia, 12(3), 45-58. https://doi.org/10.xxxxx/jtpi.v12i3.2020\n- Rahmat, M. T., & Kusumawati, A. (2021). Implementasi manajemen strategis berbasis teknologi informasi di perguruan tinggi. Jurnal Ilmu Manajemen Indonesia, 15(2), 89-102. https://doi.org/10.xxxxx/jimi.v15i2.2021\n- Santrock, J. W. (2019). Psikologi pendidikan (Terj. I. D. Setyo). Jakarta: Kencana.\n- Sugiyono. (2017). Metode penelitian pendidikan: Pendekatan kuantitatif, kualitatif, dan R&D. Bandung: Alfabeta.",
+    "content": "# DAFTAR PUSTAKA\n\n_(Font Times New Roman, Uppercase, Size 12, Bold, Spasi 1,5, Center)_\n\nDarmawan, D. (2018). _Metode penelitian kuantitatif_. Bandung: Alfabeta.\n\nKurniawan, A. W., & Yulianto, A. (2020). Pengaruh teknologi informasi terhadap peningkatan produktivitas kerja di sektor pendidikan. _Jurnal Teknologi dan Pendidikan Indonesia, 12_(3), 45–58. <u>https://doi.org/10.xxxxx/jtpi.v12i3.2020</u>\n\nRahmat, M. T., & Kusumawati, A. (2021). Implementasi manajemen strategis berbasis teknologi informasi di perguruan tinggi. _Jurnal Ilmu Manajemen Indonesia, 15_(2), 89–102. <u>https://doi.org/10.xxxxx/jimi.v15i2.2021</u>\n\nSantrock, J. W. (2019). _Psikologi pendidikan_ (Terj. I. D. Setyo). Jakarta: Kencana.\n\nSugiyono. (2017). _Metode penelitian pendidikan: Pendekatan kuantitatif, kualitatif, dan R&D_. Bandung: Alfabeta.\n\n_(Font Times New Roman, Size 12, Spasi Single, Menggunakan tools Mendeley/tools reference lainnya dengan format (APA))_",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "Lampiran 9",
-    "pages": ["33"]
+    "pages": [
+      "33"
+    ]
   },
   {
     "id": "pi-067",
     "title": "Lampiran 10: Contoh Jadwal Penelitian",
-    "content": "Contoh jadwal penelitian berbentuk tabel dengan kolom: No, Nama Kegiatan, Bulan 1, Bulan 2, Bulan 3, Bulan 4. Baris diisi untuk kegiatan 1 sampai 5 (atau dst) sesuai kebutuhan.",
+    "content": "# **Lampiran 10. Contoh Jadwal Penelitian**\n\nNo\n        Nama Kegiatan\n        Bulan\n\n1\n        2\n        3\n        4\n\ndst",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "Lampiran 10",
-    "pages": ["34"]
+    "pages": [
+      "34"
+    ]
   },
   {
     "id": "pi-068",
     "title": "Lampiran 11: Contoh Lembar Wawancara",
-    "content": "Form daftar wawancara memuat:\n- Nama Responden\n- Jabatan Responden\n- Nama Pewawancara\n- Lokasi Wawancara\n- Daftar pertanyaan bernomor 1 sampai 10\n- Penutup: Kota dilakukan wawancara (tanggal wawancara), Responden, stempel perusahaan dan tanda tangan, serta nama lengkap responden.",
+    "content": "Lampiran 11. Contoh Lembar Wawancara\n**Kode Dokumen**: FM/STMIKWICIDA/SPMI-I/5/Ak/235\n\n## DAFTAR WAWANCARA PENULISAN ILMIAH\n\n- **Nama Responden**:\n- **Jabatan Responden**:\n- **Nama Pewawancara**:\n- **Lokasi Wawancara**:\n\n1.\n2.\n3.\n4.\n5.\n6.\n7.\n8.\n9.\n10.\n\nKota dilakukan wawancara, (_tanggal wawancara_)\nResponden,\n\n_Stempel Perusahaan dan Tanda Tangan_\n\n<u>**Nama Lengkap Responden**</u>",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "Lampiran 11",
-    "pages": ["35"]
+    "pages": [
+      "35"
+    ]
   },
   {
     "id": "pi-069",
     "title": "Lampiran 12: Form Bimbingan Laporan",
-    "content": "Form bimbingan laporan memuat:\n- Nama, NIM, Judul PI\n- Tabel bimbingan dengan kolom No., Uraian, Tanggal, Tanda Tangan\n- Mengetahui Ketua Program Studi (SI/TI/BisDig), NIK\n- Samarinda (tanggal), Dosen Pembimbing, NIDN\n- Catatan: pilih salah satu dan nama prodi tidak disingkat.",
+    "content": "**Lampiran 12. Form Bimbingan Laporan**\n**Kode Dokumen: FM/STMIKWICIDA/SPMI-I/5/Ak/082**\n\n## FORM BIMBINGAN LAPORAN PENULISAN ILMIAH\n\n- **Nama**:\n- **NIM**:\n- **Judul PI**:\n\nNo.\n        Uraian\n        Tanggal\n        Tanda Tangan\n\n**Mengetahui,**\n**Ketua Program Studi SI/TI/BisDig <sup>4</sup>**\n**Samarinda...................**\n**Dosen Pembimbing**\n\n**<u>Nama Ketua Program Studi</u>**\n**NIK.**\n**<u>Nama Dosen Pembimbing</u>**\n**NIDN.**\n\n<sup>4</sup> Pilih Salah Satu dan Nama Prodi Tidak Disingkat",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "Lampiran 12",
-    "pages": ["36"]
+    "pages": [
+      "36"
+    ]
   },
   {
     "id": "pi-070",
     "title": "Lampiran 13: Form Daftar Hadir Menyaksikan Ujian",
-    "content": "Form daftar hadir menyaksikan ujian memuat:\n- Nama, NIM, Kelas\n- Tabel kehadiran dengan kolom No., Hari/Tanggal, Seminaris (Nama dan NIM), Judul PI, Tanda Tangan Dosen Pembimbing\n- Mengetahui Ketua Program Studi (SI/TI/BisDig) dan NIK\n- Catatan: pilih salah satu dan nama prodi tidak disingkat.",
+    "content": "Lampiran 13. Form Daftar Hadir Menyaksikan Ujian\nKode Dokumen: FM/STMIKWICIDA/SPMI-I/5/Ak/083\n\n# FORM DAFTAR HADIR MENYAKSIKAN<br/>UJIAN PENULISAN ILMIAH<br/>PROGRAM STUDI SI/TI/BISDIG<sup>5</sup>\n\n- **Nama**: [____________________________________]\n- **NIM**: [____________________________________]\n- **Kelas**: [____________________________________]\n\nNo.\n        Hari/Tanggal\n        Seminaris<br/>(Nama dan Nim)\n        Judul PI\n        Tanda Tangan<br/>Dosen Pembimbing\n\nMengetahui,<br/>Ketua Program Studi SI/TI/BisDig ⁶\n\n**<u>Nama Ketua Program Studi</u>**<br/>NIK.\n\n<sup>5 6</sup> Pilih Salah Satu dan Nama Prodi Tidak Disingkat",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "Lampiran 13",
-    "pages": ["37"]
+    "pages": [
+      "37"
+    ]
   },
   {
     "id": "pi-071",
     "title": "Lampiran 14: Form Pengecekan Syarat Administrasi Ujian",
-    "content": "Form pengecekan syarat administrasi ujian memuat:\n- NIM, Nama, Kelas, Judul PI\n- Checklist berkas yang harus diupload di KPST: form pengecekan, form pendaftaran, form permohonan ujian; lembar persetujuan ujian; form bimbingan laporan dan daftar hadir menyaksikan ujian; transkrip nilai dan syarat SKS/IPK; kuitansi BPP/SKS tervalidasi BAUK; KRS tervalidasi BAAK; surat keterangan penelitian; presensi kehadiran dan nilai dari tempat penelitian; daftar wawancara; draf laporan PI; lembar persetujuan waktu ujian.\n- Tanda tangan pemeriksa syarat seminar (staff program studi).\n- Catatan: pilih salah satu dan nama prodi tidak disingkat.",
+    "content": "**Lampiran 14. Form Pengecekan Syarat Administrasi Ujian**\nKode Dokumen: FM/STMIKWICIDA/SPMI-I/5/Ak/081\n\n## FORM PENGECEKAN SYARAT ADMINISTRASI\n\n## UJIAN PENULISAN ILMIAH\n\n## PROGRAM STUDI TI/SI/BISDIG<sup>7</sup>\n\n- **NIM**: [________________________________________________________________________________]\n- **Nama**: [________________________________________________________________________________]\n- **Kelas**: [________________________________________________________________________________]\n- **Judul PI**: [________________________________________________________________________________]\n\nTanda\n        No.\n        Berkas Administrasi yang harus dilengkapi dan di upload di KPST\n\n[x]\n        1.\n        **Form Pengecekan Syarat Administrasi, Form Pendaftaran Ujian PI dan Form Permohonan Ujian PI**\n\n•\n        2.\n        **Lembar Persetujuan Ujian PI** yang sudah ditandatangani oleh Pembimbing dan Ketua Program Studi\n\n•\n        3.\n        **Form Bimbingan Laporan PI** yang sudah di ACC Pembimbing dan **Form Daftar Hadir** Menyaksikan Ujian PI\n\n•\n        4.\n        Transkrip Nilai Terakhir, Jumlah SKS Minimal 100 SKS dan IP Kumulatif minimal 2.00\n\n•\n        5.\n        **Kuitansi BPP dan SKS** di semester saat Ujian PI dilaksanakan di Validasi BAUK\n\n•\n        6.\n        **Kartu Rencana Studi (KRS)** yang mencantumkan PI dan divalidasi di BAAK\n\n•\n        7.\n        Surat keterangan penelitian / Surat balasan dari tempat penelitian yang ditandatangani dan distempel\n\n•\n        8.\n        **Presensi Kehadiran dan Nilai dari tempat penelitian** divalidasi pembimbing dan pembimbing lapangan\n\n•\n        9.\n        **Daftar wawancara** yang sudah ditandatangani oleh responden dan distempel oleh perusahaan/lembaga tempat penelitian\n\n•\n        10.\n        **Draf laporan PI**\n\n•\n        11.\n        **Lembar Persetujuan Waktu Ujian PI**\n\nSamarinda, [________________________________________]\nPemeriksa Syarat Seminar\nProgram Studi TI/SI/BisDig <sup>8</sup>\n\n---\n\nStaff Program Studi\n\n<sup>7 8</sup> Pilih Salah Satu dan Nama Prodi Tidak Disingkat",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "Lampiran 14",
-    "pages": ["38"]
+    "pages": [
+      "38"
+    ]
   },
   {
     "id": "pi-072",
     "title": "Lampiran 15: Form Permohonan Ujian",
-    "content": "Form permohonan ujian memuat:\n- Samarinda (tanggal), kepada Ketua Program Studi SI/TI/BisDig\n- Identitas mahasiswa: Nama, NIM, Kelas, Program Studi\n- Judul laporan dan pembimbing\n- Lampiran berkas (1-11): lembar persetujuan ujian, fotokopi persetujuan waktu ujian, transkrip nilai, KRS, surat keterangan penelitian, presensi dan nilai dari tempat penelitian, form bimbingan laporan, daftar hadir menyaksikan ujian, daftar wawancara, lembar perbaikan seminar PI, fotokopi draf laporan PI\n- Tanda tangan Ketua Program Studi dan Pemohon\n- Catatan: pilih salah satu dan nama prodi tidak disingkat.",
+    "content": "**Lampiran 15. Form Permohonan Ujian**\n**Kode Dokumen: FM/STMIKWICIDA/SPMI-I/5/Ak/085**\n\n## FORM PERMOHONAN UJIAN PENULISAN ILMIAH\n\n## PROGRAM STUDI TI/SI/BISDIG <sup>9</sup>\n\n- **Samarinda,**: [___________]\n- **Kepada Yth.**:\n- **Ketua Program Studi SI/TI/BisDig <sup>10</sup>**:\n- **STMIK Widya Cipta Dharma**:\n\nSaya yang bertanda tangan berikut ini :\n\n- **Nama**: [___________]\n- **NIM**: [___________]\n- **Kelas**: [___________]\n- **Program Studi**: Teknik Informatika / Sistem Informasi / Bisnis Digital <sup>11</sup>\n\nTerdaftar sebagai mahasiswa STMIK Widya Cipta Dharma mengajukan permohonan Ujian Penulisan Ilmiah, dengan keterangan sebagai berikut:\n\n- **Judul Laporan**: [___________]\n- **Pembimbing**: [___________]\n\nBesar harapan saya agar dapat dikabulkan permohonan ini, sebagai pertimbangan saya lampirkan:\n\n1. Lembar Persetujuan Ujian Laporan PI yang telah ditandatangani oleh Pembimbing dan Ketua Program Studi yang asli sebanyak 4 (empat) lembar\n2. Fotokopi Lembar Persetujuan Waktu Ujian PI, 3 (Tiga) lembar\n3. Fotokopi Transkrip Nilai Terakhir yang telah dilegalisir BAAK, 4 (Empat) lembar\n4. Fotokopi KRS semester saat Ujian PI dilaksanakan, 3 (Tiga) lembar\n5. Fotokopi Surat keterangan penelitian dari tempat penelitian yang telah ditandatangani dan distempel, 3 (Tiga) lembar\n6. Fotokopi Presensi Kehadiran dan Nilai dari tempat penelitian divalidasi pembimbing dan pembimbing lapangan, 3 (Tiga) rangkap\n7. Fotokopi Form Bimbingan Laporan PI yang sudah di ACC Pembimbing dan ditandatangani Pembimbing dan Ketua Program Studi, 3 (Tiga) rangkap\n8. Fotokopi Daftar hadir menyaksikan Ujian PI, 3 (Tiga) lembar\n9. Daftar wawancara telah ditandatangani oleh responden dan distempel oleh perusahaan/lembaga tempat penelitian sebanyak 3 (Tiga) rangkap\n10. Lembar Perbaikan Seminar PI, 3 (Tiga) lembar\n11. Fotokopi draf Laporan PI, 3 (Tiga) rangkap\n\nSetuju diuji\n\n- **Tanggal**: [___________] <sup>12</sup>\n\n**Ketua Program Studi SI/TI/BisDig <sup>12</sup>**\n**Pemohon**\n\n<u>**Nama Ketua Program Studi**</u>\n<u>**Nama Mahasiswa**</u>\nNIK.\nNim.\n\n<sup>9 10 11 12</sup> Pilih Salah Satu dan Nama Prodi Tidak Disingkat",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "Lampiran 15",
-    "pages": ["39"]
+    "pages": [
+      "39"
+    ]
   },
   {
     "id": "pi-073",
     "title": "Lampiran 16: Form Pendaftaran Ujian",
-    "content": "Form pendaftaran ujian memuat:\n- TA (Ganjil/Genap), Nama, NIM, Kelas, Judul PI, Pembimbing\n- Ketua Penguji dan Anggota Penguji (diisi Ka.Prodi)\n- Hari/Tanggal, Waktu, Ruang (diisi Sekt.Prodi)\n- No. HP dan Email\n- Mengetahui Ketua Program Studi dan NIK\n- Catatan: pilih salah satu dan nama prodi tidak disingkat.",
+    "content": "**Lampiran 16. Form Pendaftaran Ujian**\nKode Dokumen: FM/STMIKWICIDA/SPMI-I/5/Ak/084\n\n# FORM PENDAFTARAN\n\n# UJIAN PENULISAN ILMIAH\n\n- **TA : Ganjil / Genap**: (Diisi oleh Sekt.Prodi)\n- **Nama**:\n- **Nim**:\n- **Kelas**:\n- **Judul PI**:\n- **Pembimbing**:\n- **Ketua Penguji**: (Diisi oleh Ka.Prodi)\n- **Anggota Penguji**: (Diisi oleh Ka.Prodi)\n- **Hari / Tanggal**: (Diisi oleh Sekt.Prodi)\n- **Waktu**: (Diisi oleh Sekt.Prodi)\n- **Ruang**: (Diisi oleh Sekt.Prodi)\n- **No. HP**:\n- **Email**:\n\nMengetahui,\nKetua Program Studi TI/SI/BisDig<sup>13</sup>\n\n<u>**Nama Ketua Program Studi**</u>\nNIK.\n\n<sup>13</sup> Pilih Salah Satu dan Nama Prodi Tidak Disingkat",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "Lampiran 16",
-    "pages": ["40"]
+    "pages": [
+      "40"
+    ]
   },
   {
     "id": "pi-074",
     "title": "Lampiran 17: Lembar Persetujuan Ujian",
-    "content": "Lembar persetujuan ujian memuat:\n- Judul, Nama, NIM, Jenjang (Sarjana), Program Studi\n- Menyetujui: Pembimbing (nama dan gelar, NIDN/NUPTK)\n- Mengetahui: Ketua Program Studi SI/TI/BisDig (nama dan gelar, NIK)\n- Catatan: pilih salah satu dan nama prodi tidak disingkat.",
+    "content": "**Lampiran 17. Contoh Lembar Persetujuan Ujian**\nKode Dokumen: FM/STMIKWICIDA/SPMI-I/5/Ak/086\n\n# LEMBAR PERSETUJUAN UJIAN PENULISAN ILMIAH\n\n_(Font Times New Roman, Uppercase, Size 12, Bold, Spasi 1,5, Center)_\n\n- **Judul**: (Judul PI)\n- **Nama**: (Nama Lengkap Mahasiswa)\n- **Nim**: (NIM Mahasiswa)\n- **Jenjang**: Sarjana\n- **Program Studi**: (Program Studi)\n\n_Font Times New Roman, Uppercase, Size 12, Bold, Spasi 1,5, Center_\n\nMenyetujui,\nPembimbing\n\n<u>**Nama dan Gelar**</u>\nNIDN/NUPTK.\n\nMengetahui,\nKetua Program Studi SI/TI/BisDig <sup>14</sup>\n\n<u>**Nama dan Gelar**</u>\nNIK.\n\n_(Font Times New Roman, Capitalize Each Word, Size 12, Spasi 1,5)_\n\n<sup>14</sup> Pilih salah satu dan nama prodi tidak disingkat\n41",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "Lampiran 17",
-    "pages": ["41"]
+    "pages": [
+      "41"
+    ]
   },
   {
     "id": "pi-075",
     "title": "Lampiran 18: Lembar Persetujuan Waktu Ujian",
-    "content": "Lembar persetujuan waktu ujian memuat:\n- Nama Mahasiswa, NIM, Judul, Hari dan Tanggal Ujian PI, Waktu Ujian PI\n- Menyetujui: Pembimbing Utama\n- Ketua Penguji dan Anggota Penguji\n- Mengetahui: Ketua Program Studi SI/TI/BisDig\n- Catatan: pilih salah satu dan nama prodi tidak disingkat.",
+    "content": "**Lampiran 18. Contoh Lembar Persetujuan Waktu Ujian**\nKode Dokumen: FM/STMIKWICIDA/SPMI-I/5/Ak/087\n\n## LEMBAR PERSETUJUAN WAKTU UJIAN PENULISAN ILMIAH\n\n## PROGRAM STUDI TI/SI/BISDIG <sup>15</sup>\n\n- **Nama Mahasiswa**:\n- **Nim**:\n- **Judul**:\n- **Hari dan Tanggal Ujian PI**:\n- **Waktu Ujian PI**:\n\nSamarinda, ....................................\n\nMenyetujui,\nPembimbing Utama\n\n<u>**Nama dan Gelar**</u>\nNIDN/NUPTK.\n\nKetua Penguji\nAnggota Penguji\n\n<u>**Nama dan Gelar**</u>\nNIDN/NUPTK.\n<u>**Nama dan Gelar**</u>\nNIDN/NUPTK.\n\nMengetahui,\nKetua Program Studi SI/TI/BisDig <sup>16</sup>\n\n<u>**Nama dan Gelar**</u>\nNIK.\n\n<sup>15 16</sup> Pilih Salah Satu dan Nama Prodi Tidak Disingkat",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "Lampiran 18",
-    "pages": ["42"]
+    "pages": [
+      "42"
+    ]
   },
   {
     "id": "pi-076",
     "title": "Lampiran 19: Lembar Perbaikan Ujian",
-    "content": "Lembar perbaikan ujian memuat daftar poin perbaikan bernomor 1 sampai 10, tanggal dan tanda tangan pembimbing/penguji. Catatan: lembar perbaikan dibawa kembali saat proses revisi dan maju seminar berikutnya.",
+    "content": "**Lampiran 19. Contoh Lembar Perbaikan Ujian**\nKode Dokumen: FM/STMIKWICIDA/SPMI-I/5/Ak/089\n\n## LEMBAR PERBAIKAN UJIAN PENULISAN ILMIAH\n\n## SEMESTER GANJIL/GENAP TAHUN AKADEMIK ………..\n\n1.\n2.\n3.\n4.\n5.\n6.\n7.\n8.\n9.\n10.\n\nSamarinda,\n………………….\nPembimbing/Penguji\n\n**Catatan :**\n_Lembar Perbaikan ini dibawa kembali pada saat melakukan proses revisi dan Maju Seminar berikutnya_",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "Lampiran 19",
-    "pages": ["43"]
+    "pages": [
+      "43"
+    ]
   },
   {
     "id": "pi-077",
     "title": "Lampiran 20: Berita Acara Ujian",
-    "content": "Berita acara ujian memuat:\n- Identitas kegiatan ujian (hari, tanggal, tempat)\n- Memperhatikan: jawaban/sanggahan selama ujian dan nilai hasil seminar\n- Tabel susunan dewan penguji (Pembimbing, Ketua Penguji, Anggota Penguji)\n- Penetapan hasil: Nama, NIM, Program Studi/Jenjang, Kelas, Judul PI, Hasil Kesimpulan, Catatan\n- Tanda tangan Ketua Program Studi dan NIK.",
+    "content": "**Lampiran 20. Contoh Berita Acara**\nKode Dokumen: FM/STMIKWICIDA/SPMI-I/5/Ak/231\n\n# BERITA ACARA UJIAN PENULISAN ILMIAH\n\n# PROGRAM STUDI (SI/TI/BisDig)\n\nPanitia Ujian Penulisan Ilmiah Sekolah Tinggi Manajemen Informatika dan Komputer Widya Cipta Dharma Setelah melaksanakan Ujian Penulisan Ilmiah Tahun Akademik Ganjil/Genap ………… Pada Hari ………… Tanggal ……………… Bertempat di Sekolah Tinggi Manajemen Informatika dan Komputer Widya Cipta Dharma\n\n**Memperhatikan:**\n\n1. Jawaban-jawaban dan sanggahan yang diberikan selama ujian\n2. Nilai hasil seminar yang dicapai dalam ujian Penulisan Ilmiah dengan susunan dewan Penguji sebagai berikut :\n\nNo\n        Nama Dosen Pembimbing<br/>dan Dosen Penguji\n        Sebagai\n        Tanda<br/>Tangan\n\nPembimbing\n\nKetua Penguji\n\nAnggota Penguji\n\n**M E M U T U S K A N**\n\n**Menetapkan :**\n\n1. Nama :\n2. Nim :\n3. Program Studi/Jenjang :\n4. Kelas :\n5. Judul Penulisan Ilmiah :\n\n**Hasil Kesimpulan :**\n**Catatan :**\n\n**Samarinda,** ……………..\n**Ketua Program Studi**",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "Lampiran 20",
-    "pages": ["44"]
+    "pages": [
+      "44"
+    ]
   },
   {
     "id": "pi-078",
     "title": "Lampiran 21: Form Penilaian Ujian",
-    "content": "Form penilaian ujian memuat:\n- NIM, Nama, Program Studi/Jenjang, Judul PI\n- Tabel komponen penilaian: Orisinalitas Penulisan, Sistematika dan Tata Cara Penulisan, Penguasaan Materi, Kemampuan Argumentasi, Penampilan/Etika, beserta kolom nilai (0-100)\n- Jumlah Nilai dan Nilai Rata-Rata\n- Tanda tangan Dosen Pembimbing/Penguji dan NIDN/NUPTK\n- Keterangan: nilai akhir adalah rata-rata dari seluruh komponen.",
+    "content": "<u>**Nama dan Gelar**</u>\n**NIK.**\n\n**Lampiran 21. Contoh Form Penilaian Ujian**\n**Kode Dokumen**: FM/STMIKWICIDA/SPMI-I/5/Ak/232\n\n## FORM PENILAIAN UJIAN PENULISAN ILMIAH PROGRAM STUDI (SI/TI/BisDig)\n\nYang bertandatangan di bawah ini sebagai Penguji Sidang Penulisan Ilmiah bagi mahasiswa STMIK Widya Cipta Dharma sebagai berikut:\n\n- **NIM**:\n- **Nama**:\n- **Program Studi / Jenjang**:\n- **Judul PI**:\n\nNo\n        Komponen Penilaian\n        Nilai Keterangan\n        Nilai Keterangan\n\n(0-100)\n\n1\n        Orisinalitas Penulisan\n\n2\n        Sistematika dan Tata Cara Penulisan\n\n3\n        Penguasaan Materi\n\n4\n        Kemampuan Argumentasi\n\n5\n        Penampilan / Etika\n\n**Jumlah Nilai**\n\n**Nilai Rata-Rata**\n\nSamarinda,\nDosen Pembimbing/Penguji\n\n<u>**Nama Dosen Pembimbing**</u>\nNIDN/NUPTK.\n\n**Keterangan :**\nSetiap komponen diberi nilai dalam rentang (0-100). Nilai yang digunakan adalah hasil rata-rata dari seluruh nilai komponen tersebut",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "Lampiran 21",
-    "pages": ["45"]
+    "pages": [
+      "45"
+    ]
   },
   {
     "id": "pi-079",
     "title": "Lampiran 22: Rekapitulasi Penilaian Ujian",
-    "content": "Form rekapitulasi penilaian ujian memuat:\n- NIM, Nama, Program Studi/Jenjang, Judul PI\n- A. Seminar Hasil: nilai pembimbing, ketua penguji, anggota penguji, dan jumlah\n- Keterangan rentang nilai: A (80-100), B (70-79), C (60-69), D (40-59), E (0-39)\n- Catatan: pilih salah satu dan nama prodi tidak disingkat.",
+    "content": "Lampiran 22 Rekap Rekapitulasi Penilaian Ujian\nKode Dokumen: FM/STMIKWICIDA/SPMI-I/5/Ak/240\n\n## FORM REKAPITULASI PENILAIAN UJIAN PENULISAN ILMIAH PROGRAM STUDI SI/TI/BisDig <sup>17</sup>\n\n- **NIM**:\n- **Nama**:\n- **Program Studi / Jenjang**:\n- **Judul PI**:\n\n### A. SEMINAR HASIL\n\n- **1 Pembimbing**: =\n- **2 Ketua Penguji**: =\n- **3 Anggota Penguji**: =\n- **JUMLAH**: = : 4 =\n\n**Keterangan :**\n\nA\n        : 80 ≤ Nilai ≤ 100\n\nB\n        : 70 ≤ Nilai ≤ 79\n\nC\n        : 60 ≤ Nilai ≤ 69\n\nD\n        : 40 ≤ Nilai ≤ 59\n\nE\n        : 0 ≤ Nilai ≤ 39\n\n<sup>17</sup> Pilih salah satu dan nama prodi tidak disingkat\n46",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "Lampiran 22",
-    "pages": ["46"]
+    "pages": [
+      "46"
+    ]
   },
   {
     "id": "pi-080",
     "title": "Lampiran 23: Permohonan Penggantian Dosen Pembimbing",
-    "content": "Form permohonan penggantian Dosen Pembimbing memuat:\n- NIM, Nama, Program Studi/Jenjang, Judul PI\n- Dosen Pembimbing yang akan diganti\n- Alasan penggantian (lingkari salah satu): meninggal dunia, sakit, cuti di luar tanggungan, pindah tugas, atau alasan lain\n- Tanda tangan pemohon dan NIM.",
+    "content": "Lampiran 23. Form Permohonan Penggantian Dosen Pembimbing\nKode Dokumen: FM/STMIKWICIDA/SPMI-I/5/Ak/236\n\n## PERMOHONAN PENGGANTIAN DOSEN PEMBIMBING PENULISAN ILMIAH\n\n- **NIM**:\n- **Nama**:\n- **Program Studi / Jenjang**:\n- **Judul PI**:\n\nDengan ini mengajukan permohonan penggantian Dosen Pembimbing.\n\n**Dosen Pembimbing yang akan diganti**: _Tuliskan nama dosen dan gelarnya_\n\n**Alasan penggantian Dosen Pembimbing: <sup>18</sup>**\n\n- a. Meninggal dunia [ ]\n- b. Sakit, sehingga yang bersangkutan harus istirahat panjang [ ]\n- c. Cuti diluar tanggungan Negara [ ]\n- d. Pindah tugas [ ]\n- e.\n\nSamarinda,\nPemohon\n\n[signature]\n( )\n\n<sup>18</sup> Lingkari salah satu\n47",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "Lampiran 23",
-    "pages": ["47"]
+    "pages": [
+      "47"
+    ]
   },
   {
     "id": "pi-081",
     "title": "Lampiran 24: Surat Penugasan Dosen Pengganti",
-    "content": "Surat tugas penugasan dosen pengganti memuat:\n- Nomor surat tugas\n- Identitas dosen pengganti (Nama, NIDN/NUPTK, Program Studi)\n- Identitas mahasiswa (NIM, Nama, Program Studi/Jenjang, Judul PI)\n- Tanda tangan Ketua Program Studi dan NIK, serta tanggal di Samarinda.",
+    "content": "**Lampiran 24. Surat Penugasan Dosen Pengganti Dosen Pembimbing**\nKode Dokumen: FM/STMIKWICIDA/SPMI-I/5/Ak/236\n\n## SURAT TUGAS\n\n**NO : [__________________________]**\n\nBersama ini kami menugaskan kepada Bapak/Ibu Dosen :\n\n- **Nama**: [__________________________]\n- **NIDN/NUPTK**: [__________________________]\n- **Program Studi**: [__________________________]\n\nUntuk menjadi Dosen Pembimbing pengganti **Penulisan Ilmiah** mahasiswa dengan :\n\n- **NIM**: [__________________________]\n- **Nama**: [__________________________]\n- **Program Studi / Jenjang**: [__________________________]\n- **Judul PI**: [__________________________]\n\nDemikian surat tugas ini kami sampaikan, atas perhatian dan kerjasama Bapak/ Ibu diucapkan terima kasih.\n\n**Samarinda, [__________________________]**\n**Ketua Program Studi**\n\n<br/>\n<br/>\n<br/>\n\n**<u>Nama dan Gelar</u>**\nNIK.",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "Lampiran 24",
-    "pages": ["48"]
+    "pages": [
+      "48"
+    ]
   },
   {
     "id": "pi-082",
     "title": "Lampiran 25: Permohonan Penggantian Judul",
-    "content": "Form permohonan penggantian judul memuat:\n- Hal: Permohonan Penggantian Judul Penulisan Ilmiah\n- Lampiran: jumlah lembar\n- Identitas mahasiswa: Nama, NIM, Kelas, Tempat Penelitian\n- Judul PI lama dan judul PI baru\n- Alasan revisi judul dan bukti pendukung\n- Tanda tangan pemohon, pembimbing utama, ketua penguji, dan anggota penguji.",
+    "content": "## Lampiran 25. Form Permohonan Penggantian Judul\n\n**Kode Dokumen**: FM/STMIKWICIDA/SPMI-I/5/Ak/088\n\n- **Hal**: Permohonan Penggantian Judul Penulisan Ilmiah\n- **Lampiran**: …….. lembar\n  Samarinda, …………………\n\nKepada Yth.\nKetua Program Studi SI/TI/BisDig\nSTMIK Widya Cipta Dharma\n\nDengan hormat,\n\nBersama surat ini, saya bermaksud mengajukan permohonan revisi judul PI yang telah diajukan sebelumnya.\n\n- **Nama**:\n- **Nim**:\n- **Kelas**:\n- **Tempat Penelitian**:\n\n- **Judul PI yang sebelumnya diajukan**: Tuliskan Judul PI Lama\n- **Saya bermaksud merevisi judul menjadi**: Tuliskan Judul PI Baru\n- **Adapun alasan revisi judul ini karena**: Sebutkan dan jelaskan alasan revisi judul dengan jelas\n  Terlampir bukti pendukung sesuai alasan revisi\n\nDemikian surat permohonan ini saya ajukan. Atas perhatiannya diucapkan terima kasih.\n\nHormat Saya,\n\n**<u>Nama Pemohon</u>**\nNIM.\n\nMengetahui,\nPembimbing Utama\n\n**<u>Nama dan Gelar</u>**\nNIDN/NUPTK.\n\nKetua Penguji\nAnggota Penguji\n\n**<u>Nama dan Gelar</u>**\nNIDN/NUPTK.\n**<u>Nama dan Gelar</u>**\nNIDN/NUPTK.\n\nwicida.ac.id\n\n# STMIK\n\n# WIDYA CIPTA DHARMA\n\nCenter Of Excellence\n\nJl. M. Yamin No. 25, Samarinda\n\n0541 - 736071\n\n0541 - 203492\n\nwicida@wicida.ac.id",
     "source": "Panduan Penyusunan Penulisan Imliah (PI) Cetak",
     "section": "Lampiran 25",
-    "pages": ["49"]
+    "pages": [
+      "49"
+    ]
   }
 ]

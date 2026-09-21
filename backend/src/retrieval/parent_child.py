@@ -24,6 +24,9 @@ class ParentMatchInfo:
     matched_children: list[str] = field(
         default_factory=list
     )
+    matched_child_documents: list[dict] = field(
+        default_factory=list
+    )
     score_source: str = "rrf"
 
 
@@ -36,7 +39,7 @@ class ParentChildFetcher:
         - Track best child score
         - Track matched child IDs
         - Fetch parent documents
-        - Fetch matched child pages
+        - Preserve matched child evidence for reranking
         - Attach retrieval metadata
     """
 
@@ -57,10 +60,6 @@ class ParentChildFetcher:
         self._parent_table = (
             settings.table_parent_chunks
         )
-        self._child_table = (
-            settings.table_child_chunks
-        )
-
     def fetch_parents(
         self,
         search_results: list[HybridSearchResult],
@@ -99,14 +98,9 @@ class ParentChildFetcher:
         if not parents:
             return []
 
-        child_pages = self._fetch_child_pages(
-            parent_matches
-        )
-
         self._attach_metadata(
             parents,
             parent_matches,
-            child_pages,
         )
 
         parents.sort(
@@ -147,6 +141,9 @@ class ParentChildFetcher:
                     matched_children=[
                         result.child_id
                     ],
+                    matched_child_documents=[
+                        ParentChildFetcher._matched_child_document(result)
+                    ],
                     score_source=result.score_source,
                 )
                 continue
@@ -159,8 +156,26 @@ class ParentChildFetcher:
             info.matched_children.append(
                 result.child_id
             )
+            info.matched_child_documents.append(
+                ParentChildFetcher._matched_child_document(result)
+            )
 
         return matches
+
+    @staticmethod
+    def _matched_child_document(
+        result: HybridSearchResult,
+    ) -> dict:
+        """Keep the exact child evidence returned by hybrid search."""
+        metadata = result.document.metadata or {}
+        return {
+            "id": result.child_id,
+            "title": metadata.get("title", ""),
+            "section": metadata.get("section", ""),
+            "pages": list(metadata.get("pages") or []),
+            "content": result.document.page_content,
+            "hybrid_score": result.hybrid_score,
+        }
 
     def _fetch_parent_rows(
         self,
@@ -218,69 +233,10 @@ class ParentChildFetcher:
 
         return parents
 
-    def _fetch_child_pages(
-        self,
-        parent_matches: dict[str, ParentMatchInfo],
-    ) -> dict[str, list[int]]:
-        """Fetch page numbers for matched children."""
-
-        child_ids = [
-            child_id
-            for info in parent_matches.values()
-            for child_id in info.matched_children
-        ]
-
-        if not child_ids:
-            return {}
-
-        child_pages: dict[str, list[int]] = {}
-
-        try:
-            response = (
-                self._supabase
-                .table(self._child_table)
-                .select(
-                    "id, parent_id, pages"
-                )
-                .in_(
-                    "id",
-                    child_ids,
-                )
-                .execute()
-            )
-
-        except Exception as exc:
-            logger.warning(
-                "Gagal mengambil data halaman child: {}",
-                exc,
-            )
-            return {}
-
-        for row in response.data or []:
-            parent_id = row.get(
-                "parent_id",
-                "",
-            )
-
-            pages = row.get(
-                "pages"
-            ) or []
-
-            if not parent_id or not pages:
-                continue
-
-            child_pages.setdefault(
-                parent_id,
-                []
-            ).extend(pages)
-
-        return child_pages
-
     @staticmethod
     def _attach_metadata(
         parents: list[dict],
         parent_matches: dict[str, ParentMatchInfo],
-        child_pages: dict[str, list[int]],
     ) -> None:
         """Attach retrieval metadata to parent records."""
 
@@ -308,6 +264,13 @@ class ParentChildFetcher:
             )
 
             parent[
+                "matched_child_documents"
+            ] = [
+                dict(child)
+                for child in match.matched_child_documents
+            ]
+
+            parent[
                 "score_source"
             ] = match.score_source
 
@@ -319,10 +282,9 @@ class ParentChildFetcher:
                 "matched_pages"
             ] = sorted(
                 set(
-                    child_pages.get(
-                        parent_id,
-                        [],
-                    )
+                    page
+                    for child in match.matched_child_documents
+                    for page in child.get("pages", [])
                 ),
                 key=_smart_page_sort_key,
             )

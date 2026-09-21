@@ -82,7 +82,14 @@ def get_evaluation_case_by_request(
     admin: dict = Depends(get_current_admin),
 ):
     del admin
-    return {"data": get_evaluation_repository().get_case_by_request(request_id)}
+    repository = get_evaluation_repository()
+    case = repository.get_case_by_request(request_id)
+    answer = case.get("actual_answer") if case else None
+    if not isinstance(answer, str) or not answer:
+        answer = repository.load_trace(request_id).get("answer")
+    # Jawaban diperlukan untuk penilaian pertama, sebelum evaluation case dibuat.
+    # Jangan mengirim seluruh trace/dokumen ketika frontend hanya meminta jawaban.
+    return {"data": case, "answer": answer if isinstance(answer, str) else None}
 
 
 @router.patch("/cases/{case_id}")

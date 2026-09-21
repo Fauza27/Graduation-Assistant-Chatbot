@@ -8,8 +8,10 @@ from docx.shared import Pt, Cm, Inches
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from collections import Counter, defaultdict
 import re
+from pathlib import Path
 
-DOCX_PATH = r"naskah PI\PI_Muhammad_Fauza_BAB1-3.docx"
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+DOCX_PATH = PROJECT_ROOT / "naskah PI" / "PI_Muhammad_Fauza_REVISED.docx"
 
 
 def emu_to_cm(emu):

@@ -169,7 +169,9 @@ def run_retrieval(
             "Seluruh pencarian retrieval gagal karena dependency tidak tersedia"
         ) from search_errors[-1]
 
-    search_results = _merge_search_results(search_batches)
+    search_results = _deduplicate_equivalent_child_content(
+        _merge_search_results(search_batches)
+    )
     set_field(
         num_docs_retrieved=len(search_results),
         search_candidates=_serialize_search_candidates(
@@ -445,6 +447,8 @@ def _serialize_parent_candidates(
             "rerank_original_chars": candidate.get("rerank_original_chars"),
             "rerank_input_chars": candidate.get("rerank_input_chars"),
             "rerank_truncated": candidate.get("rerank_truncated"),
+            "rerank_evidence_source": candidate.get("rerank_evidence_source"),
+            "rerank_window_start": candidate.get("rerank_window_start"),
             "accepted": (
                 str(candidate.get("parent_id", "")) in accepted_ids
                 if accepted_ids is not None
@@ -556,6 +560,35 @@ def _deduplicate_single_search(
         key=lambda result: getattr(result, "hybrid_score", 0.0),
         reverse=True,
     )
+
+
+def _deduplicate_equivalent_child_content(
+    search_results: list[HybridSearchResult],
+) -> list[HybridSearchResult]:
+    """Keep the highest-ranked copy of byte-equivalent knowledge text.
+
+    PI and KKP intentionally share several formatting rules. Returning both
+    copies consumes candidate slots without adding evidence when no source was
+    selected, so exact normalized duplicates are collapsed after ranking.
+    """
+    unique: list[HybridSearchResult] = []
+    seen_content: set[str] = set()
+    duplicate_count = 0
+    for result in search_results:
+        normalized = " ".join(result.document.page_content.casefold().split())
+        if normalized and normalized in seen_content:
+            duplicate_count += 1
+            continue
+        if normalized:
+            seen_content.add(normalized)
+        unique.append(result)
+
+    if duplicate_count:
+        logger.debug(
+            "Collapsed {} exact duplicate child candidate(s)",
+            duplicate_count,
+        )
+    return unique
 
 
 def _skip_reranking(

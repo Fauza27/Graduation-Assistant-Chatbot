@@ -49,7 +49,7 @@ export default function EditChunkPage({ params }: { params: Promise<{ childId: s
 
   if (isLoading) {
     return (
-      <div className="view active" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
+      <div className="admin-view active" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
         <Loader2 className="spin" style={{ width: '40px', height: '40px', color: 'var(--purple-primary)' }} />
       </div>
     );
@@ -57,7 +57,7 @@ export default function EditChunkPage({ params }: { params: Promise<{ childId: s
 
   if (!detail) {
     return (
-      <div className="view active">
+      <div className="admin-view active">
         <div className="empty-state" style={{ marginTop: '100px' }}>
           <h3>Chunk Tidak Ditemukan</h3>
           <p>Chunk dengan ID {childId} tidak ada atau gagal dimuat.</p>
@@ -70,7 +70,7 @@ export default function EditChunkPage({ params }: { params: Promise<{ childId: s
   }
 
   return (
-    <div className="view active">
+    <div className="admin-view active">
       <header className="main-header">
         <button 
           className="icon-btn mobile-only" 

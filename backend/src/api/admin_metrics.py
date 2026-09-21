@@ -62,39 +62,48 @@ def _select_view(view_name: str, days: int, order_col: str = "day") -> dict[str,
     }
 
 
-@router.get("/latency", summary="A1/A3: latency percentile & throughput per jam")
-async def get_latency_stats(days: int = Query(default=7, ge=1, le=90), admin: dict = Depends(get_current_admin)):
-    result = _select_view("v_latency_stats_hourly", days, order_col="bucket")
+def _view_response(view_name: str, days: int, order_col: str = "day") -> dict[str, Any]:
+    """Return one consistent API envelope for every metrics view.
+
+    ``_select_view`` also returns diagnostic metadata.  Keeping that metadata
+    beside ``data`` prevents the accidental ``data.data`` response shape that
+    previously broke every array consumer in the monitoring UI.
+    """
+    result = _select_view(view_name, days, order_col=order_col)
     return {
         "data": result["data"],
-        "date_filter_applied": result["metadata"]["date_filter_applied"],
-        "total_records": result["metadata"]["total_records"]
+        **result["metadata"],
     }
+
+
+@router.get("/latency", summary="A1/A3: latency percentile & throughput per jam")
+async def get_latency_stats(days: int = Query(default=7, ge=1, le=90), admin: dict = Depends(get_current_admin)):
+    return _view_response("v_latency_stats_hourly", days, order_col="bucket")
 
 
 @router.get("/stage-breakdown", summary="A2: rata-rata durasi tiap tahap pipeline per hari")
 async def get_stage_breakdown(days: int = Query(default=30, ge=1, le=180), admin: dict = Depends(get_current_admin)):
-    return {"data": _select_view("v_stage_breakdown_daily", days)}
+    return _view_response("v_stage_breakdown_daily", days)
 
 
 @router.get("/errors", summary="B1/B4: error rate & quota rejection rate per hari")
 async def get_error_stats(days: int = Query(default=30, ge=1, le=180), admin: dict = Depends(get_current_admin)):
-    return {"data": _select_view("v_error_stats_daily", days)}
+    return _view_response("v_error_stats_daily", days)
 
 
 @router.get("/errors/breakdown", summary="B2: breakdown error by source")
 async def get_error_breakdown(days: int = Query(default=30, ge=1, le=180), admin: dict = Depends(get_current_admin)):
-    return {"data": _select_view("v_error_breakdown_daily", days)}
+    return _view_response("v_error_breakdown_daily", days)
 
 
 @router.get("/openai-retry", summary="B3: retry rate ke OpenAI")
 async def get_openai_retry_stats(days: int = Query(default=30, ge=1, le=180), admin: dict = Depends(get_current_admin)):
-    return {"data": _select_view("v_openai_retry_stats_daily", days)}
+    return _view_response("v_openai_retry_stats_daily", days)
 
 
 @router.get("/retrieval-quality", summary="C1/C3/C4: kualitas retrieval per hari")
 async def get_retrieval_quality(days: int = Query(default=30, ge=1, le=180), admin: dict = Depends(get_current_admin)):
-    return {"data": _select_view("v_retrieval_quality_daily", days)}
+    return _view_response("v_retrieval_quality_daily", days)
 
 
 @router.get("/top-documents", summary="C2: dokumen paling sering diambil")
@@ -117,12 +126,12 @@ async def get_top_documents(limit: int = Query(default=20, ge=1, le=100), admin:
 
 @router.get("/domain-stats", summary="C5: breakdown query per domain")
 async def get_domain_stats(days: int = Query(default=30, ge=1, le=180), admin: dict = Depends(get_current_admin)):
-    return {"data": _select_view("v_domain_stats_daily", days)}
+    return _view_response("v_domain_stats_daily", days)
 
 
 @router.get("/cost", summary="D2/D3: cost harian & cost per request")
 async def get_cost_stats(days: int = Query(default=30, ge=1, le=180), admin: dict = Depends(get_current_admin)):
-    return {"data": _select_view("v_cost_daily", days)}
+    return _view_response("v_cost_daily", days)
 
 
 @router.get("/cost/per-user", summary="D3: cost per user")
@@ -150,22 +159,26 @@ async def get_active_users(
     admin: dict = Depends(get_current_admin)
 ):
     view_name = f"v_active_users_{granularity}"
-    return {"data": _select_view(view_name, days, order_col="day" if granularity == "daily" else "month")}
+    return _view_response(
+        view_name,
+        days,
+        order_col="day" if granularity == "daily" else "month",
+    )
 
 
 @router.get("/usage/new-vs-returning", summary="E2: sesi baru vs lanjutan per hari")
 async def get_new_vs_returning(days: int = Query(default=30, ge=1, le=180), admin: dict = Depends(get_current_admin)):
-    return {"data": _select_view("v_new_vs_returning_daily", days)}
+    return _view_response("v_new_vs_returning_daily", days)
 
 
 @router.get("/usage/turns-per-session", summary="E2: rata-rata turn per sesi per hari")
 async def get_turns_per_session(days: int = Query(default=30, ge=1, le=180), admin: dict = Depends(get_current_admin)):
-    return {"data": _select_view("v_avg_turns_per_session_daily", days)}
+    return _view_response("v_avg_turns_per_session_daily", days)
 
 
 @router.get("/usage/followup-rate", summary="E5: repeat/follow-up question rate")
 async def get_followup_rate(days: int = Query(default=30, ge=1, le=180), admin: dict = Depends(get_current_admin)):
-    return {"data": _select_view("v_followup_rate_daily", days)}
+    return _view_response("v_followup_rate_daily", days)
 
 
 @router.get("/system", summary="F1: active session count vs MAX_ACTIVE_SESSIONS")
@@ -178,23 +191,31 @@ async def get_system_health(admin: dict = Depends(get_current_admin)):
         active = stats.get("active_sessions") or stats.get("total_sessions") or 0
         max_sessions = settings.MAX_ACTIVE_SESSIONS
         return {
-            "session_stats": stats,
-            "max_active_sessions": max_sessions,
-            "utilization_pct": round(100.0 * active / max_sessions, 2) if max_sessions else None,
+            "data": {
+                "session_stats": stats,
+                "max_active_sessions": max_sessions,
+                "utilization_pct": (
+                    round(100.0 * active / max_sessions, 2)
+                    if max_sessions
+                    else None
+                ),
+            }
         }
     except Exception as exc:
         logger.error(f"Failed to fetch system health metrics: {exc}")
         return {
             "error": f"Failed to fetch system health: {str(exc)}",
-            "session_stats": {},
-            "max_active_sessions": None,
-            "utilization_pct": None,
+            "data": {
+                "session_stats": {},
+                "max_active_sessions": None,
+                "utilization_pct": None,
+            },
         }
 
 
 @router.get("/admin-activity", summary="F3: aktivitas admin (chunk edit + re-embed)")
 async def get_admin_activity(days: int = Query(default=30, ge=1, le=180), admin: dict = Depends(get_current_admin)):
-    return {"data": _select_view("v_admin_activity_daily", days)}
+    return _view_response("v_admin_activity_daily", days)
 
 
 @router.get("/system/overview", summary="Dashboard overview dengan key metrics")

@@ -3,7 +3,9 @@ from src.evaluation_agent.models import (
     DocumentPage,
     DocumentSpec,
     EvaluationCase,
+    EvidenceCandidate,
     EvidenceCandidateLLM,
+    EvidenceVerification,
     RegisteredDocument,
     ReviewStatus,
 )
@@ -136,3 +138,59 @@ def test_discovery_rejects_unknown_cases_and_clamps_page_numbers(monkeypatch, tm
     assert len(found["case-1"]) == 1
     assert found["case-1"][0].page_start == 3
     assert found["case-1"][0].page_end == 3
+
+
+def test_related_scope_evidence_is_retained_without_claiming_direct_answer(tmp_path):
+    class ScopeModel:
+        def verify_evidence(self, case, window, evidence_text):
+            return EvidenceVerification(
+                answers_question=False,
+                answer_available=False,
+                is_related_scope=True,
+                scope_note="Aturan hanya berlaku untuk seminar proposal.",
+                corrected_evidence_text=evidence_text,
+                explanation="Bukti terkait, tetapi cakupannya lebih sempit.",
+                confidence=0.9,
+            )
+
+    runner = EvaluationRunner(
+        repository=FakeRepository(), model=ScopeModel(), reader=FakeReader()
+    )
+    document = RegisteredDocument(
+        document_id="doc",
+        version_id="version",
+        spec=DocumentSpec(
+            slug="guide",
+            title="Guide",
+            domain="SKRIPSI",
+            version="1",
+            path=tmp_path / "guide.pdf",
+            chunk_source="Guide",
+        ),
+        checksum_sha256="abc",
+        page_count=5,
+    )
+    case = EvaluationCase(
+        case_id="case-1",
+        question="Berapa halaman naskah Skripsi?",
+        review_status=ReviewStatus.UNREVIEWED,
+        queue_reason="answer_abstention",
+    )
+    candidate = EvidenceCandidate(
+        case_id="case-1",
+        version_id="version",
+        document_slug="guide",
+        document_title="Guide",
+        page_start=3,
+        page_end=3,
+        evidence_text="Proposal minimal 40 halaman.",
+        explanation="",
+        confidence=0.8,
+    )
+
+    assessment = runner._assess_evidence(case, [candidate], {"version": document})
+
+    assert assessment.direct is None
+    assert assessment.related_scope is not None
+    assert not assessment.related_scope.is_verified
+    assert "seminar proposal" in assessment.related_scope.explanation

@@ -188,9 +188,20 @@ class CrossEncoderReranker:
             content = self._document_text(document, content_key)
             document["rerank_original_chars"] = len(content)
             document["rerank_truncated"] = len(content) > self.max_content_chars
+            document["rerank_evidence_source"] = (
+                "matched_children"
+                if document.get("matched_child_documents")
+                else "parent"
+            )
 
+            document["rerank_window_start"] = 0
             if len(content) > self.max_content_chars:
-                content = content[: self.max_content_chars]
+                content, window_start = self._select_relevant_window(
+                    query,
+                    content,
+                    self.max_content_chars,
+                )
+                document["rerank_window_start"] = window_start
                 truncated_count += 1
 
             document["rerank_input_chars"] = len(content)
@@ -200,8 +211,62 @@ class CrossEncoderReranker:
         return pairs, truncated_count
 
     @staticmethod
+    def _select_relevant_window(
+        query: str,
+        content: str,
+        max_chars: int,
+    ) -> tuple[str, int]:
+        """Select the most query-relevant character window from long evidence."""
+        if len(content) <= max_chars:
+            return content, 0
+
+        terms = {
+            term
+            for term in query.casefold().split()
+            if len(term.strip(".,?!:;()[]{}\"'")) >= 3
+        }
+        terms = {
+            term.strip(".,?!:;()[]{}\"'")
+            for term in terms
+        }
+        if not terms:
+            return content[:max_chars], 0
+
+        # Preserve a compact heading prefix when the best evidence occurs
+        # later, then spend the remaining budget on the relevant window.
+        prefix_budget = min(240, max_chars // 5)
+        body_budget = max_chars - prefix_budget - 5
+        stride = max(body_budget // 2, 1)
+        candidates = list(range(0, max(len(content) - body_budget + 1, 1), stride))
+        final_start = max(len(content) - body_budget, 0)
+        if final_start not in candidates:
+            candidates.append(final_start)
+
+        def score(start: int) -> tuple[int, int, int]:
+            window = content[start : start + body_budget].casefold()
+            matched = [term for term in terms if term in window]
+            return (
+                len(matched),
+                sum(window.count(term) for term in matched),
+                -start,
+            )
+
+        best_start = max(candidates, key=score)
+        if best_start == 0:
+            return content[:max_chars], 0
+
+        prefix = content[:prefix_budget].rstrip()
+        window = content[best_start : best_start + body_budget].strip()
+        return f"{prefix}\n…\n{window}"[:max_chars], best_start
+
+    @staticmethod
     def _document_text(document: dict, content_key: str) -> str:
-        """Include document headings while preserving the original content."""
+        """Build reranker input from the evidence that matched retrieval.
+
+        Hybrid search scores child chunks. Reusing those exact snippets keeps
+        the cross-encoder focused on the evidence that selected the parent,
+        even when the relevant child occurs near the end of a long parent.
+        """
         headings = list(
             dict.fromkeys(
                 value
@@ -209,8 +274,31 @@ class CrossEncoderReranker:
                 if (value := str(document.get(key) or "").strip())
             )
         )
-        content = str(document.get(content_key) or "")
+        matched_children = document.get("matched_child_documents") or []
+        child_evidence = [
+            CrossEncoderReranker._format_child_evidence(child)
+            for child in matched_children
+            if str(child.get("content") or "").strip()
+        ]
+        content = (
+            "\n\n".join(child_evidence)
+            if child_evidence
+            else str(document.get(content_key) or "")
+        )
         return "\n\n".join([*headings, content]) if headings else content
+
+    @staticmethod
+    def _format_child_evidence(child: dict) -> str:
+        """Add compact provenance without repeating identical headings."""
+        headings = list(
+            dict.fromkeys(
+                value
+                for key in ("title", "section")
+                if (value := str(child.get(key) or "").strip())
+            )
+        )
+        content = str(child.get("content") or "").strip()
+        return "\n".join([*headings, content]) if headings else content
 
     @staticmethod
     def _attach_scores(

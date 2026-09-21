@@ -1,50 +1,320 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import ReactMarkdown from 'react-markdown';
+import {
+  Send,
+  Menu,
+  Trash2,
+  Copy,
+  Check,
+  ArrowDown,
+  FileText,
+  MessageSquarePlus,
+  MoreVertical,
+} from 'lucide-react';
+
 import { useAppStore, CitationSource } from '../../../lib/store';
 import { sendChatMessage, deleteSession } from '../../../lib/api';
-import ReactMarkdown from 'react-markdown';
 import { DOCUMENTS } from '../../../lib/documentSources';
 
+// =============================================================================
+// 1. HELPER FUNCTIONS
+// =============================================================================
+
+/**
+ * Membantu menentukan URL dokumen PDF dan halaman target berdasarkan sumber referensi (sitasi).
+ */
+function resolveCitationUrl(src: CitationSource | string): string {
+  const srcObj = typeof src === 'string' ? { title: src } : src;
+  let domain = 'skripsi'; // Domain default
+
+  // Cek apakah parent_id mengarah ke kategori tertentu (KKP, Non-Skripsi, dsb)
+  if (srcObj.parent_id) {
+    const pid = srcObj.parent_id.toLowerCase();
+    if (pid.includes('kkp')) domain = 'kkp';
+    else if (pid.includes('non-skripsi') || pid.includes('nonskripsi'))
+      domain = 'non-skripsi';
+    else if (pid.includes('pi')) domain = 'pi';
+  }
+
+  // Ambil URL dokumen yang sesuai dari koleksi dokumen
+  let docUrl =
+    DOCUMENTS.find((d) => d.id === domain)?.fileUrl ||
+    DOCUMENTS.find((d) => d.id === 'skripsi')?.fileUrl ||
+    DOCUMENTS[0]?.fileUrl ||
+    '';
+
+  // Jika ada nomor halaman, tambahkan hash #page=X agar PDF otomatis membuka halaman tsb
+  if (srcObj.pages && srcObj.pages.length > 0) {
+    docUrl += `#page=${srcObj.pages[0]}`;
+  } else {
+    // Jika tidak ada nomor halaman spesifik, coba gunakan pencarian teks
+    const searchTerm = srcObj.title || srcObj.section;
+    if (searchTerm) {
+      const query = searchTerm.split(' ').slice(0, 8).join(' ');
+      docUrl += `#search=${encodeURIComponent(query)}`;
+    }
+  }
+
+  return docUrl;
+}
+
+// Pertanyaan umum cepat (Quick Suggestions) saat percakapan masih baru/kosong
+const QUICK_SUGGESTIONS = [
+  {
+    label: 'Syarat judul Skripsi',
+    question: 'Apa saja syarat pengajuan judul Skripsi?',
+  },
+  { label: 'Syarat pendaftaran KKP', question: 'Apa syarat pendaftaran KKP?' },
+  {
+    label: 'Jalur Non Skripsi',
+    question: 'Apa ketentuan Jalur Lulus Non Skripsi?',
+  },
+];
+
+// =============================================================================
+// 2. SUB-KOMPONEN TAMPILAN
+// =============================================================================
+
+/**
+ * Komponen Card untuk satu sumber referensi (sitasi dokumen)
+ */
+function CitationCard({
+  source,
+  onClick,
+}: {
+  source: CitationSource | string;
+  onClick: (src: CitationSource | string) => void;
+}) {
+  const srcObj = typeof source === 'string' ? { title: source } : source;
+  const displayTitle = srcObj.title || srcObj.section || 'Sumber Referensi';
+  const truncatedTitle =
+    displayTitle.length > 60
+      ? `${displayTitle.substring(0, 60)}...`
+      : displayTitle;
+
+  return (
+    <button
+      type="button"
+      className="citation-card"
+      onClick={() => onClick(source)}
+      style={{ textAlign: 'left' }}
+      aria-label={`Buka sumber: ${displayTitle}`}
+    >
+      <div className="citation-icon">
+        <FileText size={16} />
+      </div>
+      <div className="citation-text">
+        <div className="citation-title">{truncatedTitle}</div>
+      </div>
+    </button>
+  );
+}
+
+/**
+ * Komponen Tampilan Pesan Bot (Markdown + Referensi + Tombol Copy)
+ */
+function BotMessageItem({
+  text,
+  sources,
+  onCitationClick,
+  onCopy,
+  isCopied,
+}: {
+  text: string;
+  sources?: (string | CitationSource)[];
+  onCitationClick: (src: CitationSource | string) => void;
+  onCopy: () => void;
+  isCopied: boolean;
+}) {
+  return (
+    <div className="msg-row bot">
+      <div className="msg-col">
+        {/* Konten teks jawaban bot dirender menggunakan Markdown */}
+        <div className="bot-text">
+          <ReactMarkdown
+            components={{
+              a: ({ ...props }) => (
+                <a {...props} target="_blank" rel="noopener noreferrer" />
+              ),
+            }}
+          >
+            {text}
+          </ReactMarkdown>
+        </div>
+
+        {/* Daftar Sumber Dokumen (Sitasi) jika disediakan oleh AI */}
+        {sources && sources.length > 0 && (
+          <>
+            <div className="bubble-label">Sumber Referensi</div>
+            <div
+              style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}
+            >
+              {sources.map((src, i) => (
+                <CitationCard key={i} source={src} onClick={onCitationClick} />
+              ))}
+            </div>
+          </>
+        )}
+
+        {/* Tombol aksi: Salin jawaban */}
+        <div className="msg-actions">
+          <button
+            type="button"
+            className={`msg-action-btn ${isCopied ? 'copied' : ''}`}
+            onClick={onCopy}
+            aria-label="Salin jawaban"
+            title={isCopied ? 'Tersalin!' : 'Salin jawaban'}
+          >
+            {isCopied ? <Check size={14} /> : <Copy size={14} />}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Komponen Tampilan Pesan Pengguna
+ */
+function UserMessageItem({ text }: { text: string }) {
+  return (
+    <div className="msg-row user">
+      <div className="msg-col">
+        <div className="bubble">{text}</div>
+      </div>
+    </div>
+  );
+}
+
+// =============================================================================
+// 3. KOMPONEN UTAMA (ChatPage)
+// =============================================================================
+
 export default function ChatPage() {
-  const { session_id, messages, hasHydrated, addMessage, resetSession, openDocument } = useAppStore();
+  // --- A. STATE DARI GLOBAL STORE (Zustand) ---
+  const session_id = useAppStore((state) => state.session_id);
+  const messages = useAppStore((state) => state.messages);
+  const hasHydrated = useAppStore((state) => state.hasHydrated);
+  const isSidebarOpen = useAppStore((state) => state.isSidebarOpen);
+  const addMessage = useAppStore((state) => state.addMessage);
+  const resetSession = useAppStore((state) => state.resetSession);
+  const openDocument = useAppStore((state) => state.openDocument);
+  const toggleSidebar = useAppStore((state) => state.toggleSidebar);
+
+  // --- B. STATE LOKAL KOMPONEN ---
   const [inputValue, setInputValue] = useState('');
+  const [inputError, setInputError] = useState<string | null>(null);
+  const [copyError, setCopyError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const chatScrollRef = useRef<HTMLDivElement>(null);
+  const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
+  const [showScrollBottom, setShowScrollBottom] = useState(false);
 
-  // Rehydration & Empty session initialization
+  // --- C. REFS (Manipulasi DOM langsung) ---
+  const chatScrollRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(
+    () => () => {
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+    },
+    [],
+  );
+
+  // --- D. EFFECTS & LIFECYCLE ---
+
+  // 1. Inisialisasi session jika aplikasi sudah hydrated tapi belum ada session_id
   useEffect(() => {
     if (hasHydrated && !session_id) {
       resetSession();
     }
   }, [hasHydrated, session_id, resetSession]);
 
-  // Auto scroll to bottom
+  // 2. Tutup menu dropdown opsi jika pengguna mengklik area luar menu
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setMenuOpen(false);
+      }
+    };
+
+    if (menuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [menuOpen]);
+
+  // 3. Otomatis gulir ke bawah saat ada pesan baru atau bot sedang memproses
   useEffect(() => {
     if (chatScrollRef.current) {
       chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
     }
   }, [messages, isLoading]);
 
-  const handleSend = async () => {
-    if (!inputValue.trim() || !session_id) return;
-    const currentInput = inputValue;
+  // --- E. EVENT HANDLERS (Fungsi Aksi Pengguna) ---
+
+  // Memantau posisi scroll untuk memunculkan tombol 'kembali ke bawah'
+  const handleScroll = () => {
+    if (!chatScrollRef.current) return;
+    const { scrollTop, scrollHeight, clientHeight } = chatScrollRef.current;
+    const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+    setShowScrollBottom(messages.length > 0 && distanceFromBottom > 140);
+  };
+
+  // Menggulirkan area chat secara halus ke paling bawah
+  const scrollToBottom = (smooth = true) => {
+    if (chatScrollRef.current) {
+      chatScrollRef.current.scrollTo({
+        top: chatScrollRef.current.scrollHeight,
+        behavior: smooth ? 'smooth' : 'auto',
+      });
+    }
+  };
+
+  // Mengirim pesan ke backend dan menambahkan respon ke tampilan
+  const handleSend = async (overrideText?: string) => {
+    const textToSend = (overrideText ?? inputValue).trim();
+    if (!textToSend || !session_id || isLoading) return;
+    if (textToSend.length < 3 || textToSend.length > 500) {
+      setInputError('Pertanyaan harus terdiri dari 3 sampai 500 karakter.');
+      return;
+    }
+    setInputError(null);
+
+    // Bersihkan input teks & masukkan pesan user ke store tampilan
     setInputValue('');
-    addMessage('user', currentInput);
+    addMessage('user', textToSend);
     setIsLoading(true);
 
     try {
-      const response = await sendChatMessage(currentInput, session_id);
+      // Panggil API chat backend
+      const response = await sendChatMessage(textToSend, session_id);
+      if (useAppStore.getState().session_id !== session_id) return;
       addMessage('bot', response.answer || '...', response.sources || []);
-    } catch (err: Error | unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Gagal terhubung ke server.';
+
+      if (response.error) {
+        console.warn('Pemberitahuan layanan chat:', response.error);
+      }
+    } catch (err: unknown) {
+      if (useAppStore.getState().session_id !== session_id) return;
+      const errorMessage =
+        err instanceof Error ? err.message : 'Gagal terhubung ke server.';
       addMessage('bot', `**Error:** ${errorMessage}`);
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Menangani penekanan tombol Enter pada kolom input
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -52,6 +322,22 @@ export default function ChatPage() {
     }
   };
 
+  // Menyalin teks jawaban ke clipboard
+  const handleCopy = async (text: string, idx: number) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopyError(null);
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+      setCopiedIdx(idx);
+      copyTimerRef.current = setTimeout(() => setCopiedIdx(null), 1500);
+    } catch {
+      setCopyError(
+        'Jawaban belum bisa disalin otomatis. Pilih dan salin teks jawaban secara manual.',
+      );
+    }
+  };
+
+  // Menghapus riwayat sesi chat saat ini
   const handleDeleteSession = async () => {
     if (!session_id) return;
     if (window.confirm('Apakah Anda yakin ingin menghapus percakapan ini?')) {
@@ -59,160 +345,245 @@ export default function ChatPage() {
         await deleteSession(session_id);
         resetSession();
         setMenuOpen(false);
-      } catch (err: Error | unknown) {
-        const errorMessage = err instanceof Error ? err.message : 'Terjadi kesalahan';
+      } catch (err: unknown) {
+        const errorMessage =
+          err instanceof Error ? err.message : 'Terjadi kesalahan';
         alert(`Gagal menghapus percakapan: ${errorMessage}`);
       }
     }
   };
 
+  // Membuka modal dokumen PDF sesuai rujukan sitasi
   const handleCitationClick = (src: CitationSource | string) => {
-    const srcObj = typeof src === 'string' ? { title: src } : src;
-    let domain = 'skripsi'; // default
-    if (srcObj.parent_id) {
-      const pid = srcObj.parent_id.toLowerCase();
-      if (pid.includes('kkp')) domain = 'kkp';
-      else if (pid.includes('non-skripsi') || pid.includes('nonskripsi')) domain = 'non-skripsi';
-      else if (pid.includes('pi')) domain = 'pi';
-    }
-    let docUrl = DOCUMENTS.find(d => d.id === domain)?.fileUrl || DOCUMENTS[2].fileUrl;
-    
-    // Prioritas 1: Gunakan #page=N (didukung Chrome PDFium, terverifikasi)
-    // Prioritas 2: Fallback ke #search= (best-effort, tidak selalu didukung)
-    if (srcObj.pages && srcObj.pages.length > 0) {
-      docUrl += `#page=${srcObj.pages[0]}`;
-    } else {
-      const searchTerm = srcObj.title || srcObj.section;
-      if (searchTerm) {
-        const query = searchTerm.split(' ').slice(0, 8).join(' ');
-        docUrl += `#search=${encodeURIComponent(query)}`;
-      }
-    }
-    
-    console.log("Membuka dokumen:", docUrl);
-    
+    const docUrl = resolveCitationUrl(src);
     openDocument(docUrl);
   };
 
-  // Prevent flicker during hydration
-  if (!hasHydrated) return null;
+  // --- F. RENDER KONDISIONAL (Loading Hydration) ---
+  if (!hasHydrated) {
+    return (
+      <section
+        className="view active"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <div className="spinner" />
+      </section>
+    );
+  }
 
+  // --- G. RENDER UTAMA ---
   return (
     <>
+      {/* 1. HEADER HALAMAN (Desktop & Tablet) */}
       <div className="main-header">
-        <h2 className="h2">Chat</h2>
-        <div className="dropdown">
-          <button 
-            className="icon-btn header-icon-btn" 
-            onClick={() => setMenuOpen(!menuOpen)}
-          >
-            <svg className="icon" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>
-          </button>
-          {menuOpen && (
-            <div className="dropdown-menu show" style={{ right: 20 }}>
-              <button className="danger" onClick={handleDeleteSession}>
-                <svg className="icon-sm" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                Hapus Percakapan
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
+        <button
+          type="button"
+          className="icon-btn sidebar-toggle-btn"
+          onClick={toggleSidebar}
+          aria-label={isSidebarOpen ? 'Tutup Sidebar' : 'Buka Sidebar'}
+          title={isSidebarOpen ? 'Tutup Sidebar' : 'Buka Sidebar'}
+        >
+          <Menu className="icon" size={20} />
+        </button>
 
-      <section className={`view active ${messages.length === 0 ? 'chat-empty' : ''}`} style={{ display: 'flex' }}>
-        <div className="chat-scroll" ref={chatScrollRef}>
-          <div className="chat-inner">
-            {messages.length === 0 ? (
-              <div className="empty-state">
-                <div className="empty-badge">
-                  <svg viewBox="0 0 24 24"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 1 1 17 .5z"/><line x1="12" y1="8.5" x2="12" y2="13.5"/><line x1="9.5" y1="11" x2="14.5" y2="11"/></svg>
-                </div>
-                <h3 className="h3">Mulai percakapan baru</h3>
-                <p className="body2">Tanyakan apa saja seputar PI, KKP, Skripsi, atau Jalur Lulus Non Skripsi.</p>
-              </div>
-            ) : (
-              messages.map((msg, idx) => (
-                <div key={idx} className={`msg-row ${msg.role}`}>
-                  <div className="msg-col">
-                    {msg.role === 'user' ? (
-                      <div className="bubble">
-                        {msg.text}
-                      </div>
-                    ) : (
-                      <>
-                        <div className="bot-text">
-                          <ReactMarkdown>{msg.text}</ReactMarkdown>
-                        </div>
-                        {msg.sources && msg.sources.length > 0 && (
-                          <>
-                            <div className="bubble-label">Sumber Referensi</div>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                              {msg.sources.map((src, i) => {
-                                const srcObj = typeof src === 'string' ? { title: src, parent_id: '', section: '' } : src as CitationSource;
-                                const displayTitle = srcObj.title || srcObj.section || 'Sumber Referensi';
-                                return (
-                                  <div key={i} className="citation-card" onClick={() => handleCitationClick(src)} style={{ cursor: 'pointer' }}>
-                                    <div className="citation-icon">
-                                      <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                                    </div>
-                                    <div className="citation-text">
-                                      <div className="citation-title">{displayTitle.substring(0, 60)}{displayTitle.length > 60 ? '...' : ''}</div>
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </>
-                        )}
-                      </>
-                    )}
-                  </div>
-                </div>
-              ))
-            )}
-            
-            {isLoading && (
-              <div className="msg-row bot">
-                <div className="typing-dots">
-                  <div className="dot"></div>
-                  <div className="dot"></div>
-                  <div className="dot"></div>
-                </div>
+        <h2 className="h2">Chat</h2>
+
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            marginLeft: 'auto',
+          }}
+        >
+          {/* Tombol Hapus Cepat (Hanya muncul jika ada pesan) */}
+          {messages.length > 0 && (
+            <button
+              type="button"
+              className="icon-btn"
+              onClick={handleDeleteSession}
+              aria-label="Hapus Percakapan"
+              title="Hapus Percakapan"
+              style={{ color: 'var(--danger, #DC2626)' }}
+            >
+              <Trash2 className="icon-sm" size={18} />
+            </button>
+          )}
+
+          {/* Menu Opsi Dropdown */}
+          <div className="dropdown" ref={dropdownRef}>
+            <button
+              type="button"
+              className="icon-btn header-icon-btn"
+              onClick={() => setMenuOpen(!menuOpen)}
+              aria-label="Opsi Percakapan"
+            >
+              <MoreVertical className="icon" size={18} />
+            </button>
+
+            {menuOpen && (
+              <div className="dropdown-menu show" style={{ right: 0 }}>
+                <button
+                  type="button"
+                  className="danger"
+                  onClick={handleDeleteSession}
+                >
+                  <Trash2 className="icon-sm" size={16} />
+                  Hapus Percakapan
+                </button>
               </div>
             )}
           </div>
         </div>
+      </div>
 
+      {/* 2. AREA KONTEN CHAT (Daftar Pesan & Form Input) */}
+      <section
+        id="view-chat"
+        className={`view active ${messages.length === 0 ? 'chat-empty' : ''}`}
+      >
+        {/* Scrollable Container untuk Pesan */}
+        <div
+          className="chat-scroll"
+          ref={chatScrollRef}
+          onScroll={handleScroll}
+        >
+          <div className="chat-inner">
+            {/* Tampilan Kosong (Empty State) jika belum ada obrolan */}
+            {messages.length === 0 ? (
+              <div className="empty-state">
+                <div className="empty-badge">
+                  <MessageSquarePlus size={32} />
+                </div>
+                <h3 className="h3">Mulai percakapan baru</h3>
+                <p className="body2">
+                  Tanyakan apa saja seputar PI, KKP, Skripsi, atau Jalur Lulus
+                  Non Skripsi.
+                </p>
+              </div>
+            ) : (
+              // Perulangan Daftar Pesan
+              messages.map((msg, idx) =>
+                msg.role === 'user' ? (
+                  <UserMessageItem key={idx} text={msg.text} />
+                ) : (
+                  <BotMessageItem
+                    key={idx}
+                    text={msg.text}
+                    sources={msg.sources}
+                    onCitationClick={handleCitationClick}
+                    onCopy={() => handleCopy(msg.text, idx)}
+                    isCopied={copiedIdx === idx}
+                  />
+                ),
+              )
+            )}
+
+            {/* Animasi Indikator Mengetik (Typing Dots) saat Bot Loading */}
+            {isLoading && (
+              <div className="msg-row bot">
+                <div className="typing-dots">
+                  <div className="dot" />
+                  <div className="dot" />
+                  <div className="dot" />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Tombol Mengambang: Scroll ke Paling Bawah */}
+          {showScrollBottom && (
+            <button
+              type="button"
+              className="scroll-bottom-btn show"
+              onClick={() => scrollToBottom(true)}
+              aria-label="Ke pesan terbaru"
+            >
+              <ArrowDown className="icon-sm" size={18} />
+            </button>
+          )}
+        </div>
+
+        {/* 3. BAGIAN COMPOSER (Input Pesan & Rekomendasi Pertanyaan) */}
         <div className="composer">
           <div className="composer-inner">
-            <div className="suggestion-row">
-              <button className="chip" onClick={() => setInputValue('Apa saja syarat pengajuan judul Skripsi?')}>
-                <svg className="icon-sm" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                Syarat judul Skripsi
-              </button>
-              <button className="chip" onClick={() => setInputValue('Apa syarat pendaftaran KKP?')}>
-                <svg className="icon-sm" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                Syarat pendaftaran KKP
-              </button>
-            </div>
-            
+            {/* Kolom Input Teks & Tombol Kirim */}
             <div className="input-field">
-              <input 
+              <input
+                ref={inputRef}
                 id="chat-input"
                 name="chat-input"
-                type="text" 
+                type="text"
                 value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
+                onChange={(e) => {
+                  setInputValue(e.target.value);
+                  setInputError(null);
+                }}
+                maxLength={500}
+                aria-label="Pertanyaan untuk chatbot"
+                aria-describedby="chat-input-help"
+                aria-invalid={Boolean(inputError)}
                 onKeyDown={handleKeyDown}
-                placeholder="Ketik pertanyaan Anda..." 
+                placeholder="Ketik pertanyaan Anda..."
                 disabled={isLoading}
                 autoComplete="off"
               />
-              <button className="send-btn" onClick={handleSend} disabled={!inputValue.trim() || isLoading}>
-                <svg className="icon" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+
+              <button
+                type="button"
+                className="send-btn"
+                onClick={() => handleSend()}
+                disabled={inputValue.trim().length < 3 || isLoading}
+                aria-label="Kirim Pesan"
+              >
+                <Send className="icon" size={18} />
               </button>
             </div>
-            <p className="caption composer-hint">Chatbot dapat membuat kesalahan. Jawaban selalu berdasarkan dokumen resmi.</p>
+
+            {/* Rekomendasi Pertanyaan Cepat (Chips) */}
+            <div className="suggestion-row">
+              {QUICK_SUGGESTIONS.map((item, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  className="chip"
+                  disabled={isLoading}
+                  onClick={() => handleSend(item.question)}
+                >
+                  <FileText className="icon-sm" size={14} />
+                  {item.label}
+                </button>
+              ))}
+            </div>
+
+            {copyError && (
+              <p
+                className="caption composer-hint"
+                role="alert"
+                style={{ color: 'var(--danger)' }}
+              >
+                {copyError}
+              </p>
+            )}
+            <p
+              id="chat-input-help"
+              className="caption composer-hint"
+              role={inputError ? 'alert' : undefined}
+              style={inputError ? { color: 'var(--danger)' } : undefined}
+            >
+              {inputError ||
+                (inputValue.length >= 450
+                  ? `${inputValue.length}/500 karakter`
+                  : 'Gunakan pertanyaan yang jelas. Anda juga bisa bertanya lanjutan dalam percakapan yang sama.')}
+            </p>
+            <p className="caption composer-hint">
+              Chatbot dapat membuat kesalahan. Periksa sumber pedoman yang
+              disertakan.
+            </p>
           </div>
         </div>
       </section>

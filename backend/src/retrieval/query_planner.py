@@ -41,11 +41,16 @@ _CLAUSE_SEPARATOR = re.compile(
 _DOMAIN_TERMS: tuple[tuple[str, tuple[str, ...]], ...] = (
     (
         "tugas akhir non skripsi",
-        ("non skripsi", "non-skripsi", "wirausaha", "pekerja profesional"),
+        (
+            "tugas akhir non skripsi",
+            "non skripsi",
+            "non-skripsi",
+            "nonskripsi",
+        ),
     ),
     (
         "Penulisan Ilmiah",
-        ("penulisan ilmiah",),
+        ("penulisan ilmiah", "laporan pi", "ujian pi", "seminar pi"),
     ),
     (
         "KKP",
@@ -53,8 +58,21 @@ _DOMAIN_TERMS: tuple[tuple[str, tuple[str, ...]], ...] = (
     ),
     (
         "skripsi",
-        ("skripsi", "pendadaran", "seminar proposal", "seminar hasil"),
+        ("skripsi", "tugas akhir skripsi", "proposal skripsi"),
     ),
+)
+
+_NON_SKRIPSI_TRACK_TERMS = (
+    "jalur karya ilmiah",
+    "karya ilmiah",
+    "prosiding",
+    "jalur profesional",
+    "pekerja profesional",
+    "it profesional",
+    "jalur wirausaha",
+    "wirausaha",
+    "startup",
+    "business model canvas",
 )
 
 
@@ -153,7 +171,13 @@ def _find_single_domain(query: str) -> str | None:
         if any(term in searchable for term in terms):
             matched.append(canonical)
 
-    return matched[0] if len(matched) == 1 else None
+    if len(matched) == 1:
+        return matched[0]
+
+    if not matched and any(term in query_lower for term in _NON_SKRIPSI_TRACK_TERMS):
+        return "tugas akhir non skripsi"
+
+    return None
 
 
 def _contains_domain(query: str) -> bool:
@@ -162,4 +186,4 @@ def _contains_domain(query: str) -> bool:
         term in query_lower
         for _, terms in _DOMAIN_TERMS
         for term in terms
-    )
+    ) or any(term in query_lower for term in _NON_SKRIPSI_TRACK_TERMS)

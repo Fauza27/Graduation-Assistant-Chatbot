@@ -31,3 +31,5 @@ ADR/
 percakapan.txt
 demo_review.py
 export_*.py
+scripts/demos/
+scripts/database/

@@ -207,25 +207,33 @@ _KKP_KEYWORDS = [
     "untuk kkp",
 ]
 
-_NON_SKRIPSI_KEYWORDS = [
+_NON_SKRIPSI_EXPLICIT_KEYWORDS = [
     "non skripsi",
     "non-skripsi",
+    "nonskripsi",
     "tugas akhir non skripsi",
     "tugas akhir non-skripsi",
+    "jalur non skripsi",
+]
+
+_NON_SKRIPSI_TRACK_KEYWORDS = [
+    "jalur karya ilmiah",
     "karya ilmiah",
-    "jalur profesional",
-    "wirausaha",
-    "jurnal",
     "prosiding",
+    "jalur profesional",
+    "jalur pekerja profesional",
+    "pekerja profesional",
+    "it profesional",
+    "jalur wirausaha",
+    "wirausaha",
     "startup",
+    "business model canvas",
     "jalur kelulusan alternatif",
 ]
 
 _SKRIPSI_KEYWORDS = [
     "skripsi",
     "tugas akhir skripsi",
-    "pendadaran",
-    "seminar hasil",
     "proposal skripsi",
     "untuk skripsi",
     "jalur skripsi",
@@ -293,15 +301,15 @@ def _detect_source(
     "non skripsi" does not accidentally match "skripsi".
     """
 
-    is_non_skripsi = _contains_any(
+    is_non_skripsi_explicit = _contains_any(
         query_lower,
-        _NON_SKRIPSI_KEYWORDS,
+        _NON_SKRIPSI_EXPLICIT_KEYWORDS,
     )
 
     # Remove non-skripsi phrases before checking skripsi.
     skripsi_query = query_lower
 
-    for keyword in _NON_SKRIPSI_KEYWORDS:
+    for keyword in _NON_SKRIPSI_EXPLICIT_KEYWORDS:
         skripsi_query = skripsi_query.replace(
             keyword,
             " ",
@@ -333,13 +341,22 @@ def _detect_source(
     if is_skripsi:
         matched_sources.append(_SOURCE_SKRIPSI)
 
-    if is_non_skripsi:
+    if is_non_skripsi_explicit:
         matched_sources.append(_SOURCE_NON_SKRIPSI)
 
     # Only apply a source filter when the query identifies
     # exactly one domain.
     if len(matched_sources) == 1:
         return matched_sources[0]
+
+    # Track names identify Non-Skripsi only when the query did not already
+    # name another guide explicitly. This prevents phrases such as
+    # "karya ilmiah pada skripsi" from overriding the explicit Skripsi domain.
+    if not matched_sources and _contains_any(
+        query_lower,
+        _NON_SKRIPSI_TRACK_KEYWORDS,
+    ):
+        return _SOURCE_NON_SKRIPSI
 
     return None
 
@@ -398,6 +415,68 @@ def _detect_section(
 
     return None, "medium"
 
+
+def _resolve_section_filter(
+    section: str | None,
+    source: str | None,
+) -> str | None:
+    """Return a section substring that is safe for the selected source.
+
+    The retrieval RPC performs a substring match. A bare Roman numeral is
+    therefore unsafe: ``BAB II`` also occurs at the beginning of ``BAB III``.
+    Use the shortest source-specific prefix that still separates chapters.
+    Skripsi also stores its front matter as individual labels such as
+    ``Kata Pengantar`` and ``Daftar Isi``, so ``Front Matter`` is not applied
+    to that source. A coarse filter is unsafe before a source is identified.
+    """
+
+    if section is None:
+        return None
+
+    source_independent_sections = {
+        "Lampiran",
+        "Surat Keputusan",
+    }
+
+    if section in source_independent_sections:
+        return section
+
+    filters_by_source = {
+        _SOURCE_PI: {
+            "Front Matter": "Front Matter",
+            "BAB I": "BAB I >",
+            "BAB II": "BAB II >",
+            "BAB III": "BAB III >",
+            "BAB IV": "BAB IV >",
+            "BAB V": "BAB V >",
+        },
+        _SOURCE_KKP: {
+            "Front Matter": "Front Matter",
+            "BAB I": "BAB I >",
+            "BAB II": "BAB II >",
+            "BAB III": "BAB III >",
+            "BAB IV": "BAB IV >",
+            "BAB V": "BAB V >",
+        },
+        _SOURCE_SKRIPSI: {
+            "BAB I": "BAB I Pendahuluan",
+            "BAB II": "BAB II >",
+            "BAB III": "BAB III >",
+            "BAB IV": "BAB IV >",
+            "BAB V": "BAB V >",
+        },
+        _SOURCE_NON_SKRIPSI: {
+            "Front Matter": "Front Matter",
+            "BAB I": "BAB I PENDAHULUAN",
+            "BAB II": "BAB II KETENTUAN UMUM",
+            "BAB III": "BAB III BENTUK TUGAS AKHIR NON SKRIPSI",
+            "BAB IV": "BAB IV PENJELASAN SISTEMATIKA PENULISAN LAPORAN",
+            "BAB V": "BAB V FORMAT DAN TATA CARA PENULISAN",
+        },
+    }
+
+    return filters_by_source.get(source, {}).get(section)
+
 def extract_query_components(
     query: str,
 ) -> ParsedQuery:
@@ -420,14 +499,25 @@ def extract_query_components(
     section, confidence = _detect_section(
         query_lower
     )
+    section_filter = _resolve_section_filter(
+        section,
+        source,
+    )
 
     filters: dict[str, str] = {}
 
     if source:
         filters["source"] = source
 
-    if section:
-        filters["section"] = section
+    if section_filter:
+        filters["section"] = section_filter
+
+    if section and not section_filter:
+        logger.debug(
+            "Detected section '{}' but skipped its SQL filter because "
+            "the current source metadata is not compatible",
+            section,
+        )
 
     logger.info(
         "Query analyzed — semantic='{}' | "

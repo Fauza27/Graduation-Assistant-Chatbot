@@ -78,6 +78,7 @@ class EvaluationCase(BaseModel):
     question: str
     actual_answer: str | None = None
     review_status: ReviewStatus
+    queue_reason: str = "manual_admin"
     expected_answer: str | None = None
     expected_evidence: dict[str, Any] | None = None
     review_notes: str | None = None
@@ -114,6 +115,8 @@ class EvidenceCandidate(BaseModel):
 class EvidenceVerification(BaseModel):
     answers_question: bool
     answer_available: bool
+    is_related_scope: bool = False
+    scope_note: str = ""
     page_start: int | None = None
     page_end: int | None = None
     corrected_evidence_text: str = ""

@@ -29,6 +29,7 @@ env/
 ENV/
 env.bak/
 venv.bak/
+virtual_environment/
 
 # Environment Variables (SENSITIVE!)
 .env
@@ -48,6 +49,8 @@ venv.bak/
 
 # Testing
 .pytest_cache/
+.ruff_cache/
+.benchmarks/
 .coverage
 htmlcov/
 .tox/
@@ -55,6 +58,7 @@ htmlcov/
 # Personal Notes (keep private)
 personal_docs/
 *.txt
+!requirements.txt
 !requirements-dev.txt
 !requirements-eval.txt
 
@@ -65,6 +69,7 @@ conversation.txt
 *.log
 *.tmp
 *.temp
+tmp/
 
 results/
 
@@ -75,6 +80,10 @@ manual_review_*.json
 
 # Naskah PI (private)
 kode_naskah_pi
+naskah PI/
+
+# Local database backups and CSV exports
+backup/
 
 # OS
 Thumbs.db

@@ -1,3 +1,4 @@
+import asyncio
 from contextlib import asynccontextmanager
 import hmac
  
@@ -51,8 +52,27 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 async def lifespan(app: FastAPI):
     settings = get_settings()
 
-    from src.services.ai_services import preload_models
-    preload_models()
+    from src.services.ai_services import (
+        get_session_store_strategy,
+        preload_models,
+    )
+
+    # Fail fast for persistent session storage in the worker process.  This is
+    # deliberately lazy so Uvicorn's reload supervisor does not test the same
+    # remote database connection a second time merely by importing the app.
+    get_session_store_strategy()
+
+    if settings.ENVIRONMENT == "production":
+        # Production readiness means all models are warm before traffic enters.
+        await asyncio.to_thread(preload_models)
+    else:
+        # Development remains usable while the expensive local model warmup
+        # continues. CrossEncoder initialization itself is protected by a lock.
+        logger.info("Scheduling AI model warmup in the background")
+        app.state.model_preload_task = asyncio.create_task(
+            asyncio.to_thread(preload_models),
+            name="ai-model-preload",
+        )
 
     if settings.TELEGRAM_WEBHOOK_URL:
         bot_app = create_bot()

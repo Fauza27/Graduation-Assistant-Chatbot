@@ -1,170 +1,594 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { BrainCircuit, Check, Play, RefreshCw, X } from 'lucide-react';
+import Link from 'next/link';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  ArrowRight,
+  BrainCircuit,
+  ClipboardCheck,
+  History,
+  Inbox,
+  LoaderCircle,
+  Play,
+  RefreshCw,
+  Search,
+} from 'lucide-react';
 import {
   getEvaluationCases,
-  getEvaluationRun,
   getEvaluationRuns,
-  reviewEvaluationRecommendation,
   startEvaluationRun,
 } from '@/lib/evaluationApi';
-import type { EvaluationCase, EvaluationRun, EvaluationRunReport } from '@/lib/evaluationTypes';
-import styles from './evaluations.module.css';
+import type {
+  EvaluationCase,
+  EvaluationRun,
+  ReviewStatus,
+} from '@/lib/evaluationTypes';
+import {
+  errorMessage,
+  formatRunDate,
+  isActiveRun,
+  REVIEW_LABELS,
+  RUN_LABELS,
+} from '@/lib/evaluationUtils';
+import CaseReview from '@/components/evaluation/CaseReview';
+import {
+  EmptyState,
+  EvaluationDialog,
+  StatusBadge,
+  WorkerCommand,
+} from '@/components/evaluation/EvaluationUI';
+import styles from '@/components/evaluation/evaluation.module.css';
 
-const STATUS_LABEL: Record<string, string> = {
-  pending: 'Menunggu worker', running: 'Sedang dianalisis', completed: 'Selesai',
-  failed: 'Gagal / parsial', cancelled: 'Dibatalkan',
-};
-const STAGE_LABEL: Record<string, string> = {
-  information_unavailable: 'Informasi tidak tersedia', extraction: 'Ekstraksi dokumen',
-  chunking: 'Chunking', query_processing: 'Pemrosesan query', retrieval: 'Retrieval',
-  parent_assembly: 'Penyusunan parent', reranking: 'Reranker',
-  context_assembly: 'Penyusunan konteks', generation: 'Pembuatan jawaban',
-  ambiguous: 'Belum pasti', unknown: 'Tidak diketahui',
-};
-const REVIEW_LABEL: Record<string, string> = {
-  unreviewed: 'Kandidat otomatis', correct: 'Benar', incorrect: 'Salah',
-  incomplete: 'Tidak lengkap', uncertain: 'Belum pasti',
-};
-const errorText = (error: unknown) => error instanceof Error ? error.message : 'Terjadi kesalahan.';
-
-function recommendationSummary(action: string): string {
-  return action.split('\n\nUsulan: ')[1]?.split('\n\n')[0]?.trim() || action;
-}
+const PAGE_SIZE = 15;
 
 export default function EvaluationsPage() {
   const [cases, setCases] = useState<EvaluationCase[]>([]);
   const [runs, setRuns] = useState<EvaluationRun[]>([]);
-  const [selectedCases, setSelectedCases] = useState<Set<string>>(new Set());
-  const [report, setReport] = useState<EvaluationRunReport | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [tab, setTab] = useState<'queue' | 'history'>('queue');
+  const [search, setSearch] = useState('');
+  const [filter, setFilter] = useState<ReviewStatus | 'all'>('all');
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
-  const [working, setWorking] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [reviewing, setReviewing] = useState<EvaluationCase | null>(null);
+  const [confirming, setConfirming] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [created, setCreated] = useState<{
+    run_id: string;
+    next_command: string;
+  } | null>(null);
+  const requestRef = useRef<AbortController | null>(null);
+  const allCheckbox = useRef<HTMLInputElement>(null);
 
-  const refresh = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  const load = useCallback(async () => {
+    requestRef.current?.abort();
+    const controller = new AbortController();
+    requestRef.current = controller;
     try {
-      const [caseResponse, runResponse] = await Promise.all([getEvaluationCases(), getEvaluationRuns()]);
+      const [caseResponse, runResponse] = await Promise.all([
+        getEvaluationCases(controller.signal),
+        getEvaluationRuns(controller.signal),
+      ]);
+      if (controller.signal.aborted) return;
       setCases(caseResponse.data);
       setRuns(runResponse.data);
-    } catch (refreshError) {
-      setError(errorText(refreshError));
+      setError(null);
+      const available = new Set(caseResponse.data.map((item) => item.case_id));
+      setSelected(
+        (current) => new Set([...current].filter((id) => available.has(id))),
+      );
+    } catch (loadError) {
+      if (!controller.signal.aborted) setError(errorMessage(loadError));
     } finally {
-      setLoading(false);
+      if (!controller.signal.aborted) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    let cancelled = false;
-    Promise.all([getEvaluationCases(), getEvaluationRuns()])
+    const controller = new AbortController();
+    requestRef.current = controller;
+    Promise.all([
+      getEvaluationCases(controller.signal),
+      getEvaluationRuns(controller.signal),
+    ])
       .then(([caseResponse, runResponse]) => {
-        if (cancelled) return;
+        if (controller.signal.aborted) return;
         setCases(caseResponse.data);
         setRuns(runResponse.data);
       })
-      .catch((loadError) => { if (!cancelled) setError(errorText(loadError)); })
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
+      .catch((loadError) => {
+        if (!controller.signal.aborted) setError(errorMessage(loadError));
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+    return () => controller.abort();
   }, []);
 
-  const selectedCount = selectedCases.size;
-  const allSelected = cases.length > 0 && selectedCount === cases.length;
-  const caseById = useMemo(
-    () => new Map((report?.cases || cases).map((item) => [item.case_id, item])),
-    [cases, report],
+  const activeCount = runs.filter(isActiveRun).length;
+  useEffect(() => {
+    if (!activeCount) return;
+    const timer = setInterval(() => {
+      if (document.visibilityState === 'visible') void load();
+    }, 15000);
+    return () => clearInterval(timer);
+  }, [activeCount, load]);
+
+  const filtered = useMemo(() => {
+    const term = search.trim().toLocaleLowerCase('id');
+    return cases.filter(
+      (item) =>
+        (filter === 'all' || item.review_status === filter) &&
+        (!term ||
+          `${item.question} ${item.review_notes || ''}`
+            .toLocaleLowerCase('id')
+            .includes(term)),
+    );
+  }, [cases, search, filter]);
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, pageCount);
+  const visibleCases = filtered.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE,
   );
+  const allSelected =
+    filtered.length > 0 && filtered.every((item) => selected.has(item.case_id));
+  const someSelected = filtered.some((item) => selected.has(item.case_id));
+  useEffect(() => {
+    if (allCheckbox.current)
+      allCheckbox.current.indeterminate = someSelected && !allSelected;
+  }, [someSelected, allSelected]);
 
-  const toggleAll = () => setSelectedCases(
-    allSelected ? new Set() : new Set(cases.map((item) => item.case_id)),
-  );
-
-  const queueRun = async () => {
-    setWorking(true); setError(null); setMessage(null);
+  const toggle = (id: string) =>
+    setSelected((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  const toggleFiltered = () =>
+    setSelected((current) => {
+      const next = new Set(current);
+      filtered.forEach((item) => {
+        if (allSelected) next.delete(item.case_id);
+        else next.add(item.case_id);
+      });
+      return next;
+    });
+  const queue = async () => {
+    if (creating || !selected.size) return;
+    setCreating(true);
+    setError(null);
     try {
-      const response = await startEvaluationRun(selectedCount ? Array.from(selectedCases) : undefined);
-      setMessage(`${response.message}. Jalankan di terminal: ${response.next_command}`);
-      setSelectedCases(new Set());
-      await refresh();
-    } catch (runError) { setError(errorText(runError)); }
-    finally { setWorking(false); }
-  };
-
-  const openRun = async (runId: string) => {
-    setWorking(true); setError(null);
-    try { setReport((await getEvaluationRun(runId)).data); }
-    catch (runError) { setError(errorText(runError)); }
-    finally { setWorking(false); }
-  };
-
-  const reviewRecommendation = async (recommendationId: string, status: 'approved' | 'rejected') => {
-    if (!report) return;
-    setWorking(true); setError(null);
-    try {
-      await reviewEvaluationRecommendation(recommendationId, status);
-      setReport((await getEvaluationRun(report.run.run_id)).data);
-    } catch (reviewError) { setError(errorText(reviewError)); }
-    finally { setWorking(false); }
+      const response = await startEvaluationRun([...selected]);
+      setCreated(response);
+      setConfirming(false);
+      setSelected(new Set());
+      await load();
+    } catch (queueError) {
+      setError(errorMessage(queueError));
+      setConfirming(false);
+    } finally {
+      setCreating(false);
+    }
   };
 
   return (
     <div className={styles.page}>
-      <header className={styles.header}>
-        <div><h1><BrainCircuit aria-hidden="true" /> Evaluasi RAG</h1><p>Analisis kasus gagal berdasarkan dokumen PDF asli, chunk, dan trace pipeline.</p></div>
-        <button className={styles.secondaryButton} onClick={() => void refresh()} disabled={loading}><RefreshCw aria-hidden="true" /> Refresh</button>
-      </header>
-      {error && <div className={styles.error}>{error}</div>}
-      {message && <div className={styles.message}>{message}</div>}
-
-      <section className={styles.panel}>
-        <div className={styles.panelHeader}>
-          <div><h2>Antrean kasus evaluasi</h2><p>{cases.length} kandidat otomatis dan kasus yang ditandai admin.</p></div>
-          <button className={styles.primaryButton} onClick={() => void queueRun()} disabled={working || cases.length === 0}><Play aria-hidden="true" />{selectedCount ? `Jadwalkan ${selectedCount} kasus` : 'Jadwalkan semua'}</button>
+      <div className={styles.pageInner}>
+        <header className={styles.header}>
+          <div>
+            <h1>
+              <BrainCircuit size={25} aria-hidden="true" />
+              Evaluasi RAG
+            </h1>
+            <p>Temukan penyebab jawaban gagal dan tinjau saran perbaikannya.</p>
+          </div>
+          <div className={styles.headerActions}>
+            <Link
+              className={styles.secondaryButton}
+              href="/admin/dashboard/monitoring"
+            >
+              <ClipboardCheck size={16} />
+              Nilai dari monitoring
+            </Link>
+            <button
+              className={styles.secondaryButton}
+              disabled={loading || creating}
+              onClick={() => {
+                setLoading(true);
+                void load();
+              }}
+            >
+              <RefreshCw
+                size={16}
+                className={loading ? styles.spin : undefined}
+              />
+              Perbarui
+            </button>
+          </div>
+        </header>
+        {error && (
+          <div className={styles.error} role="alert">
+            {error}{' '}
+            <button
+              className={styles.textButton}
+              onClick={() => {
+                setLoading(true);
+                void load();
+              }}
+            >
+              Coba kembali
+            </button>
+          </div>
+        )}
+        <div className={styles.stats}>
+          <div className={styles.stat}>
+            <span className={styles.statIcon}>
+              <Inbox size={21} />
+            </span>
+            <div>
+              <strong>{loading && !cases.length ? '—' : cases.length}</strong>
+              <p>Kasus dalam antrean</p>
+            </div>
+          </div>
+          <div className={styles.stat}>
+            <span className={styles.statIcon}>
+              <ClipboardCheck size={21} />
+            </span>
+            <div>
+              <strong>
+                {loading && !cases.length
+                  ? '—'
+                  : cases.filter((item) => item.review_status === 'unreviewed')
+                      .length}
+              </strong>
+              <p>Belum dinilai admin</p>
+            </div>
+          </div>
+          <div className={styles.stat}>
+            <span className={styles.statIcon}>
+              <History size={21} />
+            </span>
+            <div>
+              <strong>{loading && !runs.length ? '—' : activeCount}</strong>
+              <p>Batch menunggu / berjalan</p>
+            </div>
+          </div>
         </div>
-        <div className={styles.tableWrap}>
-          <table><thead><tr><th><input type="checkbox" checked={allSelected} onChange={toggleAll} aria-label="Pilih semua kasus" /></th><th>Pertanyaan</th><th>Status</th><th>Sumber</th><th>Catatan</th></tr></thead>
-            <tbody>
-              {cases.map((item) => <tr key={item.case_id}>
-                <td><input type="checkbox" checked={selectedCases.has(item.case_id)} onChange={() => setSelectedCases((current) => { const next = new Set(current); if (next.has(item.case_id)) next.delete(item.case_id); else next.add(item.case_id); return next; })} aria-label={`Pilih ${item.question}`} /></td>
-                <td>{item.question}</td><td><span className={styles.badge}>{REVIEW_LABEL[item.review_status] || item.review_status}</span></td><td>{item.created_by?.startsWith('system:auto:') ? 'Sistem' : 'Admin'}</td><td>{item.review_notes || '—'}</td>
-              </tr>)}
-              {!loading && cases.length === 0 && <tr><td colSpan={5} className={styles.empty}>Belum ada kandidat evaluasi.</td></tr>}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <section className={styles.panel}>
-        <div className={styles.panelHeader}><div><h2>Riwayat batch</h2><p>Pilih batch untuk melihat akar masalah dan rekomendasinya.</p></div></div>
-        <div className={styles.runGrid}>
-          {runs.map((run) => <button key={run.run_id} className={styles.runCard} onClick={() => void openRun(run.run_id)}>
-            <span className={`${styles.runStatus} ${styles[run.status] || ''}`}>{STATUS_LABEL[run.status] || run.status}</span><strong>{run.processed_cases}/{run.total_cases} kasus</strong><small>{new Date(run.created_at).toLocaleString('id-ID')}</small>{run.error_message && <small>{run.error_message}</small>}
-          </button>)}
-          {!loading && runs.length === 0 && <p className={styles.empty}>Belum ada batch evaluasi.</p>}
-        </div>
-      </section>
-
-      {report && <section className={styles.panel}>
-        <div className={styles.panelHeader}><div><h2>Hasil batch</h2><p className={styles.mono}>{report.run.run_id}</p></div></div>
-        <div className={styles.findings}>{report.findings.map((finding) => {
-          const evaluationCase = caseById.get(finding.case_id);
-          const recommendations = report.recommendations.filter((item) => item.finding_id === finding.finding_id);
-          return <article key={finding.finding_id} className={styles.finding}>
-            <div className={styles.findingHeader}><div><span className={styles.stage}>{STAGE_LABEL[finding.failed_stage] || finding.failed_stage}</span><h3>{evaluationCase?.question || finding.case_id}</h3></div></div>
-            <p><b>Alasan gagal:</b> {finding.root_cause}</p>
-            {recommendations.map((recommendation) => <div key={recommendation.recommendation_id} className={styles.recommendation}>
-              <div className={styles.recommendationDetails}>
-                <span className={styles.badge}>{recommendation.target}</span>
-                <h4>Rekomendasi perbaikan</h4>
-                <p className={styles.recommendationText}>{recommendationSummary(recommendation.action)}</p>
+        <section className={styles.intro} aria-label="Alur evaluasi">
+          <h2>Mulai dari kasus, lanjutkan ke perbaikan</h2>
+          <ol className={styles.steps}>
+            <li>
+              <span>1</span>Periksa dan pilih kasus
+            </li>
+            <li>
+              <span>2</span>Buat batch & jalankan worker
+            </li>
+            <li>
+              <span>3</span>Tinjau hasil & uji perbaikan
+            </li>
+          </ol>
+        </section>
+        {created && (
+          <section className={styles.panel}>
+            <div className={styles.sectionHeader}>
+              <div>
+                <h2>Batch berhasil dibuat</h2>
+                <p>Batch menunggu worker, belum menjalankan analisis.</p>
               </div>
-              <div className={styles.actions}><span>{recommendation.status}</span>{recommendation.status === 'proposed' && <><button aria-label="Setujui rekomendasi" onClick={() => void reviewRecommendation(recommendation.recommendation_id, 'approved')} disabled={working}><Check /></button><button aria-label="Tolak rekomendasi" onClick={() => void reviewRecommendation(recommendation.recommendation_id, 'rejected')} disabled={working}><X /></button></>}</div>
-            </div>)}
-          </article>;
-        })}</div>
-      </section>}
+              <Link
+                className={styles.textLink}
+                href={`/admin/dashboard/evaluations/${created.run_id}`}
+              >
+                Buka batch <ArrowRight size={15} />
+              </Link>
+            </div>
+            <div className={styles.batchSummary}>
+              <WorkerCommand command={created.next_command} />
+            </div>
+          </section>
+        )}
+        <section className={styles.panel}>
+          <nav className={styles.tabs} aria-label="Tampilan evaluasi">
+            <button
+              className={styles.tab}
+              aria-pressed={tab === 'queue'}
+              onClick={() => setTab('queue')}
+            >
+              Antrean kasus <span>{cases.length}</span>
+            </button>
+            <button
+              className={styles.tab}
+              aria-pressed={tab === 'history'}
+              onClick={() => setTab('history')}
+            >
+              Riwayat batch <span>{runs.length}</span>
+            </button>
+          </nav>
+          {tab === 'queue' ? (
+            <>
+              <div className={styles.toolbar}>
+                <label className={styles.search}>
+                  <Search size={16} aria-hidden="true" />
+                  <input
+                    aria-label="Cari pertanyaan atau catatan"
+                    value={search}
+                    onChange={(event) => {
+                      setSearch(event.target.value);
+                      setPage(1);
+                    }}
+                    placeholder="Cari pertanyaan atau catatan…"
+                  />
+                </label>
+                <select
+                  className={styles.select}
+                  aria-label="Filter kualitas jawaban"
+                  value={filter}
+                  onChange={(event) => {
+                    setFilter(event.target.value as typeof filter);
+                    setPage(1);
+                  }}
+                >
+                  <option value="all">Semua status</option>
+                  {(
+                    [
+                      'unreviewed',
+                      'incorrect',
+                      'incomplete',
+                      'uncertain',
+                    ] as const
+                  ).map((status) => (
+                    <option key={status} value={status}>
+                      {REVIEW_LABELS[status]}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className={styles.selectionBar}>
+                <span>
+                  {selected.size
+                    ? `${selected.size} kasus dipilih`
+                    : 'Pilih kasus yang ingin dianalisis.'}
+                </span>
+                {selected.size > 0 && (
+                  <button
+                    className={styles.textButton}
+                    onClick={() => setSelected(new Set())}
+                  >
+                    Hapus pilihan
+                  </button>
+                )}
+                <button
+                  className={styles.primaryButton}
+                  disabled={!selected.size || loading || creating}
+                  onClick={() => setConfirming(true)}
+                >
+                  <Play size={15} />
+                  Buat batch{selected.size > 0 ? ` (${selected.size})` : ''}
+                </button>
+              </div>
+              {loading && !cases.length ? (
+                <p className={styles.loading} role="status">
+                  <LoaderCircle className={styles.spin} size={18} />
+                  Memuat antrean…
+                </p>
+              ) : filtered.length ? (
+                <>
+                  <div className={styles.tableWrap}>
+                    <table className={styles.table}>
+                      <thead>
+                        <tr>
+                          <th>
+                            <input
+                              ref={allCheckbox}
+                              type="checkbox"
+                              checked={allSelected}
+                              onChange={toggleFiltered}
+                              aria-label="Pilih semua kasus sesuai filter, termasuk halaman lain"
+                            />
+                          </th>
+                          <th>Pertanyaan</th>
+                          <th>Penilaian</th>
+                          <th className={styles.sourceColumn}>Asal kasus</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {visibleCases.map((item) => (
+                          <tr key={item.case_id}>
+                            <td>
+                              <input
+                                type="checkbox"
+                                checked={selected.has(item.case_id)}
+                                onChange={() => toggle(item.case_id)}
+                                aria-label={`Pilih kasus: ${item.question}`}
+                              />
+                            </td>
+                            <td>
+                              <button
+                                className={styles.questionButton}
+                                onClick={() => setReviewing(item)}
+                              >
+                                {item.question}
+                              </button>
+                              <p className={styles.sourceText}>
+                                {item.review_notes ||
+                                  'Klik pertanyaan untuk memeriksa dan menilai jawaban.'}
+                              </p>
+                            </td>
+                            <td>
+                              <StatusBadge
+                                status={item.review_status}
+                                label={REVIEW_LABELS[item.review_status]}
+                              />
+                            </td>
+                            <td className={styles.sourceColumn}>
+                              {item.created_by?.startsWith('system:auto:')
+                                ? 'Deteksi otomatis'
+                                : 'Penilaian admin'}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className={styles.pagination}>
+                    <span>
+                      {filtered.length} kasus · Halaman {currentPage} dari{' '}
+                      {pageCount}
+                    </span>
+                    <div className={styles.headerActions}>
+                      <button
+                        className={styles.secondaryButton}
+                        disabled={currentPage <= 1}
+                        onClick={() => setPage(currentPage - 1)}
+                      >
+                        Sebelumnya
+                      </button>
+                      <button
+                        className={styles.secondaryButton}
+                        disabled={currentPage >= pageCount}
+                        onClick={() => setPage(currentPage + 1)}
+                      >
+                        Berikutnya
+                      </button>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <EmptyState
+                  title={
+                    cases.length
+                      ? 'Tidak ada kasus yang cocok'
+                      : 'Antrean masih kosong'
+                  }
+                >
+                  {cases.length ? (
+                    'Coba kata pencarian atau filter status lainnya.'
+                  ) : (
+                    <>
+                      Kasus gagal dapat terdeteksi otomatis atau ditandai dari{' '}
+                      <Link
+                        className={styles.textLink}
+                        href="/admin/dashboard/monitoring"
+                      >
+                        halaman monitoring
+                      </Link>
+                      .
+                    </>
+                  )}
+                </EmptyState>
+              )}
+            </>
+          ) : (
+            <>
+              <div className={styles.sectionHeader}>
+                <div>
+                  <h2>Batch evaluasi terbaru</h2>
+                  <p>
+                    Status menunggu berarti worker belum berjalan. Status
+                    diperbarui otomatis selama halaman aktif.
+                  </p>
+                </div>
+              </div>
+              {loading && !runs.length ? (
+                <p className={styles.loading} role="status">
+                  Memuat riwayat…
+                </p>
+              ) : runs.length ? (
+                <div className={styles.runList}>
+                  {runs.map((run) => (
+                    <Link
+                      className={styles.runCard}
+                      key={run.run_id}
+                      href={`/admin/dashboard/evaluations/${run.run_id}`}
+                    >
+                      <div>
+                        <div className={styles.runMeta}>
+                          <StatusBadge
+                            status={run.status}
+                            label={RUN_LABELS[run.status]}
+                          />
+                          <strong>
+                            {run.processed_cases} / {run.total_cases} kasus
+                          </strong>
+                        </div>
+                        <small>
+                          {formatRunDate(run.created_at)} ·{' '}
+                          {run.evaluator_model}
+                        </small>
+                        <p className={styles.sourceText}>
+                          Batch {run.run_id.slice(0, 8)}
+                          {run.error_message ? ' · Ada kendala pemrosesan' : ''}
+                        </p>
+                      </div>
+                      <ArrowRight size={17} aria-hidden="true" />
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <EmptyState title="Belum ada batch">
+                  Pilih kasus dari antrean, lalu buat batch pertama.
+                </EmptyState>
+              )}
+            </>
+          )}
+        </section>
+        {reviewing && (
+          <EvaluationDialog
+            title="Periksa kasus evaluasi"
+            onClose={() => setReviewing(null)}
+          >
+            <h3 className={styles.reason}>{reviewing.question}</h3>
+            <CaseReview
+              key={reviewing.case_id}
+              requestId={reviewing.request_id}
+              initialCase={reviewing}
+              onSaved={() => void load()}
+            />
+          </EvaluationDialog>
+        )}
+        {confirming && (
+          <EvaluationDialog
+            title="Buat batch evaluasi?"
+            onClose={() => setConfirming(false)}
+            busy={creating}
+          >
+            <p className={styles.reason}>
+              <strong>{selected.size} kasus akan dimasukkan ke batch.</strong>
+              Analisis membandingkan dokumen asli dengan hasil pipeline. Proses
+              dapat memakai API LLM berbayar.
+            </p>
+            <p className={styles.hint}>
+              Membuat batch belum menjalankan agent. Setelah berhasil, salin
+              perintah worker dan jalankan di terminal backend. Tidak ada
+              scheduler otomatis.
+            </p>
+            <div className={styles.formActions}>
+              <button
+                className={styles.secondaryButton}
+                disabled={creating}
+                onClick={() => setConfirming(false)}
+              >
+                Batal
+              </button>
+              <button
+                className={styles.primaryButton}
+                disabled={creating}
+                onClick={() => void queue()}
+              >
+                {creating ? (
+                  <LoaderCircle className={styles.spin} size={16} />
+                ) : (
+                  <Play size={16} />
+                )}
+                {creating ? 'Membuat batch…' : 'Buat batch'}
+              </button>
+            </div>
+          </EvaluationDialog>
+        )}
+      </div>
     </div>
   );
 }

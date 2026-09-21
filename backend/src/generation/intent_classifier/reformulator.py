@@ -54,6 +54,10 @@ Jika pertanyaan terkini menggunakan referensi implisit seperti:
 tulis ulang menjadi pertanyaan yang berdiri sendiri dan lengkap
 untuk digunakan sebagai query pencarian.
 
+Pertahankan domain yang disebut user. Istilah "seminar proposal",
+"seminar hasil", dan "pendadaran" digunakan pada panduan Skripsi maupun
+Non Skripsi, sehingga jangan menebak salah satu domain hanya dari istilah itu.
+
 Jika pertanyaan sudah jelas dan mandiri,
 kembalikan persis sama.
 
@@ -86,6 +90,20 @@ SUFFIX_REWRITES = {
     "nilainya": "nilai",
     "plagiarismenya": "plagiarisme",
     "referensinya": "referensi",
+    "berkasnya": "berkas",
+    "dokumennya": "dokumen",
+    "batasnya": "batas",
+    "tahapnya": "tahap",
+    "alurnya": "alur",
+    "bobotnya": "bobot",
+    "komponennya": "komponen",
+    "marginnya": "margin",
+    "spasinya": "spasi",
+    "fontnya": "font",
+    "posternya": "poster",
+    "videonya": "video",
+    "sertifikatnya": "sertifikat",
+    "publikasinya": "publikasi",
 }
 
 FOLLOW_UP_PREFIXES = (
@@ -116,14 +134,30 @@ def normalize_query(query: str) -> str:
         "apa itu kp"          → "Apa yang dimaksud dengan KKP"
     """
 
+    # Bare "praktik" is intentionally not treated as KKP. It also appears in
+    # unrelated phrases such as "praktik plagiarisme" and "praktik bisnis".
     query = re.sub(
-        r"(?i)\b(?:kp|k\.p\.|magang|internship|praktik|praktek)\b",
+        r"(?i)(?<!\w)(?:kp|k\.?\s*p\.?|magang|internship|pkl|"
+        r"praktik\s+kerja\s+lapangan|praktek\s+kerja\s+lapangan|"
+        r"kerja\s+praktik|kerja\s+praktek)(?!\w)",
         "KKP",
         query,
     )
 
     query = re.sub(
-        r"(?i)\b(?:pi|p\.i\.)\b",
+        r"(?i)(?<!\w)(?:pi|p\.?\s*i\.?)(?!\w)",
+        "Penulisan Ilmiah",
+        query,
+    )
+
+    query = re.sub(
+        r"(?i)\b(?:tugas\s+akhir\s+)?non[\s-]*skripsi\b",
+        "Tugas Akhir Non Skripsi",
+        query,
+    )
+
+    query = re.sub(
+        r"(?i)\bpenulisan\s+imliah\b",
         "Penulisan Ilmiah",
         query,
     )
@@ -181,10 +215,13 @@ def _extract_last_topic(
 
         if (
             "non skripsi" in content
+            or "non-skripsi" in content
+            or "nonskripsi" in content
             or "tugas akhir non skripsi" in content
-            or "karya ilmiah" in content
+            or "jalur karya ilmiah" in content
             or "wirausaha" in content
             or "profesional" in content
+            or "business model canvas" in content
         ):
             return "Tugas Akhir Non Skripsi"
 
@@ -297,16 +334,12 @@ class QueryReformulator:
         """Apply deterministic rewrites."""
 
         message_lower = message.lower().strip()
-        topic_lower = last_topic.lower()
 
         # Cek apakah topik sudah secara spesifik disebut dalam pesan saat ini
-        if topic_lower == "skripsi":
-            topic_already_present = (
-                contains_word(message_lower, "skripsi")
-                and "non skripsi" not in message_lower
-            )
-        else:
-            topic_already_present = contains_word(message_lower, topic_lower)
+        topic_already_present = self._mentions_topic(
+            message_lower,
+            last_topic,
+        )
 
         if topic_already_present:
             return None
@@ -320,10 +353,9 @@ class QueryReformulator:
         base_lower = base.lower().strip()
 
         if base_lower.startswith(FOLLOW_UP_PREFIXES):
-            base_has_topic = (
-                (contains_word(base_lower, "skripsi") and "non skripsi" not in base_lower)
-                if topic_lower == "skripsi"
-                else contains_word(base_lower, topic_lower)
+            base_has_topic = self._mentions_topic(
+                base_lower,
+                last_topic,
             )
             if not base_has_topic:
                 return (
@@ -339,6 +371,52 @@ class QueryReformulator:
         return self._rewrite_implicit_reference(
             message,
             last_topic,
+        )
+
+    @staticmethod
+    def _mentions_topic(
+        message_lower: str,
+        topic: str,
+    ) -> bool:
+        """Return whether a message already names the resolved domain."""
+
+        aliases = {
+            "tugas akhir non skripsi": (
+                "tugas akhir non skripsi",
+                "non skripsi",
+                "non-skripsi",
+                "nonskripsi",
+                "jalur karya ilmiah",
+                "jalur profesional",
+                "jalur wirausaha",
+            ),
+            "penulisan ilmiah": (
+                "penulisan ilmiah",
+                "laporan pi",
+                "ujian pi",
+                "seminar pi",
+            ),
+            "kkp": (
+                "kkp",
+                "kuliah kerja praktik",
+                "kuliah kerja praktek",
+                "magang",
+            ),
+            "skripsi": ("skripsi",),
+        }
+
+        topic_lower = topic.lower()
+        terms = aliases.get(topic_lower, (topic_lower,))
+
+        if topic_lower == "skripsi" and any(
+            phrase in message_lower
+            for phrase in ("non skripsi", "non-skripsi", "nonskripsi")
+        ):
+            return False
+
+        return any(
+            contains_word(message_lower, term)
+            for term in terms
         )
 
     @staticmethod
@@ -391,21 +469,31 @@ class QueryReformulator:
         message: str,
         topic: str,
     ) -> Optional[str]:
-        """Replace implicit 'itu' references."""
+        """Resolve common implicit references without an LLM call."""
 
-        if not contains_word(
-            message.lower(),
-            "itu",
-        ):
-            return None
-
-        return re.sub(
-            r"\bitu\b",
+        rewritten, count = re.subn(
+            r"\b(?:yang\s+)?(?:itu|tersebut|tadi)\b",
             topic,
             message,
             count=1,
             flags=re.IGNORECASE,
         )
+
+        if count:
+            return rewritten
+
+        message_lower = message.lower().strip()
+        contextual_follow_ups = (
+            "lebih detail",
+            "jelaskan lagi",
+            "elaborasi",
+            "lanjutkan",
+        )
+
+        if any(signal in message_lower for signal in contextual_follow_ups):
+            return f"{message.rstrip('?')} terkait {topic}?"
+
+        return None
 
     def _rewrite_with_llm(
         self,

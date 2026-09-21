@@ -36,12 +36,16 @@ class TestParentChildPageSorting:
             "p1": ParentMatchInfo(
                 best_score=0.9,
                 matched_children=["c1", "c2"],
+                matched_child_documents=[
+                    {"id": "c1", "pages": ["12", "3"]},
+                    {"id": "c2", "pages": ["i", "4"]},
+                ],
                 score_source="rrf",
             )
         }
-        child_pages = {
-            "p1": ["12", "3", "i", "4"]
-        }
 
-        ParentChildFetcher._attach_metadata(parents, parent_matches, child_pages)
+        ParentChildFetcher._attach_metadata(parents, parent_matches)
         assert parents[0]["matched_pages"] == ["3", "4", "12", "i"]
+        assert [
+            child["id"] for child in parents[0]["matched_child_documents"]
+        ] == ["c1", "c2"]

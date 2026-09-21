@@ -60,12 +60,26 @@ def analyze_trace(
     answer_available: bool,
     chunk_audit: ChunkAudit,
     trace: dict | None,
+    queue_reason: str = "manual_admin",
+    has_related_scope_evidence: bool = False,
 ) -> Diagnosis:
     if not answer_available:
+        if queue_reason == "answer_abstention" and has_related_scope_evidence:
+            return Diagnosis(
+                failed_stage=FailureStage.AMBIGUOUS,
+                root_cause=(
+                    "Dokumen asli memuat aturan terkait dengan cakupan yang "
+                    "berbeda, tetapi tidak menjawab pertanyaan secara langsung. "
+                    "Jawaban abstain perlu ditinjau dari kejelasan batas cakupannya."
+                ),
+                confidence=0.85,
+                diagnostics={"queue_reason": queue_reason},
+            )
         return Diagnosis(
             failed_stage=FailureStage.INFORMATION_UNAVAILABLE,
             root_cause="Informasi yang diperlukan tidak ditemukan dalam dokumen asli.",
             confidence=0.9,
+            diagnostics={"queue_reason": queue_reason},
         )
 
     if chunk_audit.status.startswith("extraction"):

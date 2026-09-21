@@ -2,8 +2,6 @@
 Unit tests for self_query.py (Temuan #15, #28) and errors.py AuthenticationError.
 """
 
-import pytest
-
 from src.monitoring.errors import AuthenticationError, ChatError
 from src.retrieval.self_query import (
     _detect_source,
@@ -47,10 +45,70 @@ class TestSelfQuerySourceDetection:
         assert _detect_source("format laporan non skripsi", raw_query="format laporan non skripsi") == _SOURCE_NON_SKRIPSI
         assert _detect_source("syarat pendadaran skripsi", raw_query="syarat pendadaran skripsi") == _SOURCE_SKRIPSI
 
+    def test_shared_exam_terms_do_not_force_skripsi_source(self):
+        assert _detect_source("syarat seminar hasil", raw_query="syarat seminar hasil") is None
+        assert _detect_source("alur pendadaran", raw_query="alur pendadaran") is None
+
+    def test_non_skripsi_guide_specific_terms(self):
+        assert _detect_source("syarat jalur karya ilmiah", raw_query="syarat jalur karya ilmiah") == _SOURCE_NON_SKRIPSI
+        assert _detect_source("ketentuan pekerja profesional", raw_query="ketentuan pekerja profesional") == _SOURCE_NON_SKRIPSI
+
+    def test_generic_journal_term_does_not_force_non_skripsi(self):
+        assert _detect_source("format referensi jurnal", raw_query="format referensi jurnal") is None
+
+    def test_explicit_domain_wins_over_non_skripsi_track_vocabulary(self):
+        assert _detect_source(
+            "cara menulis karya ilmiah untuk skripsi",
+            raw_query="cara menulis karya ilmiah untuk skripsi",
+        ) == _SOURCE_SKRIPSI
+        assert _detect_source(
+            "format prosiding untuk penulisan ilmiah",
+            raw_query="format prosiding untuk penulisan ilmiah",
+        ) == _SOURCE_PI
+
     def test_extract_query_components_end_to_end(self):
         parsed = extract_query_components("Bagaimana alur seminar PI?")
         assert parsed.detected_source == _SOURCE_PI
         assert parsed.filters.get("source") == _SOURCE_PI
+
+    def test_non_skripsi_chapter_filter_uses_normalized_database_section(self):
+        parsed = extract_query_components(
+            "syarat non skripsi dan berapa sks minimal"
+        )
+
+        assert parsed.detected_source == _SOURCE_NON_SKRIPSI
+        assert parsed.detected_section == "BAB II"
+        assert parsed.filters == {
+            "source": _SOURCE_NON_SKRIPSI,
+            "section": "BAB II KETENTUAN UMUM",
+        }
+
+    def test_chapter_filter_requires_a_compatible_source(self):
+        generic = extract_query_components("berapa sks minimal dan ipk minimal")
+        skripsi = extract_query_components("syarat skripsi dan sks minimal")
+
+        assert generic.detected_section == "BAB II"
+        assert "section" not in generic.filters
+        assert skripsi.filters["section"] == "BAB II >"
+
+    def test_chapter_filter_does_not_use_ambiguous_roman_prefix(self):
+        pi = extract_query_components("syarat PI dan sks minimal")
+        non_skripsi = extract_query_components(
+            "sistematika jalur wirausaha non skripsi"
+        )
+
+        assert pi.filters["section"] == "BAB II >"
+        assert non_skripsi.filters["section"] == (
+            "BAB III BENTUK TUGAS AKHIR NON SKRIPSI"
+        )
+
+    def test_skripsi_front_matter_filter_is_suppressed_for_its_metadata(self):
+        parsed = extract_query_components(
+            "contoh kata pengantar dan daftar isi skripsi"
+        )
+
+        assert parsed.detected_section == "Front Matter"
+        assert parsed.filters == {"source": _SOURCE_SKRIPSI}
 
 
 class TestSelfQueryAvailableSections:

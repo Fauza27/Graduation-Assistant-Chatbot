@@ -23,16 +23,16 @@ export default function MobileKnowledgeShell() {
   const totalChildren = currentDoc?.chapters.reduce((sum, chapter) => sum + chapter.parents.reduce((parentSum, parent) => parentSum + parent.children.length, 0), 0) ?? 0;
 
   return (
-    <div className="mobile-shell">
+    <div className="admin-mobile-shell">
       {/* STEP 1: Daftar Dokumen */}
-      <div className={`mobile-step ${step === 1 ? "active" : ""}`}>
-        <div className="mobile-topbar">
+      <div className={`admin-mobile-step ${step === 1 ? "active" : ""}`}>
+        <div className="admin-mobile-topbar">
           <div style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0, flex: 1 }}>
             <h2 style={{ textAlign: "left", margin: 0 }}>Dokumen Panduan</h2>
             <p style={{ margin: 0, fontSize: 11.5, color: "var(--gray-400)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>Pilih dokumen, lalu telusuri bab dan child chunk.</p>
           </div>
         </div>
-        <div className="mobile-step-scroll">
+        <div className="admin-mobile-step-scroll">
           <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
             <span className="status-badge status-info">{totalDocs} dokumen</span>
             <span className="status-badge status-success">Langkah 1 dari 3</span>
@@ -68,8 +68,8 @@ export default function MobileKnowledgeShell() {
       </div>
 
       {/* STEP 2: Struktur / Chapters & Parents */}
-      <div className={`mobile-step ${step === 2 ? "active" : ""}`}>
-        <div className="mobile-topbar">
+      <div className={`admin-mobile-step ${step === 2 ? "active" : ""}`}>
+        <div className="admin-mobile-topbar">
           <button className="icon-btn" onClick={() => setStep(1)} type="button">
             <ArrowLeft className="icon" />
           </button>
@@ -80,7 +80,7 @@ export default function MobileKnowledgeShell() {
             </p>
           </div>
         </div>
-        <div className="mobile-step-scroll" style={{ padding: "16px 12px" }}>
+        <div className="admin-mobile-step-scroll" style={{ padding: "16px 12px" }}>
           {currentDoc && (
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14, padding: "12px 14px", border: "1px solid var(--border)", borderRadius: 14, background: "var(--gray-100)" }}>
               <div className="mdoc-icon" style={{ width: 34, height: 34 }}>
@@ -136,8 +136,8 @@ export default function MobileKnowledgeShell() {
       </div>
 
       {/* STEP 3: Detail Child */}
-      <div className={`mobile-step ${step === 3 ? "active" : ""}`}>
-        <div className="mobile-topbar">
+      <div className={`admin-mobile-step ${step === 3 ? "active" : ""}`}>
+        <div className="admin-mobile-topbar">
           <button className="icon-btn" onClick={() => setStep(2)} type="button">
             <ArrowLeft className="icon" />
           </button>

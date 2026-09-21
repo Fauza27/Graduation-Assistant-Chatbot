@@ -49,6 +49,19 @@ def test_trace_analyzer_stops_at_chunking_before_retrieval():
     assert result.failed_stage is FailureStage.CHUNKING
 
 
+def test_trace_analyzer_marks_related_scope_abstention_as_ambiguous():
+    result = analyze_trace(
+        answer_available=False,
+        chunk_audit=ChunkAudit(status="not_applicable", explanation="Tidak langsung"),
+        trace={},
+        queue_reason="answer_abstention",
+        has_related_scope_evidence=True,
+    )
+
+    assert result.failed_stage is FailureStage.AMBIGUOUS
+    assert result.diagnostics["queue_reason"] == "answer_abstention"
+
+
 def test_rerank_diagnostics_distinguish_gap_and_top_n_from_rrf_scores():
     trace = {
         "search_candidates": [

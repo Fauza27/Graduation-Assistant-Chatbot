@@ -9,8 +9,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Asisten WCD — STMIK Widya Cipta Dharma",
-  description: "Chatbot asisten untuk mahasiswa STMIK Widya Cipta Dharma",
+  title: "Asisten WICIDA — STMIK Widya Cipta Dharma",
+  description: "Chatbot asisten untuk menjawab pertanyaan mahasiswa terkait Penelitian Ilmiah , Kuliah Kerja Praktek, Skripsi dan Non Skripsi di STMIK Widya Cipta Dharma",
 };
 
 export default function RootLayout({

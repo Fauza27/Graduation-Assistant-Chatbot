@@ -1,9 +1,5 @@
 export type ReviewStatus =
-  | 'unreviewed'
-  | 'correct'
-  | 'incorrect'
-  | 'incomplete'
-  | 'uncertain';
+  'unreviewed' | 'correct' | 'incorrect' | 'incomplete' | 'uncertain';
 
 export interface EvaluationCase {
   case_id: string;
@@ -65,7 +61,11 @@ export interface EvaluationEvidence {
 export interface EvaluationRunReport {
   run: EvaluationRun;
   cases: EvaluationCase[];
-  case_statuses: Array<{ case_id: string; status: string; error_message: string | null }>;
+  case_statuses: Array<{
+    case_id: string;
+    status: string;
+    error_message: string | null;
+  }>;
   evidence: EvaluationEvidence[];
   findings: EvaluationFinding[];
   recommendations: EvaluationRecommendation[];

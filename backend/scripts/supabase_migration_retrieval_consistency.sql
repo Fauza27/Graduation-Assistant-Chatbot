@@ -88,7 +88,7 @@ BEGIN
         FROM public.child_documents cd
         WHERE cd.embedding_status = 'success'
             AND to_tsvector('indonesian', cd.content) @@ websearch_to_tsquery('indonesian', query_text)
-            AND (filter_section IS NULL OR cd.section ILIKE '%' || filter_section || '%')
+            AND (filter_section IS NULL OR cd.section ILIKE filter_section || '%')
             AND (filter_source IS NULL OR cd.source = filter_source)
         ORDER BY rank_ix
         LIMIT match_count * 2
@@ -102,7 +102,7 @@ BEGIN
         FROM public.child_documents cd
         WHERE cd.embedding_status = 'success'
             AND cd.embedding IS NOT NULL
-            AND (filter_section IS NULL OR cd.section ILIKE '%' || filter_section || '%')
+            AND (filter_section IS NULL OR cd.section ILIKE filter_section || '%')
             AND (filter_source IS NULL OR cd.source = filter_source)
         ORDER BY rank_ix
         LIMIT match_count * 2
@@ -167,7 +167,7 @@ BEGIN
     WHERE cd.embedding_status = 'success'
         AND cd.embedding IS NOT NULL
         AND (1 - (cd.embedding <=> query_embedding)) > match_threshold
-        AND (filter_section IS NULL OR cd.section ILIKE '%' || filter_section || '%')
+        AND (filter_section IS NULL OR cd.section ILIKE filter_section || '%')
         AND (filter_source IS NULL OR cd.source = filter_source)
     ORDER BY cd.embedding <=> query_embedding
     LIMIT match_count;
@@ -228,7 +228,7 @@ BEGIN
     FROM public.child_documents cd
     WHERE cd.embedding_status = 'success'
         AND to_tsvector('indonesian', cd.content) @@ websearch_to_tsquery('indonesian', query_text)
-        AND (filter_section IS NULL OR cd.section ILIKE '%' || filter_section || '%')
+        AND (filter_section IS NULL OR cd.section ILIKE filter_section || '%')
         AND (filter_source IS NULL OR cd.source = filter_source)
     ORDER BY fts_rank DESC
     LIMIT match_count;

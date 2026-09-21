@@ -3,7 +3,7 @@ from loguru import logger
 from typing import Dict, Any
 
 from src.auth.jwt_utils import verify_access_token
-from src.services.ai_services import _session_store_strategy
+from src.services.ai_services import get_session_store_strategy
 
 router = APIRouter(prefix="/sessions", tags=["Sessions"])
 
@@ -42,7 +42,9 @@ def get_sessions(current_user: dict = Depends(get_current_mahasiswa)):
         raise HTTPException(status_code=400, detail="Invalid token payload")
 
     try:
-        sessions = _session_store_strategy.list_sessions_for_user(str(mahasiswa_id))
+        sessions = get_session_store_strategy().list_sessions_for_user(
+            str(mahasiswa_id)
+        )
         return {"ok": True, "sessions": sessions}
 
     except Exception as e:
@@ -59,7 +61,7 @@ def get_session_details(
     mahasiswa_id = current_user.get("sub")
 
     try:
-        session_details = _session_store_strategy.get_session_details_for_user(
+        session_details = get_session_store_strategy().get_session_details_for_user(
             session_id=session_id,
             mahasiswa_id=str(mahasiswa_id)
         )
@@ -87,7 +89,7 @@ def delete_session(
     """Delete a specific conversation session."""
     mahasiswa_id = current_user.get("sub")
 
-    deleted = _session_store_strategy.delete_session(
+    deleted = get_session_store_strategy().delete_session(
         session_id=session_id,
         mahasiswa_id=mahasiswa_id,
     )

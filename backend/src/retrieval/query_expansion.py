@@ -1,145 +1,181 @@
-"""
-Query Expansion
+"""Build lexical-search alternatives from terminology used in the guides.
 
-Melakukan ekspansi linguistik untuk query lexical/FTS. Query semantic untuk
-vector search tetap menggunakan bentuk query dari QueryPlan tanpa expansion.
-
-Aturan:
-- Akronim yang TIDAK ambigu (SKS, IPK, KRS, KKP, BAAK, BAUK, BKK, EYD)
-  di-match case-insensitive dengan word boundary — sehingga input casual
-  seperti "sks", "ipk" tetap ter-expand.
-- Akronim yang AMBIGU (PI, TA) di-match case-sensitive uppercase-only,
-  karena "pi" dan "ta" terlalu umum sebagai kata/partikel Indonesia.
-- Bentuk panjang (case-insensitive) di-expand ke akronim agar matching FTS
-  konsisten dua arah.
-- Tidak ada angka, satuan, atau frasa jawaban yang ditambahkan.
+The vector query remains unchanged. For PostgreSQL full-text search, every
+expanded form keeps the complete user intent and is joined with ``OR``. This
+matters because ``websearch_to_tsquery`` treats ordinary whitespace as ``AND``;
+simply appending synonyms would make a query stricter instead of broader.
 """
 
 from __future__ import annotations
 
 import re
+
 from loguru import logger
 
+MAX_QUERY_VARIANTS = 8
 
-UPPERCASE_ACRONYMS: dict[str, list[str]] = {
-    "PI": ["Penulisan Ilmiah"],
-    "KKP": ["Kuliah Kerja Praktik", "Kuliah Kerja Praktek"],
-    "TA": ["Tugas Akhir"],
-    "SKS": ["Satuan Kredit Semester"],
-    "IPK": ["Indeks Prestasi Kumulatif"],
-    "KRS": ["Kartu Rencana Studi"],
-    "BAAK": ["Biro Administrasi Akademik dan Kemahasiswaan"],
-    "BAUK": ["Biro Administrasi Umum dan Keuangan"],
-    "BKK": ["Bursa Kerja Khusus"],
-    "EYD": ["Ejaan Yang Disempurnakan"],
+# The expansions below are terms that appear in the four current guidebooks.
+ACRONYM_EXPANSIONS: dict[str, tuple[str, ...]] = {
+    "PI": ("Penulisan Ilmiah",),
+    "KKP": ("Kuliah Kerja Praktik", "Kuliah Kerja Praktek"),
+    "TA": ("Tugas Akhir",),
+    "SKS": ("Satuan Kredit Semester",),
+    "IPK": ("Indeks Prestasi Kumulatif",),
+    "KRS": ("Kartu Rencana Studi",),
+    "BAAK": ("Biro Administrasi Akademik dan Kemahasiswaan",),
+    "BAUK": ("Biro Administrasi Umum dan Keuangan",),
+    "BKK": ("Bursa Kerja Khusus",),
+    "EYD": ("Ejaan Yang Disempurnakan",),
+    "LOA": ("Letter of Acceptance", "Lembar Persetujuan"),
+    "BMC": ("Business Model Canvas",),
+    "NIB": ("Nomor Induk Berusaha",),
+    "NPWP": ("Nomor Pokok Wajib Pajak",),
+    "ISSN": ("International Standard Serial Number",),
+    "SWOT": ("Strength Weakness Opportunity Threat",),
 }
 
-# Akronim yang aman untuk di-match case-insensitive (tidak ambigu dengan kata Indonesia umum).
-SAFE_ACRONYMS: set[str] = {"SKS", "IPK", "KRS", "KKP", "BAAK", "BAUK", "BKK", "EYD"}
+# These abbreviations are safe to match regardless of letter case. PI and TA
+# remain uppercase-only because their lowercase forms occur naturally in text.
+CASE_INSENSITIVE_ACRONYMS = frozenset(
+    acronym for acronym in ACRONYM_EXPANSIONS if acronym not in {"PI", "TA"}
+)
 
-# Akronim yang HARUS di-match case-sensitive uppercase-only, karena versi lowercase-nya terlalu umum ("pi" = partikel, "ta" = kata ganti).
-AMBIGUOUS_ACRONYMS: set[str] = {"PI", "TA"}
+_AMBIGUOUS_LONG_FORMS = {"lembar persetujuan"}
 
-# Bentuk panjang menjadi akronim. Match case-insensitive karena bentuk panjang tidak ambigu dengan kata umum. Lengkap bidirectional untuk semua akronim.
-LONG_FORM_TO_ACRONYM: dict[str, list[str]] = {
-    "penulisan ilmiah": ["PI"],
-    "kuliah kerja praktik": ["KKP"],
-    "kuliah kerja praktek": ["KKP"],
-    "tugas akhir": ["TA"],
-    "satuan kredit semester": ["SKS"],
-    "indeks prestasi kumulatif": ["IPK"],
-    "kartu rencana studi": ["KRS"],
-    "biro administrasi akademik dan kemahasiswaan": ["BAAK"],
-    "biro administrasi umum dan keuangan": ["BAUK"],
-    "bursa kerja khusus": ["BKK"],
-    "ejaan yang disempurnakan": ["EYD"],
+LONG_FORM_TO_ACRONYM: dict[str, tuple[str, ...]] = {
+    long_form.lower(): (acronym,)
+    for acronym, long_forms in ACRONYM_EXPANSIONS.items()
+    for long_form in long_forms
+    if long_form.lower() not in _AMBIGUOUS_LONG_FORMS
 }
 
-# Sinonim atau kata alternatif yang sering dipakai mahasiswa tapi punya istilah resmi.
-SYNONYMS: dict[str, list[str]] = {
-    "pendadaran": ["ujian skripsi", "sidang skripsi", "ujian tugas akhir", "seminar pendadaran"],
-    "sidang": ["ujian akhir"],
-    "pembimbing": ["dosen pembimbing"],
-    "penguji": ["dosen penguji"],
+# Student wording -> wording present in the documents. Each replacement is a
+# lexical alternative, never an assumed answer or numeric requirement.
+PHRASE_EQUIVALENTS: dict[str, tuple[str, ...]] = {
+    "sidang skripsi": ("ujian pendadaran skripsi",),
+    "sidang tugas akhir": ("ujian pendadaran",),
+    "sidang": ("pendadaran", "ujian"),
+    "anti plagiarisme": ("anti-plagiarisme", "kemiripan Turnitin"),
+    "anti-plagiarism": ("anti-plagiarisme", "kemiripan Turnitin"),
+    "similarity": ("kemiripan", "anti-plagiarisme"),
+    "surat diterima jurnal": ("Letter of Acceptance", "Lembar Persetujuan"),
+    "model bisnis": ("Business Model Canvas",),
+    "pembimbing": ("dosen pembimbing",),
+    "penguji": ("dosen penguji",),
 }
 
 
-def _has_token(text: str, token: str, *, case_sensitive: bool = True) -> bool:
-    """Cek apakah token muncul sebagai kata utuh di text.
+def _replace_token(
+    text: str,
+    token: str,
+    replacement: str,
+    *,
+    case_sensitive: bool,
+) -> str | None:
+    """Replace one complete token and return a changed query variant."""
 
-    Args:
-        text: Teks yang dicari.
-        token: Token yang dicocokkan.
-        case_sensitive: Jika False, cocokkan case-insensitive.
-    """
     flags = 0 if case_sensitive else re.IGNORECASE
-    return re.search(rf"\b{re.escape(token)}\b", text, flags) is not None
+    replaced, count = re.subn(
+        rf"\b{re.escape(token)}\b",
+        replacement,
+        text,
+        count=1,
+        flags=flags,
+    )
+    return replaced if count else None
 
 
-def _has_phrase(text_lower: str, phrase: str) -> bool:
-    """Cek substring frasa di text yang sudah lowercase."""
-    return phrase in text_lower
+def _replace_phrase(
+    text: str,
+    phrase: str,
+    replacement: str,
+) -> str | None:
+    """Replace one complete phrase case-insensitively."""
+
+    replaced, count = re.subn(
+        rf"(?<!\w){re.escape(phrase)}(?!\w)",
+        replacement,
+        text,
+        count=1,
+        flags=re.IGNORECASE,
+    )
+    return replaced if count else None
+
+
+def _append_variant(
+    variants: list[str],
+    candidate: str | None,
+) -> None:
+    """Append one normalized, unique alternative within the safety cap."""
+
+    if candidate is None or len(variants) >= MAX_QUERY_VARIANTS:
+        return
+
+    normalized = re.sub(r"\s+", " ", candidate).strip()
+    existing = {variant.casefold() for variant in variants}
+    if normalized and normalized.casefold() not in existing:
+        variants.append(normalized)
 
 
 def expand_query(question: str) -> str:
-    """
-    Tambahkan bentuk panjang/pendek dari akronim akademik yang muncul di query.
-    Tidak menambahkan kata kunci jawaban apa pun.
-    """
+    """Return OR-ed lexical variants while preserving the complete question."""
+
     if not question:
         return question
 
-    additions: list[str] = []
-    text_lower = question.lower()
+    variants = [question.strip()]
+    question_lower = question.lower()
 
-    # 1. Akronim → bentuk panjang
-    #    - SAFE_ACRONYMS: case-insensitive (sks, ipk, krs → tetap match)
-    #    - AMBIGUOUS_ACRONYMS: case-sensitive uppercase-only (pi, ta → TIDAK match)
-    for acronym, expansions in UPPERCASE_ACRONYMS.items():
-        if acronym in SAFE_ACRONYMS:
-            matched = _has_token(question, acronym, case_sensitive=False)
-        else:
-            # AMBIGUOUS: hanya match kalau ditulis uppercase persis
-            matched = _has_token(question, acronym, case_sensitive=True)
+    for acronym, long_forms in ACRONYM_EXPANSIONS.items():
+        case_sensitive = acronym not in CASE_INSENSITIVE_ACRONYMS
+        for long_form in long_forms:
+            _append_variant(
+                variants,
+                _replace_token(
+                    question,
+                    acronym,
+                    long_form,
+                    case_sensitive=case_sensitive,
+                ),
+            )
 
-        if not matched:
+    for long_form, acronyms in LONG_FORM_TO_ACRONYM.items():
+        # Do not shorten the domain name "Tugas Akhir Non Skripsi" to TA.
+        if (
+            long_form == "tugas akhir"
+            and "tugas akhir non skripsi" in question_lower
+        ):
             continue
-        for exp in expansions:
-            if exp.lower() not in text_lower and exp not in additions:
-                additions.append(exp)
 
-    # 2. Bentuk panjang → akronim
-    for phrase, expansions in LONG_FORM_TO_ACRONYM.items():
-        # Jangan ekspansi "tugas akhir" -> "TA" jika sudah merupakan "tugas akhir non skripsi"
-        if phrase == "tugas akhir" and "tugas akhir non skripsi" in text_lower:
-            continue
+        for acronym in acronyms:
+            _append_variant(
+                variants,
+                _replace_phrase(question, long_form, acronym),
+            )
 
-        if not _has_phrase(text_lower, phrase):
-            continue
-        for exp in expansions:
-            # Case-insensitive check: hindari duplikasi jika user sudah
-            # menulis akronim dalam bentuk apapun (mis. "kkp" atau "KKP").
-            if not _has_token(question, exp, case_sensitive=False) and exp not in additions:
-                additions.append(exp)
+    # Prefer longer phrases so "sidang skripsi" is handled before "sidang".
+    for phrase in sorted(PHRASE_EQUIVALENTS, key=len, reverse=True):
+        for equivalent in PHRASE_EQUIVALENTS[phrase]:
+            if equivalent.casefold() in question.casefold():
+                continue
+            _append_variant(
+                variants,
+                _replace_phrase(question, phrase, equivalent),
+            )
 
-    # 3. Sinonim / Istilah Alternatif
-    for word, equivalents in SYNONYMS.items():
-        # re.escape untuk safety jika nanti ada entri dengan karakter regex
-        if re.search(rf"\b{re.escape(word)}\b", text_lower):
-            for eq in equivalents:
-                if eq.lower() not in text_lower and eq not in additions:
-                    additions.append(eq)
-
-    if not additions:
+    if len(variants) == 1:
         return question
 
-    expanded = f"{question} {' '.join(additions)}"
+    expanded = " OR ".join(variants)
     logger.debug(
-        f"Query expansion (acronym only): added {len(additions)} term(s): {additions}"
+        "Lexical query expansion created {} alternative(s): {}",
+        len(variants) - 1,
+        variants[1:],
     )
     return expanded
 
 
 def expand_query_smart(question: str) -> str:
-    """Backward-compatible wrapper. Aman dipanggil dari HybridSearcher."""
+    """Backward-compatible wrapper used by ``HybridSearcher``."""
+
     return expand_query(question)

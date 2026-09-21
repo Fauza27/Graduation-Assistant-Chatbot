@@ -4,11 +4,11 @@ import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { getAuthToken, logout, refreshAuthToken } from '../../lib/auth';
 import { useAppStore } from '../../lib/store';
+import { deleteSession } from '../../lib/api';
 import Link from 'next/link';
 import { jwtDecode } from 'jwt-decode';
 import { DOCUMENTS } from '../../lib/documentSources';
 
-// JWT payload interface
 interface JWTPayload {
   exp: number;
   [key: string]: unknown;
@@ -17,50 +17,84 @@ interface JWTPayload {
 export default function SiteLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  
-  // App store hooks
-  const {
-    isDocPanelOpen, 
-    activeDoc, 
-    setDocPanelOpen, 
-    setActiveDoc, 
-    resetSession
-  } = useAppStore();
+  const [isDocSectionOpen, setIsDocSectionOpen] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Check if we're on client side (no useEffect, no setState)
-  const isClient = typeof window !== 'undefined';
+  const isDocPanelOpen = useAppStore((state) => state.isDocPanelOpen);
+  const activeDoc = useAppStore((state) => state.activeDoc);
+  const isSidebarOpen = useAppStore((state) => state.isSidebarOpen);
+  const messages = useAppStore((state) => state.messages);
+  const session_id = useAppStore((state) => state.session_id);
+  const setDocPanelOpen = useAppStore((state) => state.setDocPanelOpen);
+  const setActiveDoc = useAppStore((state) => state.setActiveDoc);
+  const setSidebarOpen = useAppStore((state) => state.setSidebarOpen);
+  const toggleSidebar = useAppStore((state) => state.toggleSidebar);
+  const openDocument = useAppStore((state) => state.openDocument);
+  const resetSession = useAppStore((state) => state.resetSession);
 
-  // Authentication check - use useEffect only for side effects, not state updates
+  // Authentication check & SSR hydration guard
   useEffect(() => {
-    if (!isClient) return;
-    
     const checkAuth = async () => {
       let token = getAuthToken();
       try {
         if (!token) token = await refreshAuthToken();
         if (!token) throw new Error('No active session');
 
-        const decoded = jwtDecode<JWTPayload>(token);
+        let decoded = jwtDecode<JWTPayload>(token);
         if (decoded.exp * 1000 < Date.now()) {
           token = await refreshAuthToken();
           if (!token) throw new Error('Session expired');
+          decoded = jwtDecode<JWTPayload>(token);
         }
+        setIsAuthenticated(true);
       } catch {
         logout();
       }
     };
 
-    void checkAuth();
-  }, [router, isClient]);
+    checkAuth();
+  }, [router]);
 
-  // Early return for SSR hydration safety - no state needed
-  if (!isClient) return null;
+  // Initial responsive check: collapse sidebar on mobile screen width by default
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      setSidebarOpen(false);
+    }
+  }, [setSidebarOpen]);
+
+  const handleNewChat = () => {
+    resetSession();
+    router.push('/chat');
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      setSidebarOpen(false);
+    }
+  };
+
+  const handleDeleteChatMobile = async () => {
+    if (!session_id) return;
+    if (window.confirm('Apakah Anda yakin ingin menghapus percakapan ini?')) {
+      try {
+        await deleteSession(session_id);
+      } catch (err) {
+        console.warn('Delete session notice:', err);
+      }
+      resetSession();
+    }
+  };
+
+  // Loading 
+  if (!isAuthenticated) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg, #F9FAFB)' }}>
+        <div className="spinner" />
+      </div>
+    );
+  }
 
   return (
     <div className="app">
       {/* SIDEBAR */}
-      <aside className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
+      <aside className={`sidebar ${isSidebarOpen ? 'open' : 'collapsed'}`}>
         <div className="sidebar-header">
           <svg className="brand-mark" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
             <circle cx="20" cy="20" r="19" fill="#F5F1FC" stroke="#6D28D9" strokeWidth="1.4"/>
@@ -71,39 +105,83 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
             <div className="b1">STMIK</div>
             <div className="b2">WIDYA CIPTA DHARMA</div>
           </div>
-          <button className="icon-btn sidebar-close" onClick={() => setIsSidebarOpen(false)}>
+          <button 
+            className="icon-btn sidebar-close" 
+            onClick={() => setSidebarOpen(false)}
+            aria-label="Tutup Sidebar"
+            title="Tutup Sidebar"
+          >
             <svg className="icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           </button>
         </div>
 
         <button 
           className="btn-primary" 
-          onClick={() => {
-            resetSession();
-            router.push('/chat');
-            setIsSidebarOpen(false);
-          }}
+          onClick={handleNewChat}
         >
           <svg className="icon-sm" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           Chat Baru
         </button>
 
         <nav className="sidebar-nav">
-          <Link href="/riwayat" className={`nav-item ${pathname === '/riwayat' ? 'active' : ''}`} onClick={() => setIsSidebarOpen(false)}>
+          <Link 
+            href="/riwayat" 
+            className={`nav-item ${pathname === '/riwayat' ? 'active' : ''}`} 
+            onClick={() => {
+              if (typeof window !== 'undefined' && window.innerWidth < 768) {
+                setSidebarOpen(false);
+              }
+            }}
+          >
             <svg className="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/></svg>
             Riwayat Chat
           </Link>
 
           <div className="nav-section">
-            <button className="nav-section-header" onClick={() => setDocPanelOpen(!isDocPanelOpen)}>
+            <button 
+              className={`nav-section-header ${!isDocSectionOpen ? 'collapsed' : ''}`} 
+              onClick={() => setIsDocSectionOpen(!isDocSectionOpen)}
+              aria-expanded={isDocSectionOpen}
+              aria-label="Toggle Dokumen Panduan"
+            >
               DOKUMEN PANDUAN
               <svg className="icon-sm" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
             </button>
+            {isDocSectionOpen && (
+              <div className="nav-section-list">
+                {DOCUMENTS.map((doc) => (
+                  <button
+                    key={doc.id}
+                    className={`doc-item ${activeDoc === doc.fileUrl && isDocPanelOpen ? 'active' : ''}`}
+                    onClick={() => {
+                      openDocument(doc.fileUrl);
+                      if (typeof window !== 'undefined' && window.innerWidth < 768) {
+                        setSidebarOpen(false);
+                      }
+                    }}
+                    title={doc.title}
+                  >
+                    <span className="doc-icon">
+                      <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    </span>
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{doc.title}</span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </nav>
 
         <div className="sidebar-footer">
-          <Link href="/profil" className={`nav-item ${pathname === '/profil' ? 'active' : ''}`} onClick={() => setIsSidebarOpen(false)}>
+          <Link 
+            href="/profil" 
+            className={`nav-item ${pathname === '/profil' ? 'active' : ''}`} 
+            onClick={() => {
+              if (typeof window !== 'undefined' && window.innerWidth < 768) {
+                setSidebarOpen(false);
+              }
+            }}
+          >
             <svg className="icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
             Profil
           </Link>
@@ -113,20 +191,42 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
           </button>
         </div>
       </aside>
-      <div className={`sidebar-overlay ${isSidebarOpen ? 'show' : ''}`} onClick={() => setIsSidebarOpen(false)} />
+      <div className={`sidebar-overlay ${isSidebarOpen ? 'show' : ''}`} onClick={() => setSidebarOpen(false)} />
 
       {/* MAIN PANEL */}
       <main className={`main-panel ${isDocPanelOpen ? 'doc-open' : ''}`}>
         
         {/* MOBILE TOPBAR */}
         <div className="mobile-topbar">
-          <button className="icon-btn" onClick={() => setIsSidebarOpen(true)}>
+          <button 
+            className="icon-btn" 
+            onClick={toggleSidebar}
+            aria-label={isSidebarOpen ? "Tutup Menu" : "Buka Menu"}
+          >
             <svg className="icon" viewBox="0 0 24 24"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
           </button>
-          <h1>Asisten WCD</h1>
-          <button className="icon-btn" onClick={() => { resetSession(); router.push('/chat'); }}>
-            <svg className="icon" viewBox="0 0 24 24"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 1 1 17 .5z"/><line x1="12" y1="8.5" x2="12" y2="13.5"/><line x1="9.5" y1="11" x2="14.5" y2="11"/></svg>
-          </button>
+          <h1>{pathname === '/riwayat' ? 'Riwayat Chat' : pathname === '/profil' ? 'Profil' : 'Asisten WCD'}</h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            {pathname === '/chat' && messages.length > 0 && (
+              <button 
+                className="icon-btn" 
+                onClick={handleDeleteChatMobile}
+                aria-label="Hapus Percakapan"
+                title="Hapus Percakapan"
+                style={{ color: 'var(--danger, #DC2626)' }}
+              >
+                <svg className="icon-sm" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              </button>
+            )}
+            <button 
+              className="icon-btn" 
+              onClick={handleNewChat}
+              aria-label="Chat Baru"
+              title="Chat Baru"
+            >
+              <svg className="icon" viewBox="0 0 24 24"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 1 1 17 .5z"/><line x1="12" y1="8.5" x2="12" y2="13.5"/><line x1="9.5" y1="11" x2="14.5" y2="11"/></svg>
+            </button>
+          </div>
         </div>
 
         {/* CHILDREN */}
@@ -156,11 +256,20 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
         <div className="doc-panel-inner">
           <div className="doc-panel-header">
             {activeDoc ? (
-              <button className="icon-btn" onClick={() => setActiveDoc(null)} title="Kembali ke Daftar Dokumen">
+              <button 
+                className="icon-btn" 
+                onClick={() => setActiveDoc(null)} 
+                title="Kembali ke Daftar Dokumen"
+                aria-label="Kembali ke Daftar Dokumen"
+              >
                 <svg className="icon" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
               </button>
             ) : (
-              <button className="icon-btn mobile-only" onClick={() => setDocPanelOpen(false)}>
+              <button 
+                className="icon-btn mobile-only" 
+                onClick={() => setDocPanelOpen(false)}
+                aria-label="Tutup Dokumen"
+              >
                 <svg className="icon" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
               </button>
             )}
@@ -169,11 +278,15 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
             
             <div style={{ display: 'flex', gap: '4px' }}>
               {activeDoc && (
-                <a href={activeDoc} target="_blank" rel="noopener noreferrer" className="icon-btn" title="Buka di Tab Baru">
+                <a href={activeDoc} target="_blank" rel="noopener noreferrer" className="icon-btn" title="Buka di Tab Baru" aria-label="Buka di Tab Baru">
                   <svg className="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
                 </a>
               )}
-              <button className="icon-btn" onClick={() => setDocPanelOpen(false)}>
+              <button 
+                className="icon-btn" 
+                onClick={() => setDocPanelOpen(false)}
+                aria-label="Tutup Dokumen"
+              >
                 <svg className="icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>
             </div>

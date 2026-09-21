@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterable
@@ -46,6 +47,14 @@ def _now() -> str:
 def _batches(items: list[EvaluationCase], size: int) -> Iterable[list[EvaluationCase]]:
     for index in range(0, len(items), size):
         yield items[index : index + size]
+
+
+@dataclass(frozen=True)
+class EvidenceAssessment:
+    """Separate direct evidence from evidence with a different scope."""
+
+    direct: EvidenceCandidate | None = None
+    related_scope: EvidenceCandidate | None = None
 
 
 class EvaluationRunner:
@@ -240,9 +249,11 @@ class EvaluationRunner:
                 error_message=None,
             )
             try:
-                verified = self._verify_best_evidence(
+                assessment = self._assess_evidence(
                     case, evidence_by_case.get(case.case_id, []), document_by_version
                 )
+                verified = assessment.direct
+                related_scope = assessment.related_scope
                 answer_available = verified is not None
                 audit = ChunkAudit(
                     status="not_applicable",
@@ -254,12 +265,16 @@ class EvaluationRunner:
                         verified, self.repository.load_chunks(document)
                     )
                     self.repository.save_evidence(run_id, verified)
+                if related_scope is not None:
+                    self.repository.save_evidence(run_id, related_scope)
 
                 trace = self.repository.load_trace(case.request_id)
                 preliminary = analyze_trace(
                     answer_available=answer_available,
                     chunk_audit=audit,
                     trace=trace,
+                    queue_reason=case.queue_reason,
+                    has_related_scope_evidence=related_scope is not None,
                 )
                 system_context = build_system_context(
                     preliminary.failed_stage.value, trace, self.settings
@@ -267,7 +282,13 @@ class EvaluationRunner:
                 incident_facts = build_incident_context(trace, audit, preliminary)
                 review = self.model.review_diagnosis(
                     case=case,
-                    evidence_text=verified.evidence_text if verified else "",
+                    evidence_text=(
+                        verified.evidence_text
+                        if verified is not None
+                        else related_scope.evidence_text
+                        if related_scope is not None
+                        else ""
+                    ),
                     chunk_audit=audit,
                     trace=trace,
                     preliminary=preliminary,
@@ -284,6 +305,8 @@ class EvaluationRunner:
                         "trace_analysis": preliminary.model_dump(mode="json"),
                         "system_context": system_context,
                         "incident_facts": incident_facts,
+                        "queue_reason": case.queue_reason,
+                        "has_related_scope_evidence": related_scope is not None,
                     },
                 )
                 result = {
@@ -291,6 +314,11 @@ class EvaluationRunner:
                     "question": case.question,
                     "answer_available": answer_available,
                     "evidence": verified.model_dump(mode="json") if verified else None,
+                    "related_scope_evidence": (
+                        related_scope.model_dump(mode="json")
+                        if related_scope is not None
+                        else None
+                    ),
                     "chunk_audit": audit.model_dump(mode="json"),
                     "diagnosis": review.model_dump(mode="json"),
                     "system_context": system_context,
@@ -314,12 +342,13 @@ class EvaluationRunner:
                 )
         return results, failed
 
-    def _verify_best_evidence(
+    def _assess_evidence(
         self,
         case: EvaluationCase,
         candidates: list[EvidenceCandidate],
         documents: dict[str, RegisteredDocument],
-    ) -> EvidenceCandidate | None:
+    ) -> EvidenceAssessment:
+        related_scope: EvidenceCandidate | None = None
         for candidate in candidates:
             document = documents[candidate.version_id]
             pages = self.reader.read_pages(document.spec.path)
@@ -343,6 +372,31 @@ class EvaluationRunner:
             verification = self.model.verify_evidence(
                 case, window, candidate.evidence_text
             )
+            assessed = candidate.model_copy(
+                update={
+                    "page_start": min(
+                        end,
+                        max(start, verification.page_start or candidate.page_start),
+                    ),
+                    "page_end": min(
+                        end,
+                        max(
+                            verification.page_start or candidate.page_start,
+                            verification.page_end or candidate.page_end,
+                        ),
+                    ),
+                    "evidence_text": (
+                        verification.corrected_evidence_text.strip()
+                        or candidate.evidence_text
+                    ),
+                    "explanation": " ".join(
+                        part
+                        for part in (verification.explanation, verification.scope_note)
+                        if part
+                    ),
+                    "confidence": verification.confidence,
+                }
+            )
             if verification.answers_question and verification.answer_available:
                 verified_start = min(
                     end,
@@ -355,17 +409,22 @@ class EvaluationRunner:
                         verification.page_end or candidate.page_end,
                     ),
                 )
-                return candidate.model_copy(
-                    update={
-                        "page_start": verified_start,
-                        "page_end": verified_end,
-                        "evidence_text": (
-                            verification.corrected_evidence_text.strip()
-                            or candidate.evidence_text
-                        ),
-                        "explanation": verification.explanation,
-                        "confidence": verification.confidence,
-                        "is_verified": True,
-                    }
+                return EvidenceAssessment(
+                    direct=assessed.model_copy(
+                        update={
+                            "page_start": verified_start,
+                            "page_end": verified_end,
+                            "evidence_text": (
+                                verification.corrected_evidence_text.strip()
+                                or candidate.evidence_text
+                            ),
+                            "explanation": verification.explanation,
+                            "confidence": verification.confidence,
+                            "is_verified": True,
+                        }
+                    ),
+                    related_scope=related_scope,
                 )
-        return None
+            if verification.is_related_scope and related_scope is None:
+                related_scope = assessed
+        return EvidenceAssessment(related_scope=related_scope)

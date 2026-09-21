@@ -1,7 +1,10 @@
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
-from src.evaluation_agent.candidate_rules import detect_auto_candidate
+from src.evaluation_agent.candidate_rules import (
+    detect_auto_candidate,
+    is_abstention_answer,
+)
 from src.monitoring.context import RequestMetricsCollector
 from src.monitoring.writer import persist_auto_evaluation_candidate
 
@@ -53,6 +56,22 @@ def test_successful_retrieval_and_non_rag_errors_are_ignored():
     )
 
 
+def test_answer_abstention_becomes_a_soft_failure_candidate():
+    decision = detect_auto_candidate(
+        _collector(
+            answer=(
+                "Dokumen yang saya miliki tidak mencantumkan informasi "
+                "spesifik mengenai jumlah halaman."
+            )
+        )
+    )
+
+    assert decision is not None
+    assert decision.reason_code == "answer_abstention"
+    assert is_abstention_answer("Informasi tersebut tidak tersedia.")
+    assert not is_abstention_answer("Proposal minimal 40 halaman.")
+
+
 def test_automatic_candidate_insert_does_not_overwrite_admin_review():
     collector = _collector(is_no_relevant_doc=True, answer="Tidak ditemukan.")
     client = Mock()
@@ -71,6 +90,7 @@ def test_automatic_candidate_insert_does_not_overwrite_admin_review():
 
     payload = table.upsert.call_args.args[0]
     assert payload["review_status"] == "unreviewed"
+    assert payload["queue_reason"] == "no_relevant_document"
     assert payload["created_by"] == "system:auto:no_relevant_document"
     assert table.upsert.call_args.kwargs == {
         "on_conflict": "request_id",

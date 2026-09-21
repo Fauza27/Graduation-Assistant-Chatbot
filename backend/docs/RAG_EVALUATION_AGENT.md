@@ -38,7 +38,9 @@ prompt, dan kode tetap memerlukan keputusan manusia.
 ## Alur penggunaan
 
 1. Sistem otomatis memasukkan request tanpa dokumen relevan, seluruh kandidat
-   yang ditolak, dan error retrieval sebagai kandidat `unreviewed`.
+   yang ditolak, error retrieval, dan jawaban yang menyatakan informasi tidak
+   tersedia sebagai kandidat `unreviewed`.
+   Alasan antrean disimpan pada `queue_reason`.
 2. Admin juga dapat membuka detail request pada halaman Monitoring dan menilai
    jawaban sebagai benar, salah, tidak lengkap, atau belum pasti.
    Expected answer dan catatan bersifat opsional.
@@ -49,10 +51,13 @@ prompt, dan kode tetap memerlukan keputusan manusia.
 6. Worker membaca setiap halaman PDF asli dalam window yang saling overlap,
    memeriksa semua pertanyaan per batch, lalu memverifikasi kandidat bukti dengan
    halaman di sekitarnya.
-7. Bukti terverifikasi dibandingkan dengan chunk aktif. Trace request kemudian
-   digunakan untuk menentukan tahap kegagalan paling awal.
-8. Admin membaca temuan dan menyetujui atau menolak rekomendasi.
-9. Setelah perbaikan diterapkan, regression runner mengirim ulang pertanyaan yang
+7. Bukti terverifikasi dibandingkan dengan chunk aktif. Untuk jawaban abstain,
+   evaluator juga dapat menyimpan bukti yang terkait tetapi berbeda cakupan,
+   misalnya aturan proposal ketika pertanyaannya tentang naskah akhir. Bukti
+   tersebut tidak dianggap sebagai jawaban langsung.
+8. Trace request kemudian digunakan untuk menentukan tahap kegagalan paling awal.
+9. Admin membaca temuan dan menyetujui atau menolak rekomendasi.
+10. Setelah perbaikan diterapkan, regression runner mengirim ulang pertanyaan yang
    sama dan membandingkan hasil baru dengan bukti yang sudah diverifikasi.
 
 ## Persiapan
@@ -106,7 +111,7 @@ Laporan lokal disimpan di `results/evaluations/<RUN_ID>/report.json` dan
 `report.md`. Temuan, bukti, rekomendasi, dan hasil regression juga disimpan di
 database agar dapat ditampilkan di dashboard.
 
-## Isi migration 2026091403
+## Migration evaluasi
 
 Migration membuat registry dokumen asli, penyimpanan trace pipeline, evaluation
 case, batch run, evidence, finding, recommendation, dan regression result. Migration
@@ -122,3 +127,8 @@ Sebelum membuat unique index pada `request_metrics.request_id`, migration memeri
 ID historis yang duplikat. Baris pertama tetap memakai ID lama dan baris duplikat
 berikutnya memperoleh UUID baru. Tidak ada row metrics yang dihapus. Langkah ini
 diperlukan karena satu trace harus menunjuk tepat ke satu request.
+
+Migration `2026092101_evaluation_soft_failures.sql` menambahkan `queue_reason`
+pada `evaluation_cases`. Nilainya membedakan kasus yang ditambahkan oleh admin,
+retrieval error, kandidat yang seluruhnya ditolak, tidak adanya dokumen relevan,
+dan jawaban abstain. Migration ini tidak mengubah chat, chunk, atau embedding.

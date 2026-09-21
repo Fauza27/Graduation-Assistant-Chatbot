@@ -105,7 +105,7 @@ def persist_execution_trace(collector: RequestMetricsCollector) -> None:
 def persist_auto_evaluation_candidate(
     collector: RequestMetricsCollector,
 ) -> None:
-    """Collect clear RAG failures without overriding an admin review."""
+    """Collect RAG failures and abstention responses without overriding review."""
     if not get_settings().EVALUATION_AGENT_ENABLED:
         return
 
@@ -125,6 +125,7 @@ def persist_auto_evaluation_candidate(
                     "question": (collector.question or "").strip(),
                     "actual_answer": collector.answer,
                     "review_status": "unreviewed",
+                    "queue_reason": decision.reason_code,
                     "review_notes": decision.explanation,
                     "created_by": f"system:auto:{decision.reason_code}",
                 },
