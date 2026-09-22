@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -72,6 +72,44 @@ class PageWindow(BaseModel):
     has_extraction_warning: bool = False
 
 
+class ConversationTurn(BaseModel):
+    """Prior interaction used to resolve short follow-up questions."""
+
+    question: str
+    answer: str | None = None
+    resolved_question: str | None = None
+
+
+AcademicDomain = Literal["PI", "KKP", "SKRIPSI", "NON_SKRIPSI"]
+
+
+class InformationNeed(BaseModel):
+    """One fact that must be supported before a question is considered answered."""
+
+    need_id: str = Field(pattern=r"^[a-z0-9_]+$")
+    description: str = Field(min_length=3, max_length=300)
+    domains: list[AcademicDomain] = Field(default_factory=list)
+
+
+class QuestionPlan(BaseModel):
+    """Document routing and evidence requirements for one evaluation case."""
+
+    case_id: str
+    resolved_question: str = Field(min_length=3, max_length=1000)
+    target_domains: list[AcademicDomain] = Field(default_factory=list)
+    information_needs: list[InformationNeed] = Field(default_factory=list)
+    question_type: Literal[
+        "single_fact", "multi_fact", "comparison", "availability", "ambiguous"
+    ] = "single_fact"
+    is_ambiguous: bool = False
+    ambiguity_reason: str = ""
+    confidence: float = Field(ge=0.0, le=1.0)
+
+
+class QuestionPlanBatch(BaseModel):
+    plans: list[QuestionPlan]
+
+
 class EvaluationCase(BaseModel):
     case_id: str
     request_id: str | None = None
@@ -83,20 +121,64 @@ class EvaluationCase(BaseModel):
     expected_evidence: dict[str, Any] | None = None
     review_notes: str | None = None
     created_by: str | None = None
+    session_id: str | None = None
+    standalone_question: str | None = None
+    prior_questions: list[str] = Field(default_factory=list)
+    conversation_context: list[ConversationTurn] = Field(default_factory=list)
+    question_plan: QuestionPlan | None = None
+
+    @property
+    def evidence_question(self) -> str:
+        """Use the student's words; historical rewrites are diagnostic data only."""
+
+        return self.question.strip()
+
+    @property
+    def context_text(self) -> str:
+        """Compact, human-readable context for evaluator prompts."""
+
+        questions = self.prior_questions[-20:] or [
+            turn.question for turn in self.conversation_context
+        ]
+        if not questions:
+            return "-"
+        return "\n".join(f"Mahasiswa: {question}" for question in questions)
 
 
-class EvidenceCandidateLLM(BaseModel):
-    case_id: str
-    is_relevant: bool
-    page_start: int | None = None
-    page_end: int | None = None
-    evidence_text: str = ""
-    explanation: str = ""
-    confidence: float = Field(default=0.0, ge=0.0, le=1.0)
+class EvidenceDecision(BaseModel):
+    """One semantic verdict, with a source quote and answer before the decision."""
 
-
-class WindowScanOutput(BaseModel):
-    candidates: list[EvidenceCandidateLLM]
+    explanation: str = Field(
+        description="Alasan singkat hubungan bukti dengan pertanyaan."
+    )
+    quote: str = Field(
+        description="Satu kutipan persis dari halaman sumber; kosong jika tidak ada."
+    )
+    page_start: int | None
+    page_end: int | None
+    reference_answer: str = Field(
+        description="Jawaban singkat berdasarkan kutipan; kosong jika tidak menjawab."
+    )
+    verdict: Literal["supported", "partial", "related_scope", "not_found"]
+    scope_note: str = Field(
+        description="Perbedaan cakupan konkret jika ada; jangan mengulang penolakan umum."
+    )
+    covered_need_ids: list[str] = Field(
+        description="ID kebutuhan informasi yang didukung langsung oleh kutipan.",
+    )
+    subject_matches: bool = Field(
+        description="Subjek kutipan sama dengan subjek pertanyaan."
+    )
+    attribute_matches: bool = Field(
+        description="Atribut yang dijelaskan kutipan sama dengan yang ditanyakan.",
+    )
+    scope_matches: bool = Field(
+        description="Jalur dan tahap akademik sesuai pertanyaan."
+    )
+    unit_matches: bool = Field(
+        description="Satuan atau jenis ukuran sesuai pertanyaan."
+    )
+    confidence: float = Field(ge=0.0, le=1.0)
 
 
 class EvidenceCandidate(BaseModel):
@@ -110,6 +192,8 @@ class EvidenceCandidate(BaseModel):
     explanation: str
     confidence: float = Field(ge=0.0, le=1.0)
     is_verified: bool = False
+    covered_need_ids: list[str] = Field(default_factory=list)
+    reference_answer: str = ""
 
 
 class EvidenceVerification(BaseModel):
@@ -122,6 +206,13 @@ class EvidenceVerification(BaseModel):
     corrected_evidence_text: str = ""
     explanation: str
     confidence: float = Field(ge=0.0, le=1.0)
+    reference_answer: str = ""
+    verdict: str = ""
+    covered_need_ids: list[str] = Field(default_factory=list)
+    subject_matches: bool = True
+    attribute_matches: bool = True
+    scope_matches: bool = True
+    unit_matches: bool = True
 
 
 class ChunkMatch(BaseModel):
@@ -173,3 +264,8 @@ class RegressionJudgement(BaseModel):
     answer_correct: bool
     citation_correct: bool
     explanation: str
+
+
+class AnswerAssessment(BaseModel):
+    explanation: str
+    verdict: Literal["correct", "incorrect", "incomplete", "uncertain"]

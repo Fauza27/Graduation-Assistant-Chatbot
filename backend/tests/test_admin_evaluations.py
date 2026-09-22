@@ -36,8 +36,8 @@ def test_start_run_queues_selected_cases(monkeypatch):
         llm_model="chat-model",
         EVALUATION_DOCUMENT_MANIFEST="manifest.yaml",
         EVALUATION_PAGE_WINDOW=3,
-        EVALUATION_QUESTION_BATCH_SIZE=10,
-        EVALUATION_MAX_EVIDENCE_PER_CASE=5,
+        EVALUATION_CANDIDATE_WINDOWS_PER_CASE=8,
+        EVALUATION_CONTEXT_TURNS=3,
     )
     monkeypatch.setattr(
         admin_evaluations, "get_evaluation_repository", lambda: repository

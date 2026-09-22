@@ -20,9 +20,15 @@ def _coverage(evidence_terms: set[str], content: str) -> float:
     return len(evidence_terms & _terms(content)) / len(evidence_terms)
 
 
+def _quote_tokens(text: str) -> str:
+    """Ignore formatting while retaining word order, numbers and negations."""
+    return " " + " ".join(WORD_PATTERN.findall(text.lower())) + " "
+
+
 def audit_chunks(
     evidence: EvidenceCandidate,
     chunks: list[dict],
+    parents: list[dict] | None = None,
 ) -> ChunkAudit:
     """Find missing, fragmented, or adequately represented evidence."""
     if not chunks:
@@ -30,6 +36,46 @@ def audit_chunks(
             status="extraction_missing",
             explanation="Tidak ada child chunk yang terhubung dengan dokumen asli.",
             diagnostics={"chunk_count": 0},
+        )
+
+    quote = _quote_tokens(evidence.evidence_text)
+    exact_children = [
+        row
+        for row in chunks
+        if quote.strip() and quote in _quote_tokens(str(row.get("content", "")))
+    ]
+    exact_parents = [
+        row
+        for row in parents or []
+        if quote.strip() and quote in _quote_tokens(str(row.get("content", "")))
+    ]
+    if exact_children or exact_parents:
+        parent_ids = {
+            str(row["parent_id"])
+            for row in [*exact_children, *exact_parents]
+            if row.get("parent_id")
+        }
+        return ChunkAudit(
+            status="chunking_valid",
+            explanation="Kutipan asli ditemukan utuh pada child atau parent chunk.",
+            affected_chunk_ids=[str(row["id"]) for row in exact_children],
+            matched_parent_ids=sorted(parent_ids),
+            matches=[
+                ChunkMatch(
+                    child_id=str(row["id"]),
+                    parent_id=str(row.get("parent_id", "")),
+                    coverage=1.0,
+                )
+                for row in exact_children
+            ]
+            + [
+                ChunkMatch(child_id="", parent_id=str(row["parent_id"]), coverage=1.0)
+                for row in exact_parents
+            ],
+            diagnostics={
+                "match_method": "exact_quote",
+                "exact_parent_ids": [str(row["parent_id"]) for row in exact_parents],
+            },
         )
 
     evidence_terms = _terms(evidence.evidence_text)
@@ -65,51 +111,16 @@ def audit_chunks(
         else 0.0
     )
 
-    if best_coverage < 0.2:
-        status = "extraction_missing"
-        explanation = (
-            "Bukti pada dokumen asli hampir tidak terwakili dalam child chunks."
-        )
-    elif (
-        combined_coverage >= 0.85
-        and best_coverage < 0.85
-        and combined_coverage - best_coverage >= 0.1
-        and len(matches) > 1
-    ):
-        status = "context_split"
-        explanation = (
-            "Bukti tersebar pada beberapa child chunk dan satu chunk saja tidak "
-            "membawa konteks yang cukup."
-        )
-    elif best_coverage < 0.6:
-        status = "extraction_corrupted"
-        explanation = (
-            "Sebagian bukti ditemukan, tetapi representasi chunk tidak lengkap."
-        )
-    else:
-        status = "chunking_valid"
-        explanation = "Bukti dokumen asli terwakili dengan baik dalam chunk."
-
-    if status == "extraction_missing":
-        relevant_matches = []
-    elif status == "context_split":
-        relevant_matches = matches[:3]
-    else:
-        relevant_matches = [
-            match
-            for match in matches
-            if match.coverage >= max(0.2, best_coverage * 0.75)
-        ]
-
+    # Lexical overlap is a search hint, not proof that extraction lost a fact.
+    # Even complete token coverage can combine unrelated sentences or numbers.
+    status = "inconclusive"
+    explanation = (
+        "Belum ditemukan kutipan utuh pada child/parent. Kemiripan kata saja "
+        "tidak membuktikan kehilangan informasi atau kebutuhan rechunking."
+    )
     return ChunkAudit(
         status=status,
         explanation=explanation,
-        affected_chunk_ids=[match.child_id for match in relevant_matches],
-        matched_parent_ids=list(
-            dict.fromkeys(
-                match.parent_id for match in relevant_matches if match.parent_id
-            )
-        ),
         matches=matches,
         diagnostics={
             "best_coverage": round(best_coverage, 4),

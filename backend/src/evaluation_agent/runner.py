@@ -3,10 +3,9 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Iterable
 
 from loguru import logger
 
@@ -18,6 +17,14 @@ from src.evaluation_agent.document_reader import (
     OriginalDocumentReader,
     load_document_manifest,
 )
+from src.evaluation_agent.evidence_search import (
+    OriginalDocumentIndex,
+)
+from src.evaluation_agent.evidence_validation import (
+    grounded_numbers,
+    validate_quote,
+    validate_semantic_fit,
+)
 from src.evaluation_agent.model_client import (
     EvaluatorModel,
     OpenAIEvaluatorModel,
@@ -25,18 +32,27 @@ from src.evaluation_agent.model_client import (
 )
 from src.evaluation_agent.models import (
     ChunkAudit,
+    DiagnosisReview,
     EVALUATION_QUEUE_STATUSES,
     EvaluationCase,
     EvidenceCandidate,
+    FailureStage,
     PageWindow,
+    QuestionPlan,
     RegisteredDocument,
 )
+from src.evaluation_agent.question_planner import (
+    fallback_question_plan,
+    normalize_question_plan,
+    required_need_ids,
+)
 from src.evaluation_agent.report import write_report
+from src.evaluation_agent.review_policy import constrain_review
 from src.evaluation_agent.repository import (
     EvaluationRepository,
     get_evaluation_repository,
 )
-from src.evaluation_agent.trace_analyzer import analyze_trace
+from src.evaluation_agent.trace_analyzer import analyze_trace, analyze_query_scope
 from src.evaluation_agent.system_context import build_system_context
 
 
@@ -44,17 +60,34 @@ def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-def _batches(items: list[EvaluationCase], size: int) -> Iterable[list[EvaluationCase]]:
-    for index in range(0, len(items), size):
-        yield items[index : index + size]
-
-
 @dataclass(frozen=True)
 class EvidenceAssessment:
     """Separate direct evidence from evidence with a different scope."""
 
     direct: EvidenceCandidate | None = None
+    supporting: tuple[EvidenceCandidate, ...] = ()
     related_scope: EvidenceCandidate | None = None
+    candidates_checked: int = 0
+    attempts: tuple[dict, ...] = ()
+    reference_answer: str = ""
+    covered_need_ids: tuple[str, ...] = ()
+    required_need_ids: tuple[str, ...] = ()
+
+    @property
+    def discovery_status(self) -> str:
+        if self.direct is not None:
+            return "verified"
+        if self.supporting:
+            return "partial_evidence"
+        if self.related_scope is not None:
+            return "related_scope_only"
+        return "inconclusive"
+
+    @property
+    def verified_evidence(self) -> tuple[EvidenceCandidate, ...]:
+        if self.supporting:
+            return self.supporting
+        return (self.direct,) if self.direct is not None else ()
 
 
 class EvaluationRunner:
@@ -77,9 +110,18 @@ class EvaluationRunner:
             self._model = get_evaluator_model()
         return self._model
 
-    def register_documents(self) -> list[RegisteredDocument]:
+    def register_documents(
+        self, domains: set[str] | None = None
+    ) -> list[RegisteredDocument]:
         specs = load_document_manifest(self.settings.EVALUATION_DOCUMENT_MANIFEST)
-        return [self.repository.register_document(spec) for spec in specs]
+        if domains:
+            specs = [spec for spec in specs if spec.domain in domains]
+        return [
+            self.repository.register_document(
+                spec, page_count=len(self.reader.read_pages(spec.path))
+            )
+            for spec in specs
+        ]
 
     def run(self, case_ids: set[str] | None = None) -> tuple[str, Path]:
         cases = self.repository.list_cases(list(EVALUATION_QUEUE_STATUSES))
@@ -111,10 +153,14 @@ class EvaluationRunner:
 
     def _run_config(self, documents: list[RegisteredDocument] | None = None) -> dict:
         config = {
+            "evaluation_protocol_version": "2026-09-23-document-routed",
+            "context_source": "original_student_questions",
             "manifest": self.settings.EVALUATION_DOCUMENT_MANIFEST,
             "page_window": self.settings.EVALUATION_PAGE_WINDOW,
-            "question_batch_size": self.settings.EVALUATION_QUESTION_BATCH_SIZE,
-            "max_evidence_per_case": self.settings.EVALUATION_MAX_EVIDENCE_PER_CASE,
+            "candidate_windows_per_case": (
+                self.settings.EVALUATION_CANDIDATE_WINDOWS_PER_CASE
+            ),
+            "context_turns": self.settings.EVALUATION_CONTEXT_TURNS,
         }
         if documents is not None:
             config["document_checksums"] = {
@@ -128,7 +174,26 @@ class EvaluationRunner:
                 "Evaluation run sedang diproses atau sudah selesai; buat batch baru"
             )
         try:
-            documents = self.register_documents()
+            cases = self.repository.enrich_cases_with_context(
+                cases,
+                max_turns=self.settings.EVALUATION_CONTEXT_TURNS,
+            )
+            specs = load_document_manifest(self.settings.EVALUATION_DOCUMENT_MANIFEST)
+            available_domains = sorted({spec.domain for spec in specs})
+            cases = self._plan_cases(cases, available_domains)
+            routed_domains = {
+                domain
+                for case in cases
+                for domain in case.question_plan.target_domains
+                if case.question_plan is not None
+            }
+            documents = [
+                self.repository.register_document(
+                    spec, page_count=len(self.reader.read_pages(spec.path))
+                )
+                for spec in specs
+                if spec.domain in routed_domains
+            ]
             self.repository.update_run(
                 run_id,
                 configuration=self._run_config(documents),
@@ -161,14 +226,75 @@ class EvaluationRunner:
             )
             raise
 
+    def _plan_cases(
+        self, cases: list[EvaluationCase], available_domains: list[str]
+    ) -> list[EvaluationCase]:
+        """Plan questions per conversation before any source document is scanned."""
+
+        groups: dict[str, list[EvaluationCase]] = defaultdict(list)
+        for case in cases:
+            groups[case.session_id or f"case:{case.case_id}"].append(case)
+
+        planned: dict[str, QuestionPlan] = {}
+        planner = getattr(self.model, "plan_questions", None)
+        for group in groups.values():
+            raw_plans: list[QuestionPlan] = []
+            if callable(planner):
+                try:
+                    raw_plans = planner(group, available_domains)
+                except Exception:
+                    logger.exception(
+                        "Question planner gagal; menggunakan routing konservatif untuk {} case",
+                        len(group),
+                    )
+            raw_by_case = {plan.case_id: plan for plan in raw_plans}
+            for case in group:
+                raw = raw_by_case.get(case.case_id) or fallback_question_plan(
+                    case, available_domains
+                )
+                planned[case.case_id] = normalize_question_plan(
+                    raw, case, available_domains
+                )
+
+        return [
+            case.model_copy(update={"question_plan": planned[case.case_id]})
+            for case in cases
+        ]
+
     def _discover_evidence(
         self,
         cases: list[EvaluationCase],
         documents: list[RegisteredDocument],
     ) -> dict[str, list[EvidenceCandidate]]:
-        found: dict[str, list[EvidenceCandidate]] = defaultdict(list)
+        available_domains = {document.spec.domain for document in documents}
+        search_cases = [
+            case
+            if case.question_plan is not None
+            else case.model_copy(
+                update={
+                    "question_plan": fallback_question_plan(case, available_domains)
+                }
+            )
+            for case in cases
+        ]
+        found: dict[str, list[EvidenceCandidate]] = {
+            case.case_id: [] for case in cases
+        }
+        limit = self.settings.EVALUATION_CANDIDATE_WINDOWS_PER_CASE
         for document in documents:
-            logger.info("Membaca seluruh dokumen asli: {}", document.spec.title)
+            relevant_cases = [
+                case
+                for case in search_cases
+                if case.question_plan is not None
+                and document.spec.domain in case.question_plan.target_domains
+            ]
+            if not relevant_cases:
+                continue
+            logger.info(
+                "Memindai dokumen asli {} untuk {} pertanyaan relevan",
+                document.spec.title,
+                len(relevant_cases),
+            )
             pages = self.reader.read_pages(document.spec.path)
             windows = self.reader.build_windows(
                 pages,
@@ -177,55 +303,41 @@ class EvaluationRunner:
                 version_id=document.version_id,
                 window_size=self.settings.EVALUATION_PAGE_WINDOW,
             )
-            for window in windows:
-                for case_batch in _batches(
-                    cases, self.settings.EVALUATION_QUESTION_BATCH_SIZE
-                ):
-                    allowed_case_ids = {case.case_id for case in case_batch}
-                    for candidate in self.model.scan_window(case_batch, window):
-                        if (
-                            candidate.case_id not in allowed_case_ids
-                            or not candidate.is_relevant
-                            or not candidate.evidence_text.strip()
-                        ):
-                            continue
-                        page_start = min(
-                            window.page_end,
-                            max(
-                                window.page_start,
-                                candidate.page_start or window.page_start,
-                            ),
-                        )
-                        page_end = min(
-                            window.page_end,
-                            max(page_start, candidate.page_end or window.page_end),
-                        )
-                        found[candidate.case_id].append(
-                            EvidenceCandidate(
-                                case_id=candidate.case_id,
-                                version_id=document.version_id,
-                                document_slug=document.spec.slug,
-                                document_title=document.spec.title,
-                                page_start=page_start,
-                                page_end=max(page_start, page_end),
-                                evidence_text=candidate.evidence_text.strip(),
-                                explanation=candidate.explanation,
-                                confidence=candidate.confidence,
-                            )
-                        )
-        limit = self.settings.EVALUATION_MAX_EVIDENCE_PER_CASE
-        unique: dict[str, list[EvidenceCandidate]] = {}
-        for case_id, items in found.items():
-            deduplicated: dict[tuple[str, str], EvidenceCandidate] = {}
-            for item in items:
-                key = (item.version_id, " ".join(item.evidence_text.lower().split()))
-                previous = deduplicated.get(key)
-                if previous is None or item.confidence > previous.confidence:
-                    deduplicated[key] = item
-            unique[case_id] = sorted(
-                deduplicated.values(), key=lambda item: item.confidence, reverse=True
-            )[:limit]
-        return unique
+            index = OriginalDocumentIndex(
+                [(window, document.spec.domain) for window in windows]
+            )
+            for case in relevant_cases:
+                route_count = max(1, len(case.question_plan.target_domains))
+                per_document_limit = max(2, (limit + route_count - 1) // route_count)
+                ranked = index.search(
+                    case,
+                    limit=per_document_limit,
+                    allowed_domains={document.spec.domain},
+                )
+                found[case.case_id].extend(
+                    EvidenceCandidate(
+                        case_id=case.case_id,
+                        version_id=item.window.version_id,
+                        document_slug=item.window.document_slug,
+                        document_title=item.window.document_title,
+                        page_start=item.window.page_start,
+                        page_end=item.window.page_end,
+                        evidence_text=item.snippet,
+                        explanation=(
+                            "Kandidat dari indeks halaman asli; istilah cocok: "
+                            + ", ".join(item.matched_terms)
+                        ),
+                        confidence=min(0.99, item.score / (item.score + 5.0)),
+                    )
+                    for item in ranked
+                )
+                logger.debug(
+                    "Evidence search case={} domain={} candidates={}",
+                    case.case_id,
+                    document.spec.domain,
+                    len(ranked),
+                )
+        return found
 
     def _diagnose_cases(
         self,
@@ -235,6 +347,8 @@ class EvaluationRunner:
         evidence_by_case: dict[str, list[EvidenceCandidate]],
     ) -> tuple[list[dict], int]:
         document_by_version = {item.version_id: item for item in documents}
+        chunk_cache: dict[str, tuple[list[dict], list[dict]]] = {}
+        evidence_cache: dict[tuple, EvidenceAssessment] = {}
         results: list[dict] = []
         processed = 0
         failed = 0
@@ -249,22 +363,67 @@ class EvaluationRunner:
                 error_message=None,
             )
             try:
-                assessment = self._assess_evidence(
-                    case, evidence_by_case.get(case.case_id, []), document_by_version
+                evidence_key = (
+                    case.question,
+                    case.context_text,
+                    case.question_plan.model_dump_json()
+                    if case.question_plan is not None
+                    else "",
                 )
+                if evidence_key not in evidence_cache:
+                    evidence_cache[evidence_key] = self._assess_evidence(
+                        case,
+                        evidence_by_case.get(case.case_id, []),
+                        document_by_version,
+                    )
+                cached = evidence_cache[evidence_key]
+                assessment = replace(
+                    cached,
+                    direct=cached.direct.model_copy(update={"case_id": case.case_id})
+                    if cached.direct
+                    else None,
+                    supporting=tuple(
+                        evidence.model_copy(update={"case_id": case.case_id})
+                        for evidence in cached.supporting
+                    ),
+                    related_scope=cached.related_scope.model_copy(
+                        update={"case_id": case.case_id}
+                    )
+                    if cached.related_scope
+                    else None,
+                )
+                candidate_summaries = [
+                    {
+                        "document_slug": candidate.document_slug,
+                        "pages": [candidate.page_start, candidate.page_end],
+                        "confidence": candidate.confidence,
+                        "explanation": candidate.explanation,
+                    }
+                    for candidate in evidence_by_case.get(case.case_id, [])
+                ]
                 verified = assessment.direct
+                verified_evidence = assessment.verified_evidence
                 related_scope = assessment.related_scope
                 answer_available = verified is not None
                 audit = ChunkAudit(
                     status="not_applicable",
                     explanation="Tidak ada bukti terverifikasi untuk dibandingkan.",
                 )
-                if verified is not None:
-                    document = document_by_version[verified.version_id]
-                    audit = audit_chunks(
-                        verified, self.repository.load_chunks(document)
+                audits: list[ChunkAudit] = []
+                for evidence in verified_evidence:
+                    document = document_by_version[evidence.version_id]
+                    if evidence.version_id not in chunk_cache:
+                        children = self.repository.load_chunks(document)
+                        chunk_cache[evidence.version_id] = (
+                            children,
+                            self.repository.load_parents(children),
+                        )
+                    audits.append(
+                        audit_chunks(evidence, *chunk_cache[evidence.version_id])
                     )
-                    self.repository.save_evidence(run_id, verified)
+                    self.repository.save_evidence(run_id, evidence)
+                if audits:
+                    audit = _merge_chunk_audits(audits)
                 if related_scope is not None:
                     self.repository.save_evidence(run_id, related_scope)
 
@@ -275,25 +434,66 @@ class EvaluationRunner:
                     trace=trace,
                     queue_reason=case.queue_reason,
                     has_related_scope_evidence=related_scope is not None,
+                    evidence_discovery_status=assessment.discovery_status,
                 )
+                if verified is not None:
+                    preliminary = analyze_query_scope(case, trace) or preliminary
+                answer_assessment = None
+                evidence_text = _format_evidence(verified_evidence)
+                if verified is not None and case.actual_answer:
+                    answer_assessment = self.model.assess_answer(
+                        case, evidence_text
+                    )
+                if (
+                    verified is not None
+                    and not case.actual_answer
+                    and not trace.get("error_stage")
+                ):
+                    preliminary = preliminary.model_copy(
+                        update={
+                            "failed_stage": FailureStage.UNKNOWN,
+                            "root_cause": "Jawaban chatbot tidak tersimpan; kualitas jawabannya belum dapat dinilai.",
+                            "confidence": 0.3,
+                        }
+                    )
                 system_context = build_system_context(
                     preliminary.failed_stage.value, trace, self.settings
                 )
                 incident_facts = build_incident_context(trace, audit, preliminary)
-                review = self.model.review_diagnosis(
-                    case=case,
-                    evidence_text=(
-                        verified.evidence_text
-                        if verified is not None
-                        else related_scope.evidence_text
-                        if related_scope is not None
-                        else ""
-                    ),
-                    chunk_audit=audit,
-                    trace=trace,
-                    preliminary=preliminary,
-                    system_context=system_context,
-                )
+                if answer_assessment and answer_assessment.verdict in {
+                    "correct",
+                    "uncertain",
+                }:
+                    review = DiagnosisReview(
+                        failed_stage=FailureStage.UNKNOWN
+                        if answer_assessment.verdict == "correct"
+                        else FailureStage.AMBIGUOUS,
+                        root_cause=answer_assessment.explanation,
+                        confidence=0.6
+                        if answer_assessment.verdict == "correct"
+                        else 0.35,
+                        recommendations=[],
+                    )
+                elif verified is None or preliminary.failed_stage in {
+                    FailureStage.AMBIGUOUS,
+                    FailureStage.UNKNOWN,
+                }:
+                    review = DiagnosisReview(
+                        failed_stage=preliminary.failed_stage,
+                        root_cause=preliminary.root_cause,
+                        confidence=preliminary.confidence,
+                        recommendations=[],
+                    )
+                else:
+                    review = self.model.review_diagnosis(
+                        case=case,
+                        evidence_text=evidence_text,
+                        chunk_audit=audit,
+                        trace=trace,
+                        preliminary=preliminary,
+                        system_context=system_context,
+                    )
+                    review = constrain_review(review, preliminary, system_context)
                 self.repository.save_finding(
                     run_id,
                     case.case_id,
@@ -307,13 +507,39 @@ class EvaluationRunner:
                         "incident_facts": incident_facts,
                         "queue_reason": case.queue_reason,
                         "has_related_scope_evidence": related_scope is not None,
+                        "evidence_discovery_status": assessment.discovery_status,
+                        "evidence_candidates_checked": assessment.candidates_checked,
+                        "standalone_question": case.evidence_question,
+                        "conversation_context": case.context_text,
+                        "recorded_resolved_query": case.standalone_question,
+                        "evidence_candidates": candidate_summaries,
+                        "verification_attempts": list(assessment.attempts),
+                        "reference_answer": assessment.reference_answer,
+                        "question_plan": case.question_plan.model_dump(mode="json")
+                        if case.question_plan is not None
+                        else None,
+                        "covered_need_ids": list(assessment.covered_need_ids),
+                        "required_need_ids": list(assessment.required_need_ids),
+                        "answer_assessment": answer_assessment.model_dump(mode="json")
+                        if answer_assessment
+                        else None,
                     },
                 )
                 result = {
                     "case_id": case.case_id,
                     "question": case.question,
+                    "standalone_question": case.evidence_question,
+                    "conversation_context": case.context_text,
+                    "recorded_resolved_query": case.standalone_question,
+                    "question_plan": case.question_plan.model_dump(mode="json")
+                    if case.question_plan is not None
+                    else None,
                     "answer_available": answer_available,
                     "evidence": verified.model_dump(mode="json") if verified else None,
+                    "supporting_evidence": [
+                        evidence.model_dump(mode="json")
+                        for evidence in verified_evidence
+                    ],
                     "related_scope_evidence": (
                         related_scope.model_dump(mode="json")
                         if related_scope is not None
@@ -321,10 +547,28 @@ class EvaluationRunner:
                     ),
                     "chunk_audit": audit.model_dump(mode="json"),
                     "diagnosis": review.model_dump(mode="json"),
+                    "answer_assessment": answer_assessment.model_dump(mode="json")
+                    if answer_assessment
+                    else None,
                     "system_context": system_context,
                     "incident_facts": incident_facts,
+                    "evidence_search": {
+                        "status": assessment.discovery_status,
+                        "candidates_checked": assessment.candidates_checked,
+                        "candidates": candidate_summaries,
+                        "verification_attempts": list(assessment.attempts),
+                        "reference_answer": assessment.reference_answer,
+                        "covered_need_ids": list(assessment.covered_need_ids),
+                        "required_need_ids": list(assessment.required_need_ids),
+                    },
                 }
                 results.append(result)
+                logger.info(
+                    "Evaluasi case={} evidence={} stage={}",
+                    case.case_id,
+                    assessment.discovery_status,
+                    review.failed_stage.value,
+                )
                 self.repository.update_run_case(
                     run_id, case.case_id, status="completed", completed_at=_now()
                 )
@@ -348,12 +592,28 @@ class EvaluationRunner:
         candidates: list[EvidenceCandidate],
         documents: dict[str, RegisteredDocument],
     ) -> EvidenceAssessment:
+        plan = case.question_plan or fallback_question_plan(
+            case, {document.spec.domain for document in documents.values()}
+        )
+        required = required_need_ids(plan)
+        covered: set[str] = set()
+        supporting: list[EvidenceCandidate] = []
         related_scope: EvidenceCandidate | None = None
+        attempts: list[dict] = []
+        domains = set(plan.target_domains)
         for candidate in candidates:
             document = documents[candidate.version_id]
+            attempt = {
+                "document_slug": candidate.document_slug,
+                "candidate_pages": [candidate.page_start, candidate.page_end],
+            }
+            attempts.append(attempt)
+            if domains and document.spec.domain not in domains:
+                attempt["rejection"] = "document_domain_mismatch"
+                continue
             pages = self.reader.read_pages(document.spec.path)
-            start = max(1, candidate.page_start - 2)
-            end = min(len(pages), candidate.page_end + 2)
+            start = max(1, candidate.page_start - 1)
+            end = min(len(pages), candidate.page_end + 1)
             context_pages = pages[start - 1 : end]
             window = PageWindow(
                 document_slug=document.spec.slug,
@@ -372,59 +632,119 @@ class EvaluationRunner:
             verification = self.model.verify_evidence(
                 case, window, candidate.evidence_text
             )
+            attempt["verification"] = verification.model_dump(mode="json")
+            contributes = verification.answers_question or verification.verdict == "partial"
+            if not contributes and not verification.is_related_scope:
+                continue
+            rejection = validate_quote(verification, context_pages)
+            if rejection is None and not grounded_numbers(
+                verification.reference_answer, verification.corrected_evidence_text
+            ):
+                rejection = "reference_answer_invents_numbers"
+            if rejection is None:
+                rejection = validate_semantic_fit(verification)
+            covered_by_quote = set(verification.covered_need_ids).intersection(required)
+            applicable_needs = {
+                need.need_id
+                for need in plan.information_needs
+                if not need.domains or document.spec.domain in need.domains
+            }
+            if contributes and not covered_by_quote:
+                rejection = rejection or "no_information_need_covered"
+            if covered_by_quote.difference(applicable_needs):
+                rejection = rejection or "covered_need_wrong_document"
+            if rejection:
+                attempt["rejection"] = rejection
+                continue
             assessed = candidate.model_copy(
                 update={
-                    "page_start": min(
-                        end,
-                        max(start, verification.page_start or candidate.page_start),
-                    ),
-                    "page_end": min(
-                        end,
-                        max(
-                            verification.page_start or candidate.page_start,
-                            verification.page_end or candidate.page_end,
-                        ),
-                    ),
-                    "evidence_text": (
-                        verification.corrected_evidence_text.strip()
-                        or candidate.evidence_text
-                    ),
-                    "explanation": " ".join(
-                        part
-                        for part in (verification.explanation, verification.scope_note)
-                        if part
-                    ),
+                    "page_start": verification.page_start,
+                    "page_end": verification.page_end,
+                    "evidence_text": verification.corrected_evidence_text.strip(),
+                    "explanation": verification.explanation,
                     "confidence": verification.confidence,
+                    "covered_need_ids": sorted(covered_by_quote),
+                    "reference_answer": verification.reference_answer,
                 }
             )
-            if verification.answers_question and verification.answer_available:
-                verified_start = min(
-                    end,
-                    max(start, verification.page_start or candidate.page_start),
-                )
-                verified_end = min(
-                    end,
-                    max(
-                        verified_start,
-                        verification.page_end or candidate.page_end,
-                    ),
-                )
-                return EvidenceAssessment(
-                    direct=assessed.model_copy(
-                        update={
-                            "page_start": verified_start,
-                            "page_end": verified_end,
-                            "evidence_text": (
-                                verification.corrected_evidence_text.strip()
-                                or candidate.evidence_text
-                            ),
-                            "explanation": verification.explanation,
-                            "confidence": verification.confidence,
-                            "is_verified": True,
-                        }
-                    ),
-                    related_scope=related_scope,
-                )
-            if verification.is_related_scope and related_scope is None:
-                related_scope = assessed
-        return EvidenceAssessment(related_scope=related_scope)
+            if contributes:
+                new_needs = covered_by_quote.difference(covered)
+                if not new_needs:
+                    attempt["rejection"] = "duplicate_information_coverage"
+                    continue
+                supporting.append(assessed)
+                covered.update(new_needs)
+                if required.issubset(covered):
+                    break
+                continue
+            related_scope = related_scope or assessed
+
+        route_is_unresolved = plan.is_ambiguous and len(plan.target_domains) > 1
+        complete = (
+            bool(required)
+            and required.issubset(covered)
+            and not route_is_unresolved
+        )
+        finalized = tuple(
+            evidence.model_copy(update={"is_verified": complete})
+            for evidence in supporting
+        )
+        reference_answer = "\n".join(
+            dict.fromkeys(
+                evidence.reference_answer
+                for evidence in finalized
+                if evidence.reference_answer.strip()
+            )
+        )
+        return EvidenceAssessment(
+            direct=finalized[0] if complete else None,
+            supporting=finalized,
+            related_scope=related_scope,
+            candidates_checked=len(attempts),
+            attempts=tuple(attempts),
+            reference_answer=reference_answer,
+            covered_need_ids=tuple(sorted(covered)),
+            required_need_ids=tuple(sorted(required)),
+        )
+
+
+def _format_evidence(items: tuple[EvidenceCandidate, ...]) -> str:
+    return "\n\n".join(
+        f"[{item.document_title}, halaman {item.page_start}-{item.page_end}]\n"
+        f"{item.evidence_text}"
+        for item in items
+    )
+
+
+def _merge_chunk_audits(audits: list[ChunkAudit]) -> ChunkAudit:
+    """Combine audits for questions supported by more than one document."""
+
+    if len(audits) == 1:
+        return audits[0]
+    statuses = {audit.status for audit in audits}
+    if statuses == {"chunking_valid"}:
+        status = "chunking_valid"
+    elif any(value.startswith("extraction") for value in statuses):
+        status = next(value for value in statuses if value.startswith("extraction"))
+    elif "inconclusive" in statuses:
+        status = "inconclusive"
+    else:
+        status = next(value for value in statuses if value != "chunking_valid")
+    return ChunkAudit(
+        status=status,
+        explanation=" ".join(dict.fromkeys(audit.explanation for audit in audits)),
+        affected_chunk_ids=list(
+            dict.fromkeys(
+                chunk_id for audit in audits for chunk_id in audit.affected_chunk_ids
+            )
+        ),
+        matched_parent_ids=list(
+            dict.fromkeys(
+                parent_id for audit in audits for parent_id in audit.matched_parent_ids
+            )
+        ),
+        matches=[match for audit in audits for match in audit.matches],
+        diagnostics={
+            "source_audits": [audit.model_dump(mode="json") for audit in audits]
+        },
+    )

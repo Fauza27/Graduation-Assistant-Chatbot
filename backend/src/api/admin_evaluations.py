@@ -157,8 +157,10 @@ def start_evaluation_run(
         config={
             "manifest": settings.EVALUATION_DOCUMENT_MANIFEST,
             "page_window": settings.EVALUATION_PAGE_WINDOW,
-            "question_batch_size": settings.EVALUATION_QUESTION_BATCH_SIZE,
-            "max_evidence_per_case": settings.EVALUATION_MAX_EVIDENCE_PER_CASE,
+            "candidate_windows_per_case": (
+                settings.EVALUATION_CANDIDATE_WINDOWS_PER_CASE
+            ),
+            "context_turns": settings.EVALUATION_CONTEXT_TURNS,
         },
     )
     return {

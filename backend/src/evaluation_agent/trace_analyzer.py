@@ -2,11 +2,48 @@
 
 from __future__ import annotations
 
-from src.evaluation_agent.models import ChunkAudit, Diagnosis, FailureStage
+from src.evaluation_agent.models import (
+    ChunkAudit,
+    Diagnosis,
+    EvaluationCase,
+    FailureStage,
+)
+from src.evaluation_agent.evidence_search import domains_in_text, infer_domains
+
+
+def analyze_query_scope(case: EvaluationCase, trace: dict) -> Diagnosis | None:
+    """An explicitly conflicting rewrite is observable, unlike filter presence."""
+    intended = infer_domains(case)
+    resolved = str((trace.get("query_plan") or {}).get("resolved_query") or "")
+    rewritten = domains_in_text(resolved)
+    if len(intended) == 1 and rewritten and intended.isdisjoint(rewritten):
+        return Diagnosis(
+            failed_stage=FailureStage.QUERY_PROCESSING,
+            root_cause=(
+                f"Ucapan mahasiswa membahas {', '.join(sorted(intended))}, tetapi "
+                f"query hasil reformulasi berpindah ke {', '.join(sorted(rewritten))}. "
+                "Perubahan cakupan ini terjadi sebelum pencarian dokumen."
+            ),
+            confidence=0.8,
+            diagnostics={
+                "intended_domains": sorted(intended),
+                "rewritten_domains": sorted(rewritten),
+                "recorded_resolved_query": resolved,
+            },
+        )
+    return None
 
 
 def _ids(rows: list[dict], field: str) -> set[str]:
     return {str(row.get(field, "")) for row in rows if row.get(field)}
+
+
+def _missing_stage(name: str) -> Diagnosis:
+    return Diagnosis(
+        failed_stage=FailureStage.UNKNOWN,
+        root_cause=f"Trace tahap {name} tidak tersedia; penyebab belum dapat ditentukan.",
+        confidence=0.3,
+    )
 
 
 def _rerank_gate_checks(trace: dict, audit: ChunkAudit) -> list[dict]:
@@ -62,9 +99,24 @@ def analyze_trace(
     trace: dict | None,
     queue_reason: str = "manual_admin",
     has_related_scope_evidence: bool = False,
+    evidence_discovery_status: str = "conclusive",
 ) -> Diagnosis:
     if not answer_available:
-        if queue_reason == "answer_abstention" and has_related_scope_evidence:
+        if evidence_discovery_status in {"inconclusive", "partial_evidence"}:
+            return Diagnosis(
+                failed_stage=FailureStage.AMBIGUOUS,
+                root_cause=(
+                    "Pencarian bukti belum memenuhi seluruh kebutuhan informasi pada "
+                    "pertanyaan. Hasil ini belum membuktikan bahwa informasi tidak "
+                    "tersedia dalam dokumen asli."
+                ),
+                confidence=0.35,
+                diagnostics={
+                    "queue_reason": queue_reason,
+                    "evidence_discovery_status": evidence_discovery_status,
+                },
+            )
+        if has_related_scope_evidence:
             return Diagnosis(
                 failed_stage=FailureStage.AMBIGUOUS,
                 root_cause=(
@@ -72,8 +124,11 @@ def analyze_trace(
                     "berbeda, tetapi tidak menjawab pertanyaan secara langsung. "
                     "Jawaban abstain perlu ditinjau dari kejelasan batas cakupannya."
                 ),
-                confidence=0.85,
-                diagnostics={"queue_reason": queue_reason},
+                confidence=0.4,
+                diagnostics={
+                    "queue_reason": queue_reason,
+                    "evidence_discovery_status": evidence_discovery_status,
+                },
             )
         return Diagnosis(
             failed_stage=FailureStage.INFORMATION_UNAVAILABLE,
@@ -82,6 +137,13 @@ def analyze_trace(
             diagnostics={"queue_reason": queue_reason},
         )
 
+    if chunk_audit.status == "inconclusive":
+        return Diagnosis(
+            failed_stage=FailureStage.AMBIGUOUS,
+            root_cause=chunk_audit.explanation,
+            confidence=0.35,
+            diagnostics=chunk_audit.diagnostics,
+        )
     if chunk_audit.status.startswith("extraction"):
         return Diagnosis(
             failed_stage=FailureStage.EXTRACTION,
@@ -105,6 +167,8 @@ def analyze_trace(
 
     relevant_children = set(chunk_audit.affected_chunk_ids)
     relevant_parents = set(chunk_audit.matched_parent_ids)
+    if "search_candidates" not in trace:
+        return _missing_stage("retrieval")
     search_children = _ids(trace.get("search_candidates", []), "child_id")
     parent_candidates = _ids(trace.get("parent_candidates", []), "parent_id")
     reranked = trace.get("reranked_candidates", [])
@@ -113,28 +177,30 @@ def analyze_trace(
     }
     context_parents = set(trace.get("final_context", {}).get("document_ids", []))
 
-    if relevant_children.isdisjoint(search_children):
+    # A sibling child can retrieve the same complete parent. Follow evidence
+    # through the parent IDs instead of demanding one particular child ID.
+    search_parents = _ids(trace.get("search_candidates", []), "parent_id")
+    if relevant_children.isdisjoint(search_children) and relevant_parents.isdisjoint(
+        search_parents | parent_candidates
+    ):
         self_queries = trace.get("self_query_results", [])
         filters_used = [item.get("filters", {}) for item in self_queries]
-        has_filters = any(filters_used)
         return Diagnosis(
-            failed_stage=(
-                FailureStage.QUERY_PROCESSING if has_filters else FailureStage.RETRIEVAL
-            ),
-            root_cause=(
-                "Filter hasil pemrosesan query tidak membawa chunk bukti ke hasil pencarian."
-                if has_filters
-                else "Chunk yang memuat bukti tidak ditemukan oleh hybrid retrieval."
-            ),
-            confidence=0.82,
+            failed_stage=FailureStage.RETRIEVAL,
+            root_cause="Bukti tidak tercatat pada hasil retrieval. Kehadiran filter saja belum membuktikan bahwa filter salah.",
+            confidence=0.7,
             diagnostics={"filters": filters_used},
         )
+    if "parent_candidates" not in trace:
+        return _missing_stage("parent_assembly")
     if relevant_parents.isdisjoint(parent_candidates):
         return Diagnosis(
             failed_stage=FailureStage.PARENT_ASSEMBLY,
             root_cause="Child relevan ditemukan, tetapi parent-nya tidak menjadi kandidat.",
             confidence=0.9,
         )
+    if "reranked_candidates" not in trace:
+        return _missing_stage("reranking")
     if relevant_parents.isdisjoint(accepted_parents):
         return Diagnosis(
             failed_stage=FailureStage.RERANKING,
@@ -161,6 +227,8 @@ def analyze_trace(
                 ),
             },
         )
+    if "document_ids" not in trace.get("final_context", {}):
+        return _missing_stage("context_assembly")
     if relevant_parents.isdisjoint(context_parents):
         return Diagnosis(
             failed_stage=FailureStage.CONTEXT_ASSEMBLY,

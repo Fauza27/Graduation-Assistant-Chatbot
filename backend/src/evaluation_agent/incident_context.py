@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
-from src.evaluation_agent.models import ChunkAudit, Diagnosis, EvaluationCase
+from src.evaluation_agent.models import (
+    ChunkAudit,
+    Diagnosis,
+    EvaluationCase,
+    Recommendation,
+)
 
 
 def build_incident_context(
@@ -104,3 +109,77 @@ def reranking_success_criteria(
             f"Jawaban kasus ini harus memenuhi expected_answer: {case.expected_answer}"
         )
     return criteria
+
+
+def build_reranking_recommendations(
+    case: EvaluationCase,
+    trace: dict,
+    context: dict,
+    facts: dict,
+) -> list[Recommendation]:
+    """Create bounded reranker experiments without inventing threshold changes."""
+
+    query_plan = trace.get("query_plan", {})
+    resolved_query = str(query_plan.get("resolved_query") or "").strip()
+    rerank_query = str(query_plan.get("rerank_query") or "").strip()
+    criteria = "\n".join(reranking_success_criteria(case, context, facts))
+    rows = facts.get("strongest_evidence_rerank_results", [])
+    strongest = rows[0] if rows else {}
+    score = strongest.get("rerank_score")
+    rank = strongest.get("rank")
+    observed = (
+        f"Bukti terverifikasi tercatat pada rank {rank} dengan skor {score}."
+        if rank is not None and score is not None
+        else "Bukti terverifikasi tidak memperoleh posisi penerimaan yang memadai."
+    )
+
+    recommendations: list[Recommendation] = []
+    if resolved_query and rerank_query and resolved_query != rerank_query:
+        recommendations.append(
+            Recommendation(
+                target="src/retrieval/query_planner.py::build_query_plan",
+                action=(
+                    "Uji penggunaan resolved_query sebagai query reranker setelah "
+                    "reformulasi, sehingga referensi percakapan yang sudah diselesaikan "
+                    "tidak kembali menjadi pertanyaan pendek yang ambigu."
+                ),
+                rationale=(
+                    f"Request mencari dengan '{resolved_query}', tetapi reranker "
+                    f"menilai kandidat memakai '{rerank_query}'."
+                ),
+                risk="medium",
+                validation_plan=criteria,
+            )
+        )
+    elif case.conversation_context:
+        recommendations.append(
+            Recommendation(
+                target="src/generation/intent_classifier/reformulator.py",
+                action=(
+                    "Perluas deteksi follow-up pendek agar topik dari turn terakhir "
+                    "masuk ke resolved_query sebelum pencarian dan reranking."
+                ),
+                rationale=(
+                    "Kasus memiliki konteks percakapan, tetapi query reranker belum "
+                    "membawa topik tersebut secara mandiri."
+                ),
+                risk="medium",
+                validation_plan=criteria,
+            )
+        )
+
+    recommendations.append(
+        Recommendation(
+            target="src/retrieval/reranker.py dan CROSS_ENCODER_MODEL",
+            action=(
+                "Bandingkan representasi input saat ini dan model cross-encoder "
+                "multilingual menggunakan pasangan pertanyaan-bukti terverifikasi. "
+                "Pilih perubahan hanya jika rank bukti membaik tanpa menurunkan kasus "
+                "kontrol; jangan mengubah relative gap sebagai pengganti scoring."
+            ),
+            rationale=observed,
+            risk="medium",
+            validation_plan=criteria,
+        )
+    )
+    return recommendations[:2]

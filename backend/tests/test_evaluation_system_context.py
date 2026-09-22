@@ -5,6 +5,7 @@ from langchain_core.documents import Document
 
 from src.evaluation_agent.model_client import OpenAIEvaluatorModel
 from src.evaluation_agent.incident_context import (
+    build_reranking_recommendations,
     build_incident_context,
     describe_reranking_failure,
     reranking_success_criteria,
@@ -175,6 +176,42 @@ def test_rerank_validation_uses_actual_gate_contract_and_expected_answer():
     assert "kasus tanpa jawaban" in text
 
 
+def test_reranking_recommendations_fix_query_mismatch_before_tuning_gates():
+    case = EvaluationCase(
+        case_id="case",
+        question="terus totalnya berapa lama?",
+        review_status="incorrect",
+    )
+    recommendations = build_reranking_recommendations(
+        case,
+        {
+            "query_plan": {
+                "resolved_query": "Durasi seminar proposal Skripsi",
+                "rerank_query": "terus totalnya berapa lama?",
+            }
+        },
+        {
+            "current_configuration": {
+                "rerank_min_top_score": 0,
+                "rerank_relative_gap": 2.5,
+                "rerank_top_n": 5,
+            }
+        },
+        {
+            "strongest_evidence_parent_ids": ["parent-1"],
+            "strongest_evidence_rerank_results": [
+                {"parent_id": "parent-1", "rank": 7, "rerank_score": -2.0}
+            ],
+            "selection_counterfactuals": [],
+        },
+    )
+
+    assert recommendations[0].target.endswith("build_query_plan")
+    assert "resolved_query" in recommendations[0].action
+    assert all("kurangi" not in item.action.lower() for item in recommendations)
+    assert "jangan mengubah relative gap" in recommendations[1].action
+
+
 def test_report_shows_cause_and_action_and_retains_debug_details_in_json(tmp_path):
     path = write_report(
         "run",
@@ -201,7 +238,7 @@ def test_report_shows_cause_and_action_and_retains_debug_details_in_json(tmp_pat
         tmp_path,
     )
     text = path.read_text(encoding="utf-8")
-    assert "Alasan gagal:** Ditolak" in text
+    assert "Diagnosis:** Ditolak" in text
     assert "Replay skor" in text
     assert "Parent ditemukan rank 3" not in text
     assert "Bukti harus masuk context" not in text
@@ -210,6 +247,31 @@ def test_report_shows_cause_and_action_and_retains_debug_details_in_json(tmp_pat
         saved["results"][0]["diagnosis"]["recommendations"][0]["validation_plan"]
         == "Bukti harus masuk context"
     )
+
+
+def test_report_labels_inconclusive_evidence_without_document_recommendation(tmp_path):
+    path = write_report(
+        "run-inconclusive",
+        [
+            {
+                "question": "berkasnya apa?",
+                "standalone_question": "Berkas pendaftaran seminar proposal Skripsi",
+                "evidence_search": {"status": "inconclusive"},
+                "diagnosis": {
+                    "failed_stage": "ambiguous",
+                    "confidence": 0.35,
+                    "root_cause": "Pencarian bukti belum meyakinkan.",
+                    "recommendations": [],
+                },
+            }
+        ],
+        tmp_path,
+    )
+
+    text = path.read_text(encoding="utf-8")
+    assert "Pertanyaan mandiri" in text
+    assert "belum meyakinkan" in text
+    assert "Belum ada rekomendasi perbaikan yang didukung bukti" in text
 
 
 def test_pipeline_records_all_scores_without_changing_final_selection(monkeypatch):

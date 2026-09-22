@@ -1,0 +1,14 @@
+[
+  {"id":"pi-sks","question":"kak kalau PI minimal sks-nya berapa?","history":[],"domain":"PI","page":15,"quote":"jumlah SKS minimal 100 SKS"},
+  {"id":"pi-pakaian","question":"pakai jas atau cukup almamater?","history":["pas ujian PI pakaian cowoknya gimana?"],"domain":"PI","page":18,"quote":"berdasi, menggunakan almamater"},
+  {"id":"kkp-form","question":"setelah formnya disetujui dibawa ke mana?","history":["saya udah dapat tempat KKP, sekarang ngurus apa dulu?","form usulan KKP harus disetujui siapa aja?"],"domain":"KKP","page":15,"quote":"mahasiswa menyerahkan form tersebut ke BAAK"},
+  {"id":"kkp-kuota","question":"kalau instansinya minta lebih dari lima mahasiswa, masih bisa nggak?","history":["satu instansi KKP maksimal menerima berapa mahasiswa?"],"domain":"KKP","page":15,"quote":"maksimal 5 mahasiswa per instansi"},
+  {"id":"sempro-kemiripan","question":"maksimal persentase kemiripannya berapa?","history":["saya daftar sempro skripsi","bukti cek plagiasi juga wajib ya?"],"domain":"SKRIPSI","page":15,"quote":"tingkat kemiripan maksimal 30%"},
+  {"id":"sempro-cover","question":"cover sama daftar pustaka ikut dihitung ke 40 halaman kah engga?","history":["saya daftar sempro skripsi","proposalnya sendiri minimal berapa halaman?"],"domain":"SKRIPSI","page":15,"quote":"Proposal dibuat minimal 40 halaman (tidak termasuk cover"},
+  {"id":"sempro-presentasi","question":"pas sempro saya presentasi berapa menit?","history":["saya daftar sempro skripsi"],"domain":"SKRIPSI","page":16,"quote":"10 menit untuk presentasi dan 50 menit untuk tanya jawab"},
+  {"id":"sempro-total","question":"terus total ujiannya berapa lama?","history":["saya daftar sempro skripsi","pas sempro saya presentasi berapa menit?"],"recorded_query":"Berapa lama total ujian untuk seminar proposal dan seminar hasil?","domain":"SKRIPSI","page":16,"quote":"Seminar proposal dilaksanakan paling lama 60 menit"},
+  {"id":"artikel-email","question":"email yang dipakai di artikelnya harus email kampus?","history":["tugas akhir non skripsi jalur karya ilmiah itu syaratnya apa?"],"recorded_query":"Email KKP harus kampus?","domain":"NON_SKRIPSI","page":24,"quote":"Email Mahasiswa berdomain wicida.ac.id"},
+  {"id":"sinta4","question":"jurnal Sinta 4 masih diterima buat jalur ini?","history":[],"domain":"NON_SKRIPSI","page":25,"quote":"Jurnal Nasional Terakreditasi Sinta 4"},
+  {"id":"sinta6","question":"kalau Sinta 6 gimana?","history":["jurnal Sinta 4 masih diterima buat jalur ini?"],"domain":"NON_SKRIPSI","page":25,"quote":"Jurnal Nasional Terakreditasi Sinta 6"},
+  {"id":"profesional","question":"saya sekarang kerja sebagai web developer, bisa ambil jalur profesional nggak?","history":[],"domain":"NON_SKRIPSI","page":28,"quote":"keahlian yang telah mendapatkan pengakuan dari perusahaan/instansi"}
+]
