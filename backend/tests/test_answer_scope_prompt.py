@@ -7,3 +7,6 @@ def test_generation_prompt_requires_scope_clarification_for_related_rules():
     assert "cakupannya berbeda" in prompt
     assert "jangan menyamaratakan" in prompt
     assert "jangan hanya mengatakan informasi tidak tersedia" in prompt
+    assert "riwayat percakapan hanya untuk memahami maksud" in prompt
+    assert "jangan menambah syarat" in prompt
+    assert "semua fakta jawaban tetap harus berasal dari dokumen" in prompt

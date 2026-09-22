@@ -1,0 +1,162 @@
+[
+  {
+    "question": "saya semester 7, kalau mau ambil skripsi syaratnya apa aja",
+    "request_id": "745b9a9b-0d8a-4d71-bf47-911daed9450f",
+    "expected_parent_id": "parent-skripsi-010",
+    "review_note": "138 SKS; IPK 3,25",
+    "candidates": [
+      {
+        "parent_id": "parent-skripsi-010",
+        "cross_encoder_score": -3.815854549407959
+      },
+      {
+        "parent_id": "parent-skripsi-011",
+        "cross_encoder_score": -5.498035907745361
+      },
+      {
+        "parent_id": "parent-skripsi-016",
+        "cross_encoder_score": -5.540920734405518
+      },
+      {
+        "parent_id": "parent-skripsi-044",
+        "cross_encoder_score": -5.8217315673828125
+      },
+      {
+        "parent_id": "parent-skripsi-045",
+        "cross_encoder_score": -6.127996921539307
+      },
+      {
+        "parent_id": "parent-skripsi-012",
+        "cross_encoder_score": -7.454673767089844
+      },
+      {
+        "parent_id": "parent-skripsi-014",
+        "cross_encoder_score": -7.583232402801514
+      },
+      {
+        "parent_id": "parent-skripsi-013",
+        "cross_encoder_score": -8.537090301513672
+      }
+    ]
+  },
+  {
+    "question": "oke proposal saya udah di acc dua pembimbing, habis ini daftar sempro lewat mana?",
+    "request_id": "d262912a-8f79-4178-b39e-a0d4fa52ed71",
+    "expected_parent_id": "parent-skripsi-011",
+    "review_note": "Prosedur seminar proposal tersedia; domain belum eksplisit dalam pesan pembuka",
+    "candidates": [
+      {
+        "parent_id": "parent-skripsi-011",
+        "cross_encoder_score": -0.08087316155433655
+      },
+      {
+        "parent_id": "parent-non-skripsi-016",
+        "cross_encoder_score": -1.250816822052002
+      },
+      {
+        "parent_id": "parent-non-skripsi-072",
+        "cross_encoder_score": -2.463441848754883
+      },
+      {
+        "parent_id": "parent-skripsi-006",
+        "cross_encoder_score": -2.821152687072754
+      },
+      {
+        "parent_id": "parent-skripsi-009",
+        "cross_encoder_score": -3.57374906539917
+      },
+      {
+        "parent_id": "parent-skripsi-003",
+        "cross_encoder_score": -4.361408710479736
+      },
+      {
+        "parent_id": "parent-skripsi-038",
+        "cross_encoder_score": -5.878999710083008
+      },
+      {
+        "parent_id": "parent-non-skripsi-018",
+        "cross_encoder_score": -6.813546657562256
+      }
+    ]
+  },
+  {
+    "question": "saya sekarang kerja sebagai web developer, bisa ambil jalur profesional nggak?",
+    "request_id": "4447766f-effb-4b73-a548-6e7c2fa80b05",
+    "expected_parent_id": "parent-non-skripsi-028",
+    "review_note": "Web Developer tercantum pada 3.2.3",
+    "candidates": [
+      {
+        "parent_id": "parent-non-skripsi-028",
+        "cross_encoder_score": -1.6742117404937744
+      },
+      {
+        "parent_id": "parent-non-skripsi-029",
+        "cross_encoder_score": -3.371119499206543
+      },
+      {
+        "parent_id": "parent-non-skripsi-030",
+        "cross_encoder_score": -4.9747161865234375
+      },
+      {
+        "parent_id": "parent-non-skripsi-027",
+        "cross_encoder_score": -5.6261115074157715
+      },
+      {
+        "parent_id": "parent-non-skripsi-020",
+        "cross_encoder_score": -6.611303329467773
+      },
+      {
+        "parent_id": "parent-non-skripsi-026",
+        "cross_encoder_score": -7.480965614318848
+      },
+      {
+        "parent_id": "parent-non-skripsi-031",
+        "cross_encoder_score": -8.627063751220703
+      },
+      {
+        "parent_id": "parent-non-skripsi-032",
+        "cross_encoder_score": -8.74018669128418
+      }
+    ]
+  },
+  {
+    "question": "kalau saya punya usaha jasa pembuatan website bisa ambil jalur wirausaha?",
+    "request_id": "16814468-7553-47d8-8fdc-2efb2c971aa8",
+    "expected_parent_id": "parent-non-skripsi-033",
+    "review_note": "Ketentuan jalur wirausaha tersedia",
+    "candidates": [
+      {
+        "parent_id": "parent-non-skripsi-033",
+        "cross_encoder_score": -0.10816477239131927
+      },
+      {
+        "parent_id": "parent-non-skripsi-032",
+        "cross_encoder_score": -1.5363460779190063
+      },
+      {
+        "parent_id": "parent-non-skripsi-034",
+        "cross_encoder_score": -1.7520089149475098
+      },
+      {
+        "parent_id": "parent-non-skripsi-036",
+        "cross_encoder_score": -3.458652973175049
+      },
+      {
+        "parent_id": "parent-non-skripsi-035",
+        "cross_encoder_score": -3.597745895385742
+      },
+      {
+        "parent_id": "parent-non-skripsi-037",
+        "cross_encoder_score": -4.688894271850586
+      },
+      {
+        "parent_id": "parent-non-skripsi-020",
+        "cross_encoder_score": -8.280521392822266
+      },
+      {
+        "parent_id": "parent-non-skripsi-026",
+        "cross_encoder_score": -9.576553344726562
+      }
+    ]
+  }
+]

@@ -24,3 +24,25 @@ def test_source_attribution_is_derived_from_retrieval_metadata():
         [{"content": "...", "source": "panduan_pi.pdf"}],
     )
     assert answer.startswith("Sumber: Buku Panduan PI")
+
+
+def test_raw_reranker_scores_are_not_exposed_as_document_facts():
+    context = format_context([
+        {
+            "content": "Mahasiswa wajib memenuhi persyaratan.",
+            "source": "panduan_skripsi.pdf",
+            "cross_encoder_score": -3.82,
+            "score_source": "cross_encoder",
+        }
+    ])
+    assert "Mahasiswa wajib" in context
+    assert "-3.82" not in context
+    assert "Relevansi" not in context
+
+
+def test_empty_context_does_not_claim_a_relevance_threshold_failure():
+    context = format_context([])
+
+    assert "Status: NO_RELEVANT_DOCUMENT" in context
+    assert "Tidak ada konteks dokumen yang berhasil diambil" in context
+    assert "batas minimum relevansi" not in context

@@ -375,7 +375,10 @@ def _select_reranked_documents(
         return [], "No documents reranked", 0.0
 
     top_score = float(reranked[0].get("cross_encoder_score", 0.0))
-    minimum_triggered = top_score < settings.rerank_min_top_score
+    minimum_triggered = (
+        settings.rerank_min_top_score is not None
+        and top_score < settings.rerank_min_top_score
+    )
     minimum_score = top_score - settings.rerank_relative_gap
     final_results = (
         []
@@ -565,22 +568,26 @@ def _deduplicate_single_search(
 def _deduplicate_equivalent_child_content(
     search_results: list[HybridSearchResult],
 ) -> list[HybridSearchResult]:
-    """Keep the highest-ranked copy of byte-equivalent knowledge text.
+    """Collapse repeated text only within the same parent and source.
 
-    PI and KKP intentionally share several formatting rules. Returning both
-    copies consumes candidate slots without adding evidence when no source was
-    selected, so exact normalized duplicates are collapsed after ranking.
+    Identical rules in PI and KKP remain separate evidence. Dropping one loses
+    provenance and prevents a comparison from citing both guides.
     """
     unique: list[HybridSearchResult] = []
-    seen_content: set[str] = set()
+    seen_content: set[tuple[str, str, str]] = set()
     duplicate_count = 0
     for result in search_results:
         normalized = " ".join(result.document.page_content.casefold().split())
-        if normalized and normalized in seen_content:
+        identity = (
+            str(result.document.metadata.get("source") or ""),
+            str(result.parent_id),
+            normalized,
+        )
+        if normalized and identity in seen_content:
             duplicate_count += 1
             continue
         if normalized:
-            seen_content.add(normalized)
+            seen_content.add(identity)
         unique.append(result)
 
     if duplicate_count:

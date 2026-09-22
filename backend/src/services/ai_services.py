@@ -258,6 +258,7 @@ def _snapshot_retrieval_metrics(
 
 def _generate_answer(
     question: str,
+    resolved_question: str,
     retrieval_docs: list[dict],
     memory: ConversationMemory,
     session_id: str,
@@ -269,6 +270,7 @@ def _generate_answer(
         with trace_span("rag.generation", document_count=len(retrieval_docs)):
             result = get_rag_generator().generate(
                 question=question,
+                resolved_question=resolved_question,
                 context_documents=retrieval_docs,
                 conversation_history=memory.get_history_for_llm(),
                 conversation_summary=memory.summary,
@@ -443,6 +445,7 @@ def chat(
         # 4. LLM Generation
         answer = _generate_answer(
             question=question,
+            resolved_question=query_plan.resolved_query,
             retrieval_docs=retrieval_docs,
             memory=memory,
             session_id=session_id,

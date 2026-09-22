@@ -15,7 +15,7 @@ def test_simple_query_uses_normalized_query_without_rewriter():
     assert plan.normalized_query == "berapa SKS untuk Penulisan Ilmiah?"
     assert plan.resolved_query == plan.normalized_query
     assert plan.search_queries == (plan.resolved_query,)
-    assert plan.rerank_query == plan.original_query
+    assert plan.rerank_query == plan.resolved_query
     assert plan.rewrite_method is RewriteMethod.NONE
     rewrite.assert_not_called()
 

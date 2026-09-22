@@ -69,7 +69,10 @@ class Settings(BaseSettings):
     rerank_top_n: int = Field(default=8, ge=3, le=20, description="Number of documents after reranking")
     max_parent_for_rerank: int = Field(default=8, ge=3, le=50, description="Max parents to send to reranker")
     min_parent_for_rerank: int = Field(default=3, ge=1, le=10, description="Min parents required to trigger reranker")
-    rerank_min_top_score: float = Field(default=0.0, description="Minimum top score required to continue LLM generation")
+    rerank_min_top_score: float | None = Field(
+        default=None,
+        description="Optional calibrated rejection threshold; raw reranker scores are not answerability probabilities",
+    )
     rerank_relative_gap: float = Field(default=2.5, description="Adaptive gap from top score to keep documents")
     bm25_weight: float = Field(default=0.4, ge=0.0, le=1.0, description="BM25 weight in hybrid search")
     dense_weight: float = Field(default=0.6, ge=0.0, le=1.0, description="Dense search weight")
@@ -86,8 +89,8 @@ class Settings(BaseSettings):
         default="config/evaluation_documents.yaml"
     )
     EVALUATION_PAGE_WINDOW: int = Field(default=3, ge=1, le=10)
-    EVALUATION_QUESTION_BATCH_SIZE: int = Field(default=10, ge=1, le=25)
-    EVALUATION_MAX_EVIDENCE_PER_CASE: int = Field(default=5, ge=1, le=20)
+    EVALUATION_CANDIDATE_WINDOWS_PER_CASE: int = Field(default=8, ge=3, le=30)
+    EVALUATION_CONTEXT_TURNS: int = Field(default=3, ge=0, le=10)
     EVALUATION_AGENT_ENABLED: bool = Field(default=False)
 
     # Cross-Encoder Configuration

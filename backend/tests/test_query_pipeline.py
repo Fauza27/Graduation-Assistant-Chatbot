@@ -1,10 +1,12 @@
 from unittest.mock import Mock, patch
+from types import SimpleNamespace
 
 from langchain_core.documents import Document
 
 from src.retrieval.hybrid_search import HybridSearchResult
 from src.retrieval.pipeline import (
     _deduplicate_equivalent_child_content,
+    _select_reranked_documents,
     run_retrieval,
 )
 
@@ -53,7 +55,7 @@ def test_multi_query_results_are_merged_before_parent_fetch(
     assert result.num_docs == 2
 
 
-def test_exact_child_content_duplicates_do_not_consume_candidate_slots():
+def test_identical_rules_in_different_guides_keep_both_sources():
     first = _child("pi-format", "pi-parent", 0.9)
     second = _child("kkp-format", "kkp-parent", 0.8)
     distinct = _child("distinct", "other-parent", 0.7)
@@ -62,4 +64,26 @@ def test_exact_child_content_duplicates_do_not_consume_candidate_slots():
 
     result = _deduplicate_equivalent_child_content([first, second, distinct])
 
-    assert [child.child_id for child in result] == ["pi-format", "distinct"]
+    assert [child.child_id for child in result] == ["pi-format", "kkp-format", "distinct"]
+
+
+def test_negative_rerank_score_does_not_prove_missing_information():
+    settings = SimpleNamespace(
+        rerank_min_top_score=None, rerank_relative_gap=2.5, rerank_top_n=5,
+    )
+    evidence = {"parent_id": "requirements", "cross_encoder_score": -3.82}
+    other = {"parent_id": "unrelated", "cross_encoder_score": -8.0}
+    selected, _, _ = _select_reranked_documents([evidence, other], settings)
+    assert selected == [evidence]
+    assert other["selection_reason"] == "relative_gap"
+
+    settings.rerank_min_top_score = 0.0
+    selected, _, _ = _select_reranked_documents([evidence, other], settings)
+    assert selected == []
+
+
+def test_repeated_content_within_one_parent_is_deduplicated():
+    first = _child("c1", "p1", 0.9)
+    second = _child("c2", "p1", 0.8)
+    second.document.page_content = first.document.page_content
+    assert _deduplicate_equivalent_child_content([first, second]) == [first]

@@ -116,7 +116,7 @@ def build_query_plan(
         normalized_query=normalized_query,
         resolved_query=resolved_query,
         search_queries=search_queries,
-        rerank_query=original_query,
+        rerank_query=resolved_query,
         rewrite_method=rewrite_method,
         complexity=(
             QueryComplexity.COMPLEX

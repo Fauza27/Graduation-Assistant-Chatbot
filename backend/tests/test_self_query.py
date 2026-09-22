@@ -71,6 +71,30 @@ class TestSelfQuerySourceDetection:
         assert parsed.detected_source == _SOURCE_PI
         assert parsed.filters.get("source") == _SOURCE_PI
 
+    def test_resolved_skripsi_requirement_routes_to_skripsi(self):
+        parsed = extract_query_components(
+            "Berapa minimal SKS dan IPK untuk mengambil Skripsi?"
+        )
+
+        assert parsed.detected_source == _SOURCE_SKRIPSI
+        assert parsed.filters.get("source") == _SOURCE_SKRIPSI
+
+    def test_professional_track_routes_to_non_skripsi(self):
+        parsed = extract_query_components(
+            "Apa syarat jalur pekerja profesional Non-Skripsi?"
+        )
+
+        assert parsed.detected_source == _SOURCE_NON_SKRIPSI
+        assert parsed.filters.get("source") == _SOURCE_NON_SKRIPSI
+
+    def test_cross_domain_comparison_keeps_search_unfiltered(self):
+        parsed = extract_query_components(
+            "Apakah minimal SKS dan IPK untuk PI sama dengan KKP?"
+        )
+
+        assert parsed.detected_source is None
+        assert "source" not in parsed.filters
+
     def test_non_skripsi_chapter_filter_uses_normalized_database_section(self):
         parsed = extract_query_components(
             "syarat non skripsi dan berapa sks minimal"
