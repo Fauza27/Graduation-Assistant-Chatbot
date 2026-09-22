@@ -48,16 +48,32 @@ prompt, dan kode tetap memerlukan keputusan manusia.
 4. Admin memilih kasus dan membuat batch. API hanya membuat antrean dengan status
    `pending`, sehingga proses panjang tidak berjalan di dalam web server.
 5. Worker dijalankan dari terminal menggunakan `run_id` yang ditampilkan dashboard.
-6. Worker membaca setiap halaman PDF asli dalam window yang saling overlap,
-   memeriksa semua pertanyaan per batch, lalu memverifikasi kandidat bukti dengan
-   halaman di sekitarnya.
-7. Bukti terverifikasi dibandingkan dengan chunk aktif. Untuk jawaban abstain,
+6. Worker menganalisis pertanyaan per sesi sebelum membaca dokumen. Hasilnya berisi
+   pertanyaan mandiri, satu atau beberapa dokumen tujuan, jenis pertanyaan, serta
+   kebutuhan informasi yang harus dibuktikan. Pertanyaan perbandingan, misalnya
+   PI dan KKP, memiliki kebutuhan terpisah untuk setiap dokumen.
+7. Routing bersifat lunak. Domain yang disebut mahasiswa dipertahankan, sementara
+   routing ambigu atau berkeyakinan rendah diperluas agar dokumen yang benar tidak
+   hilang akibat keputusan awal.
+8. Worker memproses satu dokumen tujuan pada satu waktu. Seluruh halaman asli pada
+   dokumen itu dibaca dan di-cache, lalu pencarian hanya dijalankan untuk pertanyaan
+   yang diarahkan ke dokumen tersebut.
+9. LLM memverifikasi kandidat terbaik beserta halaman di sekitarnya. Selain kutipan
+   persis dan halaman fisik, verifier wajib memeriksa subjek, atribut, lingkup
+   akademik, satuan, dan ID kebutuhan informasi yang benar-benar dijawab.
+10. Jika tidak ada kandidat yang berhasil diverifikasi, statusnya
+   `inconclusive`/`ambiguous`. Kondisi tersebut tidak dianggap sebagai bukti bahwa
+   informasi tidak tersedia dan tidak boleh menghasilkan rekomendasi untuk
+   menambah isi dokumen.
+11. Pertanyaan baru dinyatakan memiliki jawaban setelah semua kebutuhan informasi
+   tercakup. Bukti dari beberapa panduan digabungkan untuk pertanyaan lintas dokumen.
+12. Bukti terverifikasi dibandingkan dengan chunk aktif. Untuk jawaban abstain,
    evaluator juga dapat menyimpan bukti yang terkait tetapi berbeda cakupan,
    misalnya aturan proposal ketika pertanyaannya tentang naskah akhir. Bukti
    tersebut tidak dianggap sebagai jawaban langsung.
-8. Trace request kemudian digunakan untuk menentukan tahap kegagalan paling awal.
-9. Admin membaca temuan dan menyetujui atau menolak rekomendasi.
-10. Setelah perbaikan diterapkan, regression runner mengirim ulang pertanyaan yang
+13. Trace request kemudian digunakan untuk menentukan tahap kegagalan paling awal.
+14. Admin membaca temuan dan menyetujui atau menolak rekomendasi.
+15. Setelah perbaikan diterapkan, regression runner mengirim ulang pertanyaan yang
    sama dan membandingkan hasil baru dengan bukti yang sudah diverifikasi.
 
 ## Persiapan
@@ -75,7 +91,16 @@ dijalankan, aktifkan API evaluasi:
 ```dotenv
 EVALUATION_AGENT_ENABLED=true
 EVALUATION_MODEL=gpt-4o-mini
+EVALUATION_PAGE_WINDOW=3
+EVALUATION_CANDIDATE_WINDOWS_PER_CASE=8
+EVALUATION_CONTEXT_TURNS=3
 ```
+
+`EVALUATION_CANDIDATE_WINDOWS_PER_CASE` membatasi halaman kandidat yang dikirim
+ke LLM untuk setiap kasus. `EVALUATION_CONTEXT_TURNS` menentukan banyaknya turn
+sebelumnya yang dipakai untuk memahami pertanyaan lanjutan. Perubahan mekanisme
+pencarian bukti ini menggunakan tabel yang sudah ada dan tidak memerlukan migration
+database tambahan.
 
 Daftarkan dan validasi dokumen:
 

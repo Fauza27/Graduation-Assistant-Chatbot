@@ -2,6 +2,35 @@
 
 ## Purpose
 
+### Chatbot repair — 22 September 2026
+
+- User stopped agent development and requested direct diagnosis/repair of RAG.
+- Read-only snapshot: 163 traces from 20 sessions; 85 empty contexts caused by
+  absolute reranker gate; 43 rewritten requests still reranked on raw input.
+- Changed contextual reformulation, resolved rerank query, optional absolute
+  gate, source/parent-aware dedup, and evidence-only generation instructions.
+- Existing unrelated agent changes remain untouched. No SQL/database writes.
+- Live 18-question replay stopped on first question: `credit_balance_exhausted`.
+  No successful post-fix answer; do not claim measured quality improvement.
+- Final validation: 261 tests pass, targeted Ruff and diff checks pass.
+- Details and remaining verification: `development/chatbot-repair-20260922.md`.
+
+### Evaluation repair — 22 September 2026
+
+- Inspected completed run `4b6bd7e7-4fde-4883-9848-4f40efb5e075`: 33 positive
+  evidence decisions / 107 cases are not accuracy. Old rewrites contaminated
+  context; evidence booleans and unvalidated quotes caused false decisions.
+- Current work repairs evaluation only: raw student context, one evidence verdict,
+  strict quote provenance, parent-aware audit, answer assessment, trace and
+  recommendation guards, audit trail and offline regression tests.
+- See `documentation/features/evaluation-agent.md` for design and limitations.
+- Local original-PDF candidate-search benchmark: 12/12, no paid API calls.
+- Final backend validation: 245 tests passed; Ruff passed. Three existing dependency
+  deprecation warnings remain. Semantic LLM accuracy has not been remeasured.
+- Do not run a paid batch again until the user's instruction. Preserve old reports.
+- The user confirmed the prior SQL migration was executed; the older pending
+  note below is historical. This repair does not require another migration.
+
 This file records the decisions, boundaries, and verification status for the
 ongoing refactor. It is the single working-memory file requested for this
 work, so future changes can continue without repeating discovery.
