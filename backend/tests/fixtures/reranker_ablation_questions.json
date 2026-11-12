@@ -1,0 +1,42 @@
+{
+  "sessions": [
+    {
+      "name": "skripsi_syarat",
+      "interactions": [{"index": 1, "question": "saya semester 7, kalau mau ambil skripsi syaratnya apa aja"}]
+    },
+    {
+      "name": "kkp_tahap_awal",
+      "interactions": [{"index": 1, "question": "saya udah dapat tempat KKP, sekarang ngurus apa dulu?"}]
+    },
+    {
+      "name": "kkp_laporan",
+      "interactions": [
+        {"index": 1, "question": "kak struktur laporan KKP itu dari bab 1 sampai bab berapa?"},
+        {"index": 2, "question": "bab 1 isinya apa aja?"}
+      ]
+    },
+    {
+      "name": "pi_syarat",
+      "interactions": [{"index": 1, "question": "saya mau ambil PI, syaratnya apa ya?"}]
+    },
+    {
+      "name": "non_skripsi_jalur",
+      "interactions": [{"index": 1, "question": "tugas akhir non skripsi jalur karya ilmiah itu syaratnya apa?"}]
+    },
+    {
+      "name": "kkp_batas_panduan",
+      "interactions": [{"index": 1, "question": "sebenarnya KKP itu harus dijalani berapa bulan?"}]
+    },
+    {
+      "name": "di_luar_cakupan",
+      "interactions": [
+        {"index": 1, "question": "gimana resep nasi goreng?"},
+        {"index": 2, "question": "kalau cuaca di Samarinda besok gimana?"}
+      ]
+    },
+    {
+      "name": "kkp_tidak_tersedia",
+      "interactions": [{"index": 1, "question": "mahasiswa dapat uang saku dari tempat KKP nggak?"}]
+    }
+  ]
+}
