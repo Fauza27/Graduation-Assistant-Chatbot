@@ -70,6 +70,8 @@ def persist_metrics(collector: RequestMetricsCollector) -> None:
 
         (_get_supabase_client().table("request_metrics").insert(row).execute())
         collector._persisted = True
+        if settings.ENABLE_RESEARCH_REVIEW:
+            persist_research_turn(collector, row["total_ms"])
         persist_execution_trace(collector)
         persist_auto_evaluation_candidate(collector)
 
@@ -78,6 +80,38 @@ def persist_metrics(collector: RequestMetricsCollector) -> None:
             "[metrics] Gagal menyimpan request_metrics "
             f"request_id={collector.request_id}: {exc}"
         )
+
+
+def persist_research_turn(collector: RequestMetricsCollector, duration_ms: float) -> None:
+    if (
+        collector.channel != "website"
+        or not collector.mahasiswa_id
+        or not collector.session_id
+        or not collector.question
+        or collector.http_status in (400, 401, 403, 422)
+    ):
+        return
+
+    success = collector.status == "success"
+    try:
+        _get_supabase_client().rpc(
+            "record_research_turn",
+            {
+                "p_account": collector.mahasiswa_id,
+                "p_request": collector.request_id,
+                "p_started_at": collector._started_at.isoformat(),
+                "p_session": collector.session_id,
+                "p_question": collector.question,
+                "p_answer": collector.answer if success else None,
+                "p_sources": collector.response_sources if success else [],
+                "p_status": collector.status,
+                "p_http_status": collector.http_status,
+                "p_error_source": collector.error_source,
+                "p_total_ms": duration_ms,
+            },
+        ).execute()
+    except Exception as exc:
+        logger.error("Research capture failed for request {} ({})", collector.request_id, type(exc).__name__)
 
 
 def persist_execution_trace(collector: RequestMetricsCollector) -> None:

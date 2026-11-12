@@ -7,10 +7,8 @@ import {
   Layers,
   Coins,
   FileSearch,
-  ClipboardCheck,
 } from 'lucide-react';
 import { getRequestDetail } from '@/lib/monitoringApi';
-import CaseReview from '@/components/evaluation/CaseReview';
 import { EvaluationDialog } from '@/components/evaluation/EvaluationUI';
 import type { RequestDetail } from '@/lib/monitoringTypes';
 import { PIPELINE_STAGE_KEYS, STAGE_LABELS } from '@/lib/monitoringTypes';
@@ -128,14 +126,6 @@ export default function QueryDetailModal({
                 <span className="info-label">Total Latency</span>
                 <span className="info-value">{fmtMs(data.total_ms)}</span>
               </div>
-            </div>
-
-            <div className="detail-section">
-              <h4>
-                <ClipboardCheck style={{ width: 14, height: 14 }} /> Penilaian
-                untuk Evaluasi RAG
-              </h4>
-              <CaseReview key={requestId} requestId={requestId} />
             </div>
 
             {/* Error detail kalau ada */}

@@ -31,7 +31,9 @@ export default function AdminLayout({
     ? 'Evaluasi RAG'
     : pathname?.includes('/monitoring')
       ? 'Monitoring'
-      : 'Kelola Knowledge Base';
+      : pathname?.endsWith('/research')
+        ? 'Penelaahan Pertanyaan'
+        : 'Kelola Knowledge Base';
 
   useEffect(() => {
     if (isLoginPage) return;

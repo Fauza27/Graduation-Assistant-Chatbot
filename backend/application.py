@@ -24,6 +24,7 @@ from src.api import auth
 from src.api import sessions
 from src.api import admin
 from src.api import admin_metrics
+from src.api import admin_research
 from src.api import admin_evaluations
 
 API_PREFIX = "/api"
@@ -155,6 +156,7 @@ def _register_middleware(app: FastAPI) -> None:
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
+        expose_headers=["X-Request-ID", "X-Trace-ID"],
     )
 def _register_routers(app: FastAPI) -> None:
     """Daftarkan semua router API beserta endpoint webhook Telegram dan root."""
@@ -163,6 +165,7 @@ def _register_routers(app: FastAPI) -> None:
     app.include_router(sessions.router, prefix=API_PREFIX)
     app.include_router(admin.router, prefix=API_PREFIX)
     app.include_router(admin_metrics.router, prefix=API_PREFIX)
+    app.include_router(admin_research.router, prefix=API_PREFIX)
     app.include_router(admin_evaluations.router, prefix=API_PREFIX)
     app.include_router(health_router.router)
 

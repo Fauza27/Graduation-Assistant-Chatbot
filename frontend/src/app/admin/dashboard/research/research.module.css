@@ -1,0 +1,27 @@
+.review { display: grid; gap: 16px; padding: 24px; min-width: 0; }
+.review h1 { font-size: 24px; margin-bottom: 6px; }
+.review h2 { font-size: 18px; }
+.review p { color: var(--gray-700); }
+.panel { background: var(--white); border: 1px solid var(--gray-200); border-radius: 12px; padding: 16px; display: grid; gap: 12px; min-width: 0; }
+.panel[open] > * + * { margin-top: 12px; }
+.panel summary, .context summary { cursor: pointer; font-weight: 600; }
+.filters { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; }
+.filters label, .reviewForm label { display: grid; gap: 5px; font-size: 13px; font-weight: 600; }
+.filters .check { display: flex; align-items: center; align-self: center; }
+.bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.scroll { overflow-x: auto; }
+.table { border-collapse: collapse; width: 100%; text-align: left; font-size: 14px; }
+.table th, .table td { padding: 9px; border-bottom: 1px solid var(--gray-200); vertical-align: top; }
+.table td:nth-child(3) { min-width: 190px; overflow-wrap: anywhere; }
+.table [aria-current='true'] { background: var(--purple-soft); }
+.meta { font-size: 13px; overflow-wrap: anywhere; }
+.original { background: var(--gray-100); border-radius: 8px; padding: 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.original > * + * { margin-top: 8px; }
+.original ul { padding-left: 20px; }
+.context > * + * { margin-top: 8px; }
+.reviewForm { display: grid; gap: 10px; }
+.reviewForm button { justify-self: start; }
+.error, .notice { padding: 12px; border-radius: 8px; }
+.review .error { background: var(--danger-soft); color: var(--danger); }
+.notice { background: var(--purple-soft); }
+@media (max-width: 767px) { .review { padding: 12px; } }

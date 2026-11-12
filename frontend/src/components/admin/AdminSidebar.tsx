@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { Database, LogOut, ChevronUp, X, Activity, BrainCircuit } from 'lucide-react';
+import { Database, LogOut, ChevronUp, X, Activity, ClipboardList } from 'lucide-react';
 import { adminLogout, getAdminInfo } from '@/lib/adminAuth';
 
 interface AdminSidebarProps {
@@ -46,7 +46,7 @@ export default function AdminSidebar({ onCloseMobile }: AdminSidebarProps) {
 
       <nav className="sidebar-nav">
         <button
-          className={`nav-item ${!pathname?.includes('/admin/dashboard/monitoring') && !pathname?.includes('/admin/dashboard/evaluations') && pathname?.includes('/admin/dashboard') ? 'active' : ''}`}
+          className={`nav-item ${pathname === '/admin/dashboard' || pathname?.startsWith('/admin/dashboard/chunks/') ? 'active' : ''}`}
           type="button"
           onClick={() => {
             router.push('/admin/dashboard');
@@ -68,15 +68,15 @@ export default function AdminSidebar({ onCloseMobile }: AdminSidebarProps) {
           <span>Monitoring</span>
         </button>
         <button
-          className={`nav-item ${pathname?.includes('/admin/dashboard/evaluations') ? 'active' : ''}`}
+          className={`nav-item ${pathname === '/admin/dashboard/research' ? 'active' : ''}`}
           type="button"
           onClick={() => {
-            router.push('/admin/dashboard/evaluations');
+            router.push('/admin/dashboard/research');
             if (onCloseMobile) onCloseMobile();
           }}
         >
-          <BrainCircuit className="icon" />
-          <span>Evaluasi RAG</span>
+          <ClipboardList className="icon" />
+          <span>Penelaahan Pertanyaan</span>
         </button>
       </nav>
 
