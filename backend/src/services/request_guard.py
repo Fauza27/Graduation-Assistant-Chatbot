@@ -43,7 +43,13 @@ class AIRequestGuard:
         )
         # Slot dilepas saat thread benar-benar selesai. Jika response timeout,
         # pekerjaan yang tidak dapat dibatalkan tidak membuka slot secara dini.
-        future.add_done_callback(lambda _: self._slots.release())
+        def work_finished(done):
+            self._slots.release()
+            # A timed-out operation can finish after its caller has left.
+            if not done.cancelled():
+                done.exception()
+
+        future.add_done_callback(work_finished)
 
         try:
             return await asyncio.wait_for(
@@ -51,9 +57,21 @@ class AIRequestGuard:
                 timeout=self._deadline,
             )
         except asyncio.TimeoutError as exc:
+            from src.monitoring.context import get_current
+
+            collector = get_current()
+            if collector is not None:
+                collector._response_abandoned.set()
             raise RequestDeadlineExceeded(
                 f"Pemrosesan melewati batas {self._deadline:g} detik"
             ) from exc
+        except asyncio.CancelledError:
+            from src.monitoring.context import get_current
+
+            collector = get_current()
+            if collector is not None:
+                collector._response_abandoned.set()
+            raise
 
     def shutdown(self) -> None:
         self._executor.shutdown(wait=False, cancel_futures=True)

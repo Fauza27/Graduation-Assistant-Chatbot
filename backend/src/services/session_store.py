@@ -8,7 +8,11 @@ from loguru import logger
 from supabase import Client, create_client
 
 from config.settings import get_settings
-from src.services.session_strategy import SessionAccessError, verify_session_owner
+from src.services.session_strategy import (
+    SessionAccessError,
+    verify_new_session_id,
+    verify_session_owner,
+)
 from src.generation.memory import (
     ConversationMemory,
     create_conversation_memory,
@@ -20,6 +24,13 @@ from src.services.session_views import build_session_title, serialize_messages
 settings = get_settings()
 
 DEFAULT_CACHE_SIZE = 50
+
+
+def _for_session_owner(query, session_id: str, owner_id: Optional[str]):
+    query = query.eq("session_id", session_id)
+    if owner_id is None:
+        return query.is_("mahasiswa_id", "null")
+    return query.eq("mahasiswa_id", owner_id)
 
 
 @dataclass
@@ -149,18 +160,14 @@ class DatabaseSessionStore:
             logger.debug(f"Session {session_id} loaded from cache")
             return memory
 
-        memory, owner_id = self._load_from_database(
+        memory, owner = self._load_from_database(
             session_id=session_id,
             mahasiswa_id=mahasiswa_id,
         )
 
-        self._cache.put(
-            session_id=session_id,
-            memory=memory,
-            owner_id=owner_id,
-        )
-
-        self._update_last_access(session_id)
+        if owner.found:
+            self._cache.put(session_id, memory, owner.owner_id)
+            self._update_last_access(session_id, owner.owner_id)
 
         return memory
 
@@ -174,34 +181,42 @@ class DatabaseSessionStore:
         """Simpan memory ke database dan update cache."""
 
         owner_lookup = self._get_existing_owner(session_id)
-        existing_owner = owner_lookup.owner_id if owner_lookup.found else None
-        verify_session_owner(
-            session_owner_id=existing_owner,
-            requested_owner_id=mahasiswa_id,
-        )
-
-        # Pertahankan owner_id asli agar tidak bisa dibajak.
-        effective_owner = existing_owner or mahasiswa_id
+        if owner_lookup.found:
+            verify_session_owner(owner_lookup.owner_id, mahasiswa_id)
+        else:
+            verify_new_session_id(session_id, mahasiswa_id)
 
         payload = self._build_session_payload(
             session_id=session_id,
             memory=memory,
             channel=channel,
-            mahasiswa_id=effective_owner,
+            mahasiswa_id=mahasiswa_id,
         )
 
         try:
-            (
-                self._supabase
-                .table("conversation_sessions")
-                .upsert(payload)
-                .execute()
-            )
+            table = self._supabase.table("conversation_sessions")
+            inserted = False
+            if not owner_lookup.found:
+                # A concurrent insert with the same ID must not overwrite its owner.
+                inserted = bool(table.upsert(
+                    payload, on_conflict="session_id", ignore_duplicates=True
+                ).execute().data)
+
+            if not inserted:
+                # Apply the owner check again in the write itself. A cached owner
+                # can become stale if another worker deletes and recreates the ID.
+                update = table.update({
+                    "turns": payload["turns"],
+                    "last_access": payload["last_access"],
+                })
+                if not _for_session_owner(update, session_id, mahasiswa_id).execute().data:
+                    self._cache.remove(session_id)
+                    raise SessionAccessError(None, mahasiswa_id)
 
             self._cache.put(
                 session_id=session_id,
                 memory=memory,
-                owner_id=effective_owner,
+                owner_id=mahasiswa_id,
             )
 
             logger.debug(
@@ -245,13 +260,8 @@ class DatabaseSessionStore:
         )
 
         try:
-            result = (
-                self._supabase
-                .table("conversation_sessions")
-                .delete()
-                .eq("session_id", session_id)
-                .execute()
-            )
+            deletion = self._supabase.table("conversation_sessions").delete()
+            result = _for_session_owner(deletion, session_id, mahasiswa_id).execute()
 
             self._cache.remove(session_id)
 
@@ -491,7 +501,7 @@ class DatabaseSessionStore:
         self,
         session_id: str,
         mahasiswa_id: Optional[str],
-    ) -> tuple[ConversationMemory, Optional[str]]:
+    ) -> tuple[ConversationMemory, _OwnerLookup]:
         """
         Load session dari database.
 
@@ -520,23 +530,18 @@ class DatabaseSessionStore:
                     f"Session {session_id} not found in database, "
                     "creating new memory"
                 )
-                return (
-                    create_conversation_memory(),
-                    mahasiswa_id,
+                result = None
+            else:
+                logger.error(
+                    f"Database error while loading session {session_id}: {exc}"
                 )
+                raise
 
-            logger.error(
-                f"Database error while loading session {session_id}: {exc}"
-            )
-            raise
-
-        data = result.data
+        data = result.data if result is not None else None
 
         if not data:
-            return (
-                create_conversation_memory(),
-                mahasiswa_id,
-            )
+            verify_new_session_id(session_id, mahasiswa_id)
+            return create_conversation_memory(), _OwnerLookup(False, None)
 
         owner_id = data.get("mahasiswa_id")
 
@@ -550,7 +555,7 @@ class DatabaseSessionStore:
         if not turns:
             return (
                 create_conversation_memory(),
-                owner_id,
+                _OwnerLookup(True, owner_id),
             )
 
         memory = ConversationMemory.from_dict(
@@ -558,7 +563,7 @@ class DatabaseSessionStore:
             **get_memory_config(),
         )
 
-        return memory, owner_id
+        return memory, _OwnerLookup(True, owner_id)
 
     def _load_from_cache(
         self,
@@ -592,11 +597,11 @@ class DatabaseSessionStore:
 
         return payload
 
-    def _update_last_access(self, session_id: str) -> None:
+    def _update_last_access(self, session_id: str, owner_id: Optional[str]) -> None:
         """Update timestamp tanpa menggagalkan operasi utama."""
 
         try:
-            (
+            update = (
                 self._supabase
                 .table("conversation_sessions")
                 .update({
@@ -604,9 +609,8 @@ class DatabaseSessionStore:
                         timezone.utc
                     ).isoformat()
                 })
-                .eq("session_id", session_id)
-                .execute()
             )
+            _for_session_owner(update, session_id, owner_id).execute()
 
         except Exception as exc:
             logger.debug(

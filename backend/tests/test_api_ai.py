@@ -247,6 +247,22 @@ class TestChatEndpoint:
         assert mock_persist_quota.call_args[1]["mahasiswa_id"] == "mhs-101"
         assert get_current() is None
 
+    @pytest.mark.asyncio
+    @patch("src.api.ai.chat_service")
+    @patch("src.api.ai.verify_access_token")
+    @patch("src.services.quota_service._get_supabase_client")
+    async def test_unavailable_quota_prevents_chat(self, mock_client, mock_verify, mock_chat):
+        mock_verify.return_value = {"role": "mahasiswa", "sub": "mhs-101"}
+        mock_client.return_value.rpc.side_effect = RuntimeError("Quota storage unavailable")
+        body = ChatRequest(query="Apa syarat KKP?", session_id="sess-quota")
+        request = self._create_mock_request(auth_header="Bearer valid_token")
+
+        with pytest.raises(HTTPException) as exc_info:
+            await chat_endpoint(body, request)
+
+        assert exc_info.value.status_code == 503
+        mock_chat.assert_not_called()
+
     def test_collector_idempotency_prevents_duplicate_persist(self):
         """Pastikan collector tidak di-insert dua kali ke tabel request_metrics."""
         from src.monitoring.context import new_collector

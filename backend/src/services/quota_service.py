@@ -12,6 +12,7 @@ from loguru import logger
 from supabase import Client, create_client
 
 from config.settings import get_settings
+from src.monitoring.errors import SupabaseServiceError
 
 
 @lru_cache(maxsize=1)
@@ -32,20 +33,26 @@ def _get_current_date() -> str:
     return datetime.now(tz).strftime("%Y-%m-%d")
 
 
-def check_and_update_quota(user_id: str, daily_limit: int | None = None) -> bool:
+def check_and_update_quota(
+    user_id: str,
+    daily_limit: int | None = None,
+    *,
+    allow_on_failure: bool = True,
+) -> bool:
     """
     Atomically increment quota and check daily limit via RPC.
 
     Args:
         user_id: Unique user identifier (mahasiswa_id or telegram user_id)
         daily_limit: Optional daily limit override (uses settings default if None)
+        allow_on_failure: Preserve fallback behavior for callers that permit it.
 
     Returns:
         True if user is still under the daily limit and quota was incremented.
         False if user has reached the limit.
         
-    Fail-open behavior: Returns True on DB errors or unexpected RPC response
-    to avoid blocking legitimate users.
+    Raises SupabaseServiceError when the quota is unavailable and
+    allow_on_failure is False.
     """
     today = _get_current_date()
     settings = get_settings()
@@ -71,20 +78,14 @@ def check_and_update_quota(user_id: str, daily_limit: int | None = None) -> bool
         # Format 2: TABLE (allowed boolean, current_count integer) -> list[dict]
         if isinstance(response.data, list) and response.data:
             first_row = response.data[0]
-            if isinstance(first_row, dict) and "allowed" in first_row:
-                return bool(first_row["allowed"])
+            if isinstance(first_row, dict) and isinstance(first_row.get("allowed"), bool):
+                return first_row["allowed"]
 
-        # Format tak terduga atau data kosong -> fail-open
-        logger.warning(
-            f"[quota] RPC increment_quota_if_under_limit mengembalikan "
-            f"hasil tak terduga ({response.data!r}) untuk user {user_id}. "
-            "Fail-open: request diloloskan."
-        )
-        return True
-        
-    except Exception as e:
-        logger.error(f"[quota] Error checking quota for user {user_id}: {e}")
-        # Fail open to not block user on DB issues
+        raise ValueError("Invalid quota RPC response")
+    except Exception as exc:
+        logger.error("[quota] Daily quota check failed ({})", type(exc).__name__)
+        if not allow_on_failure:
+            raise SupabaseServiceError("Kuota harian tidak dapat diperiksa") from exc
         return True
 
 

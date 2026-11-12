@@ -19,6 +19,7 @@ from src.monitoring.errors import (
     OpenAIServiceError,
     RetrievalError,
     SessionAccessError,
+    SupabaseServiceError,
     classify_exception,
 )
 from src.monitoring.writer import persist_metrics, persist_quota_rejection
@@ -103,6 +104,7 @@ class ChatRequest(BaseModel):
 
 
 class ChatResponse(BaseModel):
+    request_id: str | None = None
     answer: str
     num_docs: int
     session_id: str
@@ -152,7 +154,8 @@ def _enforce_daily_quota(body: ChatRequest, mahasiswa_id: str) -> None:
     """Tolak request (429) jika mahasiswa sudah melampaui kuota harian."""
     quota_allowed = check_and_update_quota(
         user_id=mahasiswa_id,
-        daily_limit=settings.RATE_LIMIT_REQUESTS
+        daily_limit=settings.RATE_LIMIT_REQUESTS,
+        allow_on_failure=False,
     )
 
     if not quota_allowed:
@@ -206,10 +209,13 @@ def _record_endpoint_error(
     "/chat",
     response_model=ChatResponse,
     summary="Chat with AI Chatbot",
-    description="Kirim pertanyaan ke chatbot RAG KKP/PI",
+    description="Kirim pertanyaan ke chatbot RAG PI, KKP, Skripsi, dan Non-Skripsi",
 )
 async def chat_endpoint(body: ChatRequest, request: Request):
     collector = new_collector(session_id=body.session_id, channel=body.channel, question=body.query)
+    request_id = getattr(request.state, "request_id", None)
+    if isinstance(request_id, str) and request_id:
+        collector.request_id = request_id
     collector.trace_id = current_trace_id()
     start_stage("validation")
     try:
@@ -253,6 +259,7 @@ async def chat_endpoint(body: ChatRequest, request: Request):
             )
 
         return ChatResponse(
+            request_id=collector.request_id,
             answer=result["answer"],
             num_docs=result["num_docs"],
             session_id=body.session_id,
@@ -279,7 +286,7 @@ async def chat_endpoint(body: ChatRequest, request: Request):
             status_code=504,
             detail="Pemrosesan melewati batas waktu. Silakan coba lagi.",
         ) from exc
-    except (RetrievalError, OpenAIServiceError) as exc:
+    except (RetrievalError, OpenAIServiceError, SupabaseServiceError) as exc:
         _record_endpoint_error(collector, exc, default_status_code=503)
         raise HTTPException(
             status_code=503,

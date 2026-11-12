@@ -6,10 +6,11 @@ import time
 from datetime import datetime, timezone
 from typing import Any, Awaitable, Callable
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 
 from config.settings import get_settings, Settings
+from src.admin.auth import get_current_admin
 from src.services.ai_services import get_session_stats
 
 router = APIRouter(prefix="/health", tags=["health"])
@@ -53,8 +54,10 @@ async def basic_health_check(settings: Settings = Depends(get_settings)):
 
 
 @router.get("/detailed", response_model=DetailedHealthStatus)
-async def detailed_health_check(settings: Settings = Depends(get_settings)):
+async def detailed_health_check(request: Request, settings: Settings = Depends(get_settings)):
     """Return health information for external dependencies and local state."""
+    if settings.is_production():
+        get_current_admin(request.headers.get("authorization"))
 
     openai_status, supabase_status = await asyncio.gather(
         _check_openai_health(settings),
@@ -161,9 +164,12 @@ async def readiness_check(settings: Settings = Depends(get_settings)):
 
     for service_name, status in checks.items():
         if _is_error_status(status):
+            detail = f"Service {service_name} is not ready"
+            if not settings.is_production():
+                detail += f": {status.get('error', 'Unknown error')}"
             raise HTTPException(
                 status_code=503,
-                detail=f"Service {service_name} is not ready: {status.get('error', 'Unknown error')}"
+                detail=detail,
             )
 
     return {"status": "ready", "timestamp": datetime.now(timezone.utc)}

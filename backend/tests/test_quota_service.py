@@ -3,6 +3,10 @@ Unit tests for backend/src/services/quota_service.py.
 """
 
 from unittest.mock import Mock, patch
+
+import pytest
+
+from src.monitoring.errors import SupabaseServiceError
 from src.services.quota_service import (
     check_and_update_quota,
     get_quota_status,
@@ -11,6 +15,18 @@ from src.services.quota_service import (
 
 
 class TestQuotaService:
+
+    @pytest.mark.parametrize("outcome", [None, [{"allowed": "false"}], RuntimeError("DB down")])
+    @patch("src.services.quota_service._get_supabase_client")
+    def test_website_quota_cannot_allow_requests_when_check_fails(self, mock_get_client, outcome):
+        execute = mock_get_client.return_value.rpc.return_value.execute
+        if isinstance(outcome, Exception):
+            execute.side_effect = outcome
+        else:
+            execute.return_value.data = outcome
+
+        with pytest.raises(SupabaseServiceError):
+            check_and_update_quota("mhs-web", daily_limit=25, allow_on_failure=False)
 
     def test_get_current_date_format(self):
         """Pastikan tanggal diformat YYYY-MM-DD dan sesuai timezone."""

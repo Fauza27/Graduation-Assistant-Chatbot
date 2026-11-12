@@ -11,7 +11,9 @@ from src.monitoring.tracing import current_trace_id
 
 class RequestContextMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request, call_next):
-        request_id = request.headers.get("X-Request-ID") or str(uuid.uuid4())
+        # A caller-supplied ID may be reused across users or requests. Database
+        # metrics and trace keys must identify a single server-side execution.
+        request_id = str(uuid.uuid4())
         request.state.request_id = request_id
         response = await call_next(request)
         response.headers["X-Request-ID"] = request_id

@@ -5,7 +5,7 @@ Tests verify_session_owner() across all 5 key access scenarios.
 
 import pytest
 from src.monitoring.errors import SessionAccessError, ChatError
-from src.services.session_strategy import verify_session_owner
+from src.services.session_strategy import InMemorySessionStrategy, verify_session_owner
 
 
 class TestSessionIDORProtection:
@@ -58,11 +58,30 @@ class TestSessionIDORProtection:
         # Tidak melempar exception
         verify_session_owner(session_owner_id="user_A", requested_owner_id="user_A")
 
-    def test_scenario_e_claiming_unowned_session(self):
-        """
-        Skenario E: Sesi lama belum punya owner (session_owner_id=None).
-        Request masuk dari user website terautentikasi (requested_owner_id='user_A').
-        -> HARUS lolos tanpa exception (klaim kepemilikan sesi tamu).
-        """
-        # Tidak melempar exception
-        verify_session_owner(session_owner_id=None, requested_owner_id="user_A")
+    def test_scenario_e_website_cannot_claim_telegram_session(self):
+        with pytest.raises(SessionAccessError):
+            verify_session_owner(session_owner_id=None, requested_owner_id="user_A")
+
+
+def test_in_memory_telegram_session_survives_web_access_attempts():
+    store = InMemorySessionStrategy(max_sessions=8, ttl_seconds=60)
+    memory = store.load_memory("123456789")
+    memory.add_user_turn("Pesan sintetis Telegram.")
+
+    with pytest.raises(SessionAccessError):
+        store.load_memory("123456789", mahasiswa_id="user_A")
+    with pytest.raises(SessionAccessError):
+        store.save_memory("123456789", memory, channel="website", mahasiswa_id="user_A")
+    with pytest.raises(SessionAccessError):
+        store.delete_session("123456789", mahasiswa_id="user_A")
+
+    assert store.get_session_details_for_user("123456789", "user_A") is None
+    assert store.load_memory("123456789") is memory
+
+
+def test_website_cannot_reserve_new_telegram_id():
+    store = InMemorySessionStrategy(max_sessions=8, ttl_seconds=60)
+    with pytest.raises(SessionAccessError):
+        store.load_memory("123456789", mahasiswa_id="user_A")
+    assert store.load_memory("123456789").turn_count == 0
+    assert store.load_memory("web-session", mahasiswa_id="user_A").turn_count == 0

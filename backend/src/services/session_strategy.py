@@ -129,19 +129,11 @@ def verify_session_owner(
     session_owner_id: Optional[str],
     requested_owner_id: Optional[str],
 ) -> None:
-    """
-    Pastikan user hanya dapat mengakses session miliknya (IDOR protection).
+    """Verifikasi identitas pemohon untuk sesi yang sudah ada.
 
-    Aturan:
-    - Jika sesi belum memiliki owner (session_owner_id is None), request diizinkan
-      (baik sesi Telegram murni maupun klaim kepemilikan oleh user website terautentikasi).
-    - Jika sesi memiliki owner (session_owner_id is not None), request hanya diizinkan
-      jika requested_owner_id sama persis dengan session_owner_id.
-    - Request tanpa identitas (requested_owner_id is None) dilarang mengakses sesi berpemilik.
+    Sesi Telegram dan pemanggilan internalnya sama-sama memakai owner None.
+    Sesi web hanya bisa diakses dengan identitas pemiliknya.
     """
-    if session_owner_id is None:
-        return
-
     if session_owner_id == requested_owner_id:
         return
 
@@ -149,6 +141,12 @@ def verify_session_owner(
         session_owner_id=session_owner_id,
         requested_owner_id=requested_owner_id,
     )
+
+
+def verify_new_session_id(session_id: str, mahasiswa_id: Optional[str]) -> None:
+    """Cadangkan ID pengguna Telegram yang berupa angka untuk kanal Telegram."""
+    if mahasiswa_id is not None and session_id.isdecimal():
+        raise SessionAccessError(session_owner_id=None, requested_owner_id=mahasiswa_id)
 
 
 class DatabaseSessionStrategy(SessionStore):
@@ -284,12 +282,9 @@ class InMemorySessionStrategy(SessionStore):
                 )
 
                 entry.last_access = now
-
-                if entry.owner_id is None:
-                    entry.owner_id = mahasiswa_id
-
                 return entry.memory
 
+            verify_new_session_id(session_id, mahasiswa_id)
             memory = create_conversation_memory()
 
             self._sessions[session_id] = SessionEntry(
@@ -324,15 +319,13 @@ class InMemorySessionStrategy(SessionStore):
                     session_owner_id=entry.owner_id,
                     requested_owner_id=mahasiswa_id,
                 )
-
-                owner_id = entry.owner_id or mahasiswa_id
             else:
-                owner_id = mahasiswa_id
+                verify_new_session_id(session_id, mahasiswa_id)
 
             self._sessions[session_id] = SessionEntry(
                 memory=memory,
                 last_access=now,
-                owner_id=owner_id,
+                owner_id=mahasiswa_id,
             )
 
             self._evict_lru_if_needed()

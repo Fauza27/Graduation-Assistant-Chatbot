@@ -42,7 +42,9 @@ import contextvars
 import functools
 import time
 import uuid
+import threading
 from dataclasses import dataclass, field, fields
+from datetime import datetime, timezone
 from typing import Any, Optional
 
 from loguru import logger
@@ -138,6 +140,7 @@ class RequestMetricsCollector:
     reranked_candidates: Optional[list[dict[str, Any]]] = None
     final_context: Optional[dict[str, Any]] = None
     answer: Optional[str] = None
+    response_sources: list[dict[str, Any]] = field(default_factory=list)
     pipeline_snapshot: Optional[dict[str, Any]] = None
 
     # Internal timing state
@@ -148,11 +151,13 @@ class RequestMetricsCollector:
         default_factory=time.perf_counter,
         repr=False,
     )
+    _started_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc), repr=False)
 
     # ContextVar token untuk restore context sebelumnya.
     _context_token: Any = field(default=None, repr=False)
     _persisted: bool = field(default=False, repr=False)
     _trace_persisted: bool = field(default=False, repr=False)
+    _response_abandoned: threading.Event = field(default_factory=threading.Event, repr=False)
 
     def start_stage(self, name: str) -> None:
         """
