@@ -148,6 +148,22 @@ svg:not(.brand-mark){fill:none;stroke:currentColor;stroke-width:2;stroke-linecap
 .login-footnote{margin-top:16px;color:var(--gray-400);}
 .login-copyright{position:relative;color:var(--gray-400);}
 
+.service-notice{
+  display:flex;align-items:flex-start;gap:10px;width:100%;padding:12px;
+  margin-bottom:8px;border:1px solid #DDD6FE;border-radius:10px;
+  background:#F5F3FF;color:#4C1D95;text-align:left;font-size:14px;line-height:1.45;
+}
+.service-notice>svg{flex-shrink:0;margin-top:1px;}
+.service-notice p{margin:2px 0 0;}
+.service-notice-unavailable{background:#FFFBEB;border-color:#FDE68A;color:#78350F;}
+.service-notice button{
+  margin-top:8px;padding:4px 10px;min-height:32px;border:1px solid currentColor;
+  border-radius:6px;color:inherit;background:transparent;cursor:pointer;font-weight:600;
+}
+.service-notice button:hover{background:#FEF3C7;}
+.service-notice-session{width:min(380px,88vw);}
+@media (prefers-reduced-motion: no-preference){.service-notice-spin{animation:spin .9s linear infinite;}}
+
 /* ============================================================
    2. APP SHELL / LAYOUT
    ============================================================ */

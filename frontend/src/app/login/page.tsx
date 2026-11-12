@@ -4,13 +4,15 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { GoogleLogin, CredentialResponse } from '@react-oauth/google';
 import { setAuthToken } from '../../lib/auth';
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://127.0.0.1:8000';
+import { API_BASE_URL } from '../../lib/apiConfig';
+import { BackendUnavailableError, fetchBackend } from '../../lib/backendAvailability';
+import ServiceStatusNotice, { useServiceStatus } from '../../components/ServiceStatusNotice';
 
 export default function LoginPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const { status, check, markUnavailable } = useServiceStatus();
 
   const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
     try {
@@ -22,8 +24,9 @@ export default function LoginPage() {
         throw new Error('Tidak ada credential dari Google');
       }
       
-      const res = await fetch(`${API_BASE_URL}/api/auth/google/verify`, {
+      const res = await fetchBackend(`${API_BASE_URL}/api/auth/google/verify`, {
         method: 'POST',
+        signal: AbortSignal.timeout(25_000),
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
@@ -43,9 +46,12 @@ export default function LoginPage() {
         throw new Error('Token tidak valid dari server');
       }
     } catch (err: Error | unknown) {
-      console.error('Login error:', err);
-      const errorMessage = err instanceof Error ? err.message : 'Terjadi kesalahan saat login.';
-      setErrorMsg(errorMessage);
+      if (err instanceof BackendUnavailableError) {
+        markUnavailable();
+      } else {
+        console.error('Login error:', err);
+        setErrorMsg(err instanceof Error ? err.message : 'Terjadi kesalahan saat login.');
+      }
       setIsLoading(false);
     }
   };
@@ -72,7 +78,8 @@ export default function LoginPage() {
         
         {errorMsg && <p className="body2" style={{ color: 'var(--danger)', marginBottom: '10px' }}>{errorMsg}</p>}
 
-        <div style={{ display: 'flex', justifyContent: 'center', minHeight: '40px' }}>
+        <ServiceStatusNotice status={status} onRetry={check} />
+        {status === 'ready' && <div style={{ display: 'flex', justifyContent: 'center', minHeight: '40px' }}>
           {isLoading ? (
             <div className="spinner" />
           ) : (
@@ -82,8 +89,8 @@ export default function LoginPage() {
               shape="pill"
             />
           )}
-        </div>
-        <p className="caption login-footnote">Gunakan akun Google Anda untuk masuk.</p>
+        </div>}
+        {status === 'ready' && <p className="caption login-footnote">Gunakan akun Google Anda untuk masuk.</p>}
       </div>
       <p className="caption login-copyright">© 2026 STMIK Widya Cipta Dharma</p>
     </div>

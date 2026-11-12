@@ -8,6 +8,8 @@ import { deleteSession } from '../../lib/api';
 import Link from 'next/link';
 import { jwtDecode } from 'jwt-decode';
 import { DOCUMENTS } from '../../lib/documentSources';
+import { BackendUnavailableError } from '../../lib/backendAvailability';
+import ServiceStatusNotice from '../../components/ServiceStatusNotice';
 
 interface JWTPayload {
   exp: number;
@@ -19,6 +21,8 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
   const pathname = usePathname();
   const [isDocSectionOpen, setIsDocSectionOpen] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authUnavailable, setAuthUnavailable] = useState(false);
+  const [authAttempt, setAuthAttempt] = useState(0);
 
   const isDocPanelOpen = useAppStore((state) => state.isDocPanelOpen);
   const activeDoc = useAppStore((state) => state.activeDoc);
@@ -47,13 +51,17 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
           decoded = jwtDecode<JWTPayload>(token);
         }
         setIsAuthenticated(true);
-      } catch {
-        logout();
+      } catch (error) {
+        if (error instanceof BackendUnavailableError) {
+          setAuthUnavailable(true);
+        } else {
+          logout();
+        }
       }
     };
 
     checkAuth();
-  }, [router]);
+  }, [authAttempt]);
 
   // Initial responsive check: collapse sidebar on mobile screen width by default
   useEffect(() => {
@@ -86,7 +94,12 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
   if (!isAuthenticated) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg, #F9FAFB)' }}>
-        <div className="spinner" />
+        <div className="service-notice-session">
+          <ServiceStatusNotice status={authUnavailable ? 'unavailable' : 'checking'} onRetry={() => {
+            setAuthUnavailable(false);
+            setAuthAttempt((attempt) => attempt + 1);
+          }} />
+        </div>
       </div>
     );
   }

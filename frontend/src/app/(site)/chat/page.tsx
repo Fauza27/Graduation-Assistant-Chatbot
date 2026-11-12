@@ -16,7 +16,9 @@ import {
 
 import { useAppStore, CitationSource } from '../../../lib/store';
 import { sendChatMessage, deleteSession } from '../../../lib/api';
-import { DOCUMENTS } from '../../../lib/documentSources';
+import { resolveCitationUrl } from '../../../lib/documentSources';
+import { BackendUnavailableError } from '../../../lib/backendAvailability';
+import ServiceStatusNotice, { useServiceStatus } from '../../../components/ServiceStatusNotice';
 
 // =============================================================================
 // 1. HELPER FUNCTIONS
@@ -25,41 +27,6 @@ import { DOCUMENTS } from '../../../lib/documentSources';
 /**
  * Membantu menentukan URL dokumen PDF dan halaman target berdasarkan sumber referensi (sitasi).
  */
-function resolveCitationUrl(src: CitationSource | string): string {
-  const srcObj = typeof src === 'string' ? { title: src } : src;
-  let domain = 'skripsi'; // Domain default
-
-  // Cek apakah parent_id mengarah ke kategori tertentu (KKP, Non-Skripsi, dsb)
-  if (srcObj.parent_id) {
-    const pid = srcObj.parent_id.toLowerCase();
-    if (pid.includes('kkp')) domain = 'kkp';
-    else if (pid.includes('non-skripsi') || pid.includes('nonskripsi'))
-      domain = 'non-skripsi';
-    else if (pid.includes('pi')) domain = 'pi';
-  }
-
-  // Ambil URL dokumen yang sesuai dari koleksi dokumen
-  let docUrl =
-    DOCUMENTS.find((d) => d.id === domain)?.fileUrl ||
-    DOCUMENTS.find((d) => d.id === 'skripsi')?.fileUrl ||
-    DOCUMENTS[0]?.fileUrl ||
-    '';
-
-  // Jika ada nomor halaman, tambahkan hash #page=X agar PDF otomatis membuka halaman tsb
-  if (srcObj.pages && srcObj.pages.length > 0) {
-    docUrl += `#page=${srcObj.pages[0]}`;
-  } else {
-    // Jika tidak ada nomor halaman spesifik, coba gunakan pencarian teks
-    const searchTerm = srcObj.title || srcObj.section;
-    if (searchTerm) {
-      const query = searchTerm.split(' ').slice(0, 8).join(' ');
-      docUrl += `#search=${encodeURIComponent(query)}`;
-    }
-  }
-
-  return docUrl;
-}
-
 // Pertanyaan umum cepat (Quick Suggestions) saat percakapan masih baru/kosong
 const QUICK_SUGGESTIONS = [
   {
@@ -211,6 +178,7 @@ export default function ChatPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
   const [showScrollBottom, setShowScrollBottom] = useState(false);
+  const { status, check, markUnavailable } = useServiceStatus();
 
   // --- C. REFS (Manipulasi DOM langsung) ---
   const chatScrollRef = useRef<HTMLDivElement>(null);
@@ -283,7 +251,7 @@ export default function ChatPage() {
   // Mengirim pesan ke backend dan menambahkan respon ke tampilan
   const handleSend = async (overrideText?: string) => {
     const textToSend = (overrideText ?? inputValue).trim();
-    if (!textToSend || !session_id || isLoading) return;
+    if (!textToSend || !session_id || isLoading || status !== 'ready') return;
     if (textToSend.length < 3 || textToSend.length > 500) {
       setInputError('Pertanyaan harus terdiri dari 3 sampai 500 karakter.');
       return;
@@ -306,6 +274,11 @@ export default function ChatPage() {
       }
     } catch (err: unknown) {
       if (useAppStore.getState().session_id !== session_id) return;
+      if (err instanceof BackendUnavailableError) {
+        markUnavailable();
+        setInputError('Pengiriman pesan belum dapat dikonfirmasi. Periksa riwayat chat sebelum mengirim ulang.');
+        return;
+      }
       const errorMessage =
         err instanceof Error ? err.message : 'Gagal terhubung ke server.';
       addMessage('bot', `**Error:** ${errorMessage}`);
@@ -356,6 +329,10 @@ export default function ChatPage() {
   // Membuka modal dokumen PDF sesuai rujukan sitasi
   const handleCitationClick = (src: CitationSource | string) => {
     const docUrl = resolveCitationUrl(src);
+    if (!docUrl) {
+      setCopyError('Panduan sumber ini belum dapat dikenali. Pilih dokumen melalui daftar panduan.');
+      return;
+    }
     openDocument(docUrl);
   };
 
@@ -511,6 +488,7 @@ export default function ChatPage() {
         {/* 3. BAGIAN COMPOSER (Input Pesan & Rekomendasi Pertanyaan) */}
         <div className="composer">
           <div className="composer-inner">
+            <ServiceStatusNotice status={status} onRetry={check} />
             {/* Kolom Input Teks & Tombol Kirim */}
             <div className="input-field">
               <input
@@ -537,7 +515,7 @@ export default function ChatPage() {
                 type="button"
                 className="send-btn"
                 onClick={() => handleSend()}
-                disabled={inputValue.trim().length < 3 || isLoading}
+                disabled={inputValue.trim().length < 3 || isLoading || status !== 'ready'}
                 aria-label="Kirim Pesan"
               >
                 <Send className="icon" size={18} />
@@ -551,7 +529,7 @@ export default function ChatPage() {
                   key={idx}
                   type="button"
                   className="chip"
-                  disabled={isLoading}
+                  disabled={isLoading || status !== 'ready'}
                   onClick={() => handleSend(item.question)}
                 >
                   <FileText className="icon-sm" size={14} />

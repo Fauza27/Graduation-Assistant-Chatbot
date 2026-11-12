@@ -1,3 +1,8 @@
+import { jwtDecode } from 'jwt-decode';
+import { API_BASE_URL } from './apiConfig';
+import { useAppStore } from './store';
+import { fetchBackend } from './backendAvailability';
+
 export function getAuthToken(): string | null {
   if (typeof window === 'undefined') return null;
   return localStorage.getItem('access_token');
@@ -5,15 +10,17 @@ export function getAuthToken(): string | null {
 
 export function setAuthToken(token: string): void {
   if (typeof window === 'undefined') return;
+  const previousOwner = tokenOwner(getAuthToken());
+  const nextOwner = tokenOwner(token);
+  if (!previousOwner || previousOwner !== nextOwner) clearConversation();
   localStorage.setItem('access_token', token);
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://127.0.0.1:8000';
-
 export async function refreshAuthToken(): Promise<string | null> {
-  const response = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
+  const response = await fetchBackend(`${API_BASE_URL}/api/auth/refresh`, {
     method: 'POST',
     credentials: 'include',
+    signal: AbortSignal.timeout(25_000),
   });
   if (!response.ok) return null;
   const data = await response.json();
@@ -30,5 +37,19 @@ export function logout(): void {
     keepalive: true,
   }).catch(() => undefined);
   localStorage.removeItem('access_token');
+  clearConversation();
   window.location.href = '/login';
+}
+function tokenOwner(token: string | null): string | null {
+  if (!token) return null;
+  try {
+    return jwtDecode<{ sub?: string }>(token).sub || null;
+  } catch {
+    return null;
+  }
+}
+
+function clearConversation(): void {
+  useAppStore.getState().clearConversation();
+  useAppStore.persist.clearStorage();
 }

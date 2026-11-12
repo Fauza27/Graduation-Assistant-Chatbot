@@ -7,6 +7,9 @@ export interface CitationSource {
   parent_id?: string;
   score?: number;
   pages?: number[];
+  domain?: string;
+  source?: string;
+  pdf_pages?: number[];
 }
 export type MessageRole = 'user' | 'bot';
 export interface ChatMessage {
@@ -29,6 +32,7 @@ interface AppActions {
   addMessage: (role: MessageRole, text: string, sources?: (CitationSource | string)[]) => void;
   setMessages: (messages: ChatMessage[]) => void;
   resetSession: () => void;
+  clearConversation: () => void;
   setHydrated: (state: boolean) => void;
   setSessionId: (id: string) => void;
   setDocPanelOpen: (isOpen: boolean) => void;
@@ -68,6 +72,12 @@ export const useAppStore = create<AppStore>()(
           session_id: crypto.randomUUID(),
           messages: [],
         }),
+      clearConversation: () => set({
+        session_id: null,
+        messages: [],
+        activeDoc: null,
+        isDocPanelOpen: false,
+      }),
 
       setHydrated: (hasHydrated) => set({ hasHydrated }),
       setSessionId: (session_id) => set({ session_id }),

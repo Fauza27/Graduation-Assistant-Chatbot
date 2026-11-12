@@ -1,9 +1,10 @@
 import { getAuthToken, logout, refreshAuthToken } from './auth';
 import { CitationSource, ChatMessage } from './store';
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://127.0.0.1:8000';
+import { API_BASE_URL } from './apiConfig';
+import { fetchBackend } from './backendAvailability';
 
 export interface ChatResponse {
+  request_id?: string | null;
   answer: string;
   num_docs: number;
   session_id: string;
@@ -69,7 +70,7 @@ async function fetchWithAuth<T = unknown>(endpoint: string, options: RequestInit
     delete headers['Content-Type'];
   }
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+  const response = await fetchBackend(`${API_BASE_URL}${endpoint}`, {
     ...options,
     headers,
     credentials: 'include',
@@ -125,7 +126,7 @@ export async function sendChatMessage(query: string, session_id: string): Promis
 }
 
 export async function fetchSessions(): Promise<SessionsResponse> {
-  return fetchWithAuth<SessionsResponse>('/api/sessions/');
+  return fetchWithAuth<SessionsResponse>('/api/sessions');
 }
 
 export async function fetchSessionDetails(id: string): Promise<SessionDetailResponse> {
