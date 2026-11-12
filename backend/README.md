@@ -1,7 +1,7 @@
 # Backend chatbot akademik RAG
 
 Backend FastAPI untuk chatbot pedoman PI, KKP, Skripsi, dan Non-Skripsi.
-Fitur utama meliputi pencarian hybrid, reranking, memory dengan summary LLM,
+Fitur utama meliputi pencarian hybrid, reranking opsional, memory dengan summary LLM,
 session persisten, autentikasi, monitoring, pengelolaan chunk, dan evaluation agent.
 
 Penjelasan program yang sudah disesuaikan dengan kode saat ini:
@@ -23,6 +23,21 @@ Frontend Next.js dijalankan terpisah dari folder `frontend` di project induk.
 Untuk instalasi environment baru, dependency backend ada di `requirements.txt`,
 dependency pengujian di `requirements-dev.txt`, dan dependency worker evaluasi
 di `requirements-eval.txt`.
+
+## Kesiapan evaluasi skripsi
+
+Pemeriksaan konfigurasi efektif, versi pustaka, checksum sumber, dan metadata
+database tersedia melalui preflight baca-saja:
+
+```powershell
+python -m scripts.check_research_readiness --output results/readiness/local.json
+python -m scripts.check_research_readiness --database --output results/readiness/database.json
+```
+
+Gunakan nama output baru untuk setiap pemeriksaan. Perintah ini tidak menjalankan
+LLM, mengubah database, atau menghasilkan nilai akurasi/SUS. Catatan pemeriksaan
+dan pekerjaan sebelum pengujian ada di
+[Kesiapan pengujian 10 Oktober 2026](documentation/development/research-readiness-20261010.md).
 
 ## Pengujian dan evaluasi
 

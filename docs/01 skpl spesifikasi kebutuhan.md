@@ -224,5 +224,17 @@ graph LR
 | FR-WEB-01 s/d FR-WEB-09 | Increment 2 |
 | FR-ADM-01 s/d FR-ADM-04 | Increment 3 |
 | FR-ADM-05 s/d FR-ADM-06 | Increment 4 |
+| FR-TEL-01 s/d FR-TEL-04 | Increment 7 |
 
 > Detail lengkap tiap increment ada di **`03_Rencana_Pengembangan_Incremental.md`**. Rincian arsitektur, ERD, dan API untuk memenuhi kebutuhan di atas ada di **`02_DPPL_Perancangan_Sistem.md`**.
+
+## 6. Adendum Pascaseminar — Penelaahan Pertanyaan Mahasiswa (6 November 2026)
+
+| ID | Kebutuhan | Kriteria Penerimaan |
+|---|---|---|
+| FR-TEL-01 | Admin mencatat akun peserta setelah persetujuan diperoleh. | Rekaman fitur dimulai setelah waktu pendaftaran. Admin dapat menarik peserta dan menghapus salinan penelaahannya. |
+| FR-TEL-02 | Admin memilih periode WITA dan peserta, kemudian menelusuri rekaman. | Pertanyaan dapat ditelusuri melalui ID pesan ke konteks sesi yang terekam, jawaban, sumber yang dikirim, dan status pemrosesan. |
+| FR-TEL-03 | Admin menetapkan status telaah dan memeriksa salinan teks untuk penelitian. | Hanya pesan berstatus masuk penelitian dengan salinan yang ditelaah tersedia di ekspor. Pesan latihan, pengujian, dan pesan yang belum ditelaah dikecualikan. |
+| FR-TEL-04 | Admin mengekspor CSV untuk penelaahan manual. | Ekspor mencakup seluruh halaman untuk filter aktif. Berkas memuat kode peserta, kode sesi, dan ID pesan tanpa kolom nama akun atau email. |
+
+Fitur hanya tersedia untuk akun admin dan perlu diaktifkan pada lingkungan pengumpulan. Pengelompokan maksud, penghitungan topik, pemeriksaan panduan, dan penyusunan bahan FAQ dilakukan oleh peneliti.

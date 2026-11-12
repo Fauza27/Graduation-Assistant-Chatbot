@@ -2,6 +2,22 @@
 
 ## Purpose
 
+### Evaluation integrity correction — 29 September 2026
+
+- User explicitly rejected canned answers and test leakage. Removed the
+  grounded/source-conflict answer modules, evidence-gated answer bypass,
+  answer-specific prompt facts, and question-to-clause routing.
+- Kept generic terminology normalization and user-scope handling. Rewriter
+  rejects new numerical facts; chapter references to student reports do not
+  become guide chapter filters. Generation always uses the LLM and current evidence.
+- Replay loads only questions, uses fresh session memory, and labels output
+  development_regression with code/input hashes. Historical review is snapshot-bound.
+- All 163 previously used questions remain development data. The historical
+  155/163 score included canned responses and must never be called independent
+  accuracy or current-version accuracy. Preserve original reports.
+- See development/chatbot-evaluation-integrity-20260929.md for the final-test
+  separation protocol. No database migration or deletion of chat history.
+
 ### Chatbot repair — 22 September 2026
 
 - User stopped agent development and requested direct diagnosis/repair of RAG.

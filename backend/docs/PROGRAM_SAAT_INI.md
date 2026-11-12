@@ -2,6 +2,14 @@
 
 Tanggal penulisan: 15 September 2026.
 
+Pembaruan kesiapan pengujian: 10 Oktober 2026. Reranker merupakan komponen opsional
+dan konfigurasi efektif yang diperiksa memakai `reranker_enabled=false`. Saat
+nonaktif, hasil parent dipilih menurut peringkat hybrid tanpa pemanggilan
+cross-encoder. Penjelasan reranker di bawah berlaku pada jalur yang diaktifkan.
+Perbaikan terbaru mencakup ID HTTP yang sama dengan metrik, batas konteks berbasis
+token, trace dokumen yang benar-benar dikirim, serta isolasi memory saat gagal.
+Lihat [catatan kesiapan](../documentation/development/research-readiness-20261010.md).
+
 Dokumen ini menjelaskan implementasi yang ada di kode sekarang, bukan seluruh
 rencana pengembangan. Penjelasan database mengacu pada kode dan migration;
 database tidak diubah atau diperiksa ulang secara langsung saat dokumentasi ini dibuat.
@@ -55,7 +63,7 @@ Mahasiswa mengirim pertanyaan dari frontend
   → Service memuat memory session milik mahasiswa
   → Query planner menyiapkan query pencarian
   → Retrieval mencari child chunk dan mengambil parent terkait
-  → Reranker memilih dokumen yang paling relevan
+  → Seleksi parent dari hybrid; reranker hanya dijalankan jika diaktifkan
   → LLM menerima pertanyaan + dokumen + summary + percakapan terbaru
   → Jawaban ditambahkan ke memory
   → Jika memory melewati anggaran token, percakapan lama diringkas

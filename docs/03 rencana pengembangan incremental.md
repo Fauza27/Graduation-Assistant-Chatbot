@@ -114,6 +114,17 @@ graph LR
 
 ---
 
+### Increment 7 — Penelaahan Pertanyaan Mahasiswa
+
+**Dasar penambahan.** Catatan pascaseminar 6 November 2026 memperluas fasilitas analitik Increment 4 untuk penelaahan pertanyaan mahasiswa. Peta 0–6 di atas merekam rencana awal. Fitur Increment 7 perlu siap sebelum verifikasi akhir dan pengumpulan rekaman peserta. Kegiatan penelitian mengikuti Bab III terbaru, yaitu verifikasi perangkat lunak, evaluasi jawaban, dan telaah pertanyaan mahasiswa.
+
+1. Tetapkan persetujuan peserta, data yang diperlukan, filter, dan keluaran CSV sesuai FR-TEL-01–04.
+2. Sambungkan rekaman penelaahan dengan ID permintaan website. Simpan jawaban dan sumber aktual serta status apabila pemrosesan gagal.
+3. Tambahkan halaman admin untuk pendaftaran peserta, pemeriksaan konteks, pemisahan pesan, dan ekspor salinan tersamar.
+4. Verifikasi dengan akun dan data uji. Catat keluaran aktual serta tindak lanjut pada [lembar verifikasi](penelaahan-pertanyaan-verifikasi.md).
+
+**Kriteria selesai.** Admin dapat memilih periode dan peserta, membuka pertanyaan lanjutan beserta konteks, jawaban, dan sumber, serta mencocokkan ID hasil ekspor dengan rekaman asal. Pesan latihan, pengujian, dan pesan belum ditelaah dikecualikan. Peran mahasiswa ditolak pada API penelaahan.
+
 ## 4. Risiko & Mitigasi
 
 | Risiko | Dampak | Mitigasi |
