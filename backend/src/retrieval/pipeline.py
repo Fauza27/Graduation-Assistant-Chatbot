@@ -1,11 +1,11 @@
 """Single source of truth for the RAG retrieval pipeline.
 
 Pipeline:
-    self-query → hybrid search → parent fetching → reranking
+    self-query → hybrid search → parent fetching → optional reranking
 
 Features:
     - Candidate limiting
-    - Adaptive reranking
+    - Optional, adaptive reranking
     - Zero-document short-circuit
     - Structured fallback on retrieval errors
     - Retrieval metrics and profiling
@@ -16,6 +16,8 @@ from __future__ import annotations
 import time
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
+
+from src.retrieval.domains import explicit_domains
 
 from loguru import logger
 
@@ -70,14 +72,14 @@ def run_retrieval(
 
         rerank_query:
             Query used by the cross-encoder reranker. Defaults to `query`.
-            Usually the original user question is preferable here.
+            Usually the resolved question is preferable so conversational
+            referents are available to the reranker.
 
         search_queries:
             Query variants from QueryPlan. Multi-query execution is handled
             by this pipeline; the first query remains the primary fallback.
     """
 
-    from src.retrieval.reranker import CrossEncoderReranker
     from src.retrieval.self_query import (
         ParsedQuery,
         extract_query_components,
@@ -224,11 +226,13 @@ def run_retrieval(
     # Stage 4: Limit candidates before reranking
     # ------------------------------------------------------------------
 
-    candidate_parents = parent_results[: settings.max_parent_for_rerank]
+    candidate_parents = _filter_candidate_domains(
+        parent_results, rerank_query,
+    )[: settings.max_parent_for_rerank]
     set_field(parent_candidates=_serialize_parent_candidates(parent_results))
 
     logger.debug(
-        "Reranking candidates: {} → {}",
+        "Parent candidates: {} → {}",
         len(parent_results),
         len(candidate_parents),
     )
@@ -237,14 +241,15 @@ def run_retrieval(
     # Stage 5: Adaptive reranking
     # ------------------------------------------------------------------
 
-    if len(candidate_parents) <= settings.min_parent_for_rerank:
+    if not settings.reranker_enabled or len(candidate_parents) <= settings.min_parent_for_rerank:
         final_results = _skip_reranking(
             candidate_parents,
             settings.rerank_top_n,
+            disabled=not settings.reranker_enabled,
         )
 
         rerank_time = 0.0
-        reason = "Reranking Skipped"
+        reason = "Reranker Disabled" if not settings.reranker_enabled else "Reranking Skipped"
 
         _log_pipeline_summary(
             pipeline_start=pipeline_start,
@@ -281,6 +286,8 @@ def run_retrieval(
     top_score = 0.0
 
     try:
+        from src.retrieval.reranker import CrossEncoderReranker
+
         reranked = CrossEncoderReranker().rerank(
             query=rerank_query,
             documents=candidate_parents,
@@ -365,6 +372,30 @@ def run_retrieval(
 # ============================================================================
 # Small helpers
 # ============================================================================
+
+
+_DOMAIN_LABELS = {
+    "Penulisan Ilmiah": "PI",
+    "KKP": "KKP",
+    "Skripsi": "SKRIPSI",
+    "Tugas Akhir Non Skripsi": "NON_SKRIPSI",
+}
+
+
+def _filter_candidate_domains(parents: list[dict], query: str) -> list[dict]:
+    """Respect explicitly named domains without selecting guide clauses by hand.
+
+    Preserve retrieval order and candidates with missing metadata. If every
+    candidate would be discarded, retain the original set for the reranker.
+    """
+    wanted = {_DOMAIN_LABELS[name] for name in explicit_domains(query)}
+    if not wanted:
+        return parents
+    matching = [
+        parent for parent in parents
+        if not parent.get("domain") or parent["domain"] in wanted
+    ]
+    return matching or parents
 
 
 def _select_reranked_documents(
@@ -601,29 +632,21 @@ def _deduplicate_equivalent_child_content(
 def _skip_reranking(
     candidate_parents: list[dict],
     top_n: int,
+    *,
+    disabled: bool = False,
 ) -> list[dict]:
-    """
-    Skip cross-encoder when candidate count is already small.
-
-    Hybrid score is reused as `cross_encoder_score` so downstream
-    consumers can continue using one score field.
-    """
+    """Keep hybrid parent order when cross-encoder scoring is not used."""
 
     logger.info(
-        "Skipping Reranking: only {} candidates",
+        "Skipping reranking: {} candidates",
         len(candidate_parents),
     )
 
     final_results = [dict(document) for document in candidate_parents[:top_n]]
 
     for document in final_results:
-        document["cross_encoder_score"] = document.get(
-            "best_child_score",
-            0.0,
-        )
-
-        document["score_source"] = "hybrid_skip_rerank"
-        document["rerank_method"] = "skipped"
+        document["score_source"] = "hybrid"
+        document["rerank_method"] = "disabled" if disabled else "skipped"
 
     return final_results
 
@@ -729,13 +752,9 @@ def _record_final_retrieval_metrics(
         return
 
     scores = [
-        float(
-            document.get(
-                "cross_encoder_score",
-                0.0,
-            )
-        )
+        float(document["cross_encoder_score"])
         for document in final_results
+        if document.get("score_source") == "cross_encoder"
     ]
 
     set_field(

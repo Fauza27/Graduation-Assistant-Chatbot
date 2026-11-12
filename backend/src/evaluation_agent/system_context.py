@@ -38,7 +38,7 @@ STAGE_SOURCES = {
         ),
     },
     "context_assembly": {
-        "src/generation/chain.py": ("format_context", "build_messages")
+        "src/generation/chain.py": ("format_context", "_prepare_context", "build_messages")
     },
     "generation": {
         "src/generation/chain.py": (

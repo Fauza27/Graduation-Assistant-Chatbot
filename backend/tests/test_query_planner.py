@@ -64,6 +64,72 @@ def test_conjunction_inside_one_subject_is_not_decomposed():
     assert plan.search_queries == (plan.resolved_query,)
 
 
+def test_leading_domain_qualifier_is_not_searched_on_its_own():
+    plan = build_query_plan(
+        "Pada tahap pelaksanaan KKP, berapa lama kegiatan berlangsung, dan bagaimana pelaporannya?",
+        ConversationMemory(),
+    )
+
+    assert plan.search_queries == (
+        "Pada tahap pelaksanaan KKP, berapa lama kegiatan berlangsung",
+        "bagaimana pelaporannya terkait KKP",
+    )
+
+
+def test_conditional_preface_is_kept_with_the_question():
+    plan = build_query_plan(
+        "Kalau menyiapkan laporan PI, berapa margin kiri dan kanan yang harus saya atur?",
+        ConversationMemory(),
+    )
+
+    assert plan.search_queries == (plan.normalized_query,)
+
+
+def test_comparison_searches_for_the_shared_proposal_stage_in_each_guide():
+    plan = build_query_plan(
+        "Bandingkan ketentuan jumlah halaman minimum proposal TA Skripsi dengan proposal TA Non-Skripsi.",
+        ConversationMemory(),
+    )
+
+    assert plan.search_queries == (
+        "jumlah halaman minimum untuk seminar proposal Skripsi",
+        "jumlah halaman minimum untuk seminar proposal Tugas Akhir Non Skripsi",
+    )
+    assert "seminar" not in plan.resolved_query.lower()
+    assert "TA Tugas Akhir" not in plan.normalized_query
+
+
+def test_grade_posting_search_keeps_the_original_request_and_its_guide():
+    plan = build_query_plan(
+        "Nilai KKP belum tercatat di transkrip. Dokumen apa yang perlu saya serahkan?",
+        ConversationMemory(),
+    )
+
+    assert plan.search_queries == ("pencantuman nilai KKP pada transkrip",)
+    assert plan.resolved_query == plan.normalized_query
+    assert plan.rerank_query == plan.normalized_query
+    assert build_query_plan(
+        "Berapa IPK minimal pada transkrip untuk mendaftar ujian PI?",
+        ConversationMemory(),
+    ).is_decomposed is False
+
+
+def test_clarification_preserves_a_resolved_guide_and_leaves_outside_exams_alone():
+    memory = ConversationMemory()
+    memory.add_user_turn("Saya sedang menyiapkan KKP.")
+    memory.add_assistant_turn("Silakan ajukan pertanyaan.")
+    rewrite = Mock(return_value=("Kapan batas seminar KKP?", RewriteMethod.LLM))
+    question = "Kapan batas seminar?"
+
+    assert build_query_plan(question, memory, rewrite).clarification is None
+    assert build_query_plan(question, ConversationMemory()).clarification
+    assert build_query_plan(
+        "Berapa hari batas pelaksanaan seminar sejak disetujui pembimbing?",
+        ConversationMemory(),
+    ).clarification
+    assert build_query_plan("Kapan jadwal ujian SIM?", ConversationMemory()).clarification is None
+
+
 def test_non_skripsi_domain_is_carried_to_following_clause():
     plan = build_query_plan(
         "Apa syarat non skripsi dan bagaimana proses pengajuannya?",
@@ -115,3 +181,13 @@ def test_explicit_skripsi_domain_wins_over_generic_track_term():
     )
 
     assert plan.search_queries[-1].endswith("terkait skripsi")
+
+
+def test_query_plan_does_not_inject_known_answer_or_section_locations():
+    for question in (
+        "Berapa halaman proposal skripsi?",
+        "Apa ketentuan NPWP jalur wirausaha?",
+        "Berkas ujian PI apa saja?",
+    ):
+        plan = build_query_plan(question, ConversationMemory())
+        assert plan.search_queries == (plan.normalized_query,)

@@ -6,6 +6,7 @@ from langchain_core.documents import Document
 from src.retrieval.hybrid_search import HybridSearchResult
 from src.retrieval.pipeline import (
     _deduplicate_equivalent_child_content,
+    _filter_candidate_domains,
     _select_reranked_documents,
     run_retrieval,
 )
@@ -55,6 +56,40 @@ def test_multi_query_results_are_merged_before_parent_fetch(
     assert result.num_docs == 2
 
 
+@patch("src.retrieval.reranker.CrossEncoderReranker")
+@patch("src.retrieval.pipeline.get_settings")
+@patch("src.services.ai_services._get_parent_child_fetcher")
+@patch("src.services.ai_services._get_hybrid_searcher")
+def test_disabled_reranker_keeps_hybrid_parent_order(
+    get_searcher: Mock,
+    get_fetcher: Mock,
+    get_settings: Mock,
+    reranker: Mock,
+):
+    get_settings.return_value = SimpleNamespace(
+        reranker_enabled=False,
+        max_parent_for_rerank=8,
+        min_parent_for_rerank=3,
+        rerank_top_n=8,
+    )
+    get_searcher.return_value.search.return_value = [
+        _child(f"c{i}", f"p{i}", 1 / i) for i in range(1, 5)
+    ]
+    get_fetcher.return_value.fetch_parents.return_value = [
+        {"parent_id": f"p{i}", "content": f"Aturan {i}", "best_child_score": 1 / i}
+        for i in range(1, 5)
+    ]
+
+    result = run_retrieval("berapa lama ujian?")
+
+    assert [doc["parent_id"] for doc in result.parent_documents] == [
+        "p1", "p2", "p3", "p4",
+    ]
+    assert all(doc["rerank_method"] == "disabled" for doc in result.parent_documents)
+    assert all("cross_encoder_score" not in doc for doc in result.parent_documents)
+    reranker.assert_not_called()
+
+
 def test_identical_rules_in_different_guides_keep_both_sources():
     first = _child("pi-format", "pi-parent", 0.9)
     second = _child("kkp-format", "kkp-parent", 0.8)
@@ -87,3 +122,28 @@ def test_repeated_content_within_one_parent_is_deduplicated():
     second = _child("c2", "p1", 0.8)
     second.document.page_content = first.document.page_content
     assert _deduplicate_equivalent_child_content([first, second]) == [first]
+
+
+def test_explicit_domain_comparison_excludes_other_guides():
+    parents = [
+        {"domain": "KKP", "title": "Seminar KKP"},
+        {"domain": "NON_SKRIPSI", "title": "Seminar Non Skripsi"},
+        {"domain": "PI", "title": "Seminar PI"},
+    ]
+    assert _filter_candidate_domains(
+        parents, "Apakah PI dan KKP harus menghadiri tiga seminar?",
+    ) == [parents[0], parents[2]]
+
+
+def test_candidate_titles_do_not_override_retrieval_order():
+    parents = [
+        {"domain": "SKRIPSI", "title": "Bagian baru dalam revisi panduan"},
+        {"domain": "SKRIPSI", "title": "2.6.1 Seminar proposal"},
+    ]
+    assert _filter_candidate_domains(parents, "Berapa halaman proposal skripsi?") == parents
+
+
+def test_missing_or_unmatched_domain_metadata_does_not_empty_retrieval():
+    parents = [{"domain": "PI"}, {"title": "Tanpa metadata domain"}]
+    assert _filter_candidate_domains(parents, "Persyaratan Skripsi?") == [parents[1]]
+    assert _filter_candidate_domains(parents[:1], "Persyaratan Skripsi?") == parents[:1]

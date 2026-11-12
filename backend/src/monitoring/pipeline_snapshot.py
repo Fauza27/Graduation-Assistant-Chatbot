@@ -16,6 +16,7 @@ SETTING_NAMES = (
     "cross_encoder_model",
     "cross_encoder_batch_size",
     "retrieval_top_k",
+    "reranker_enabled",
     "max_parent_for_rerank",
     "min_parent_for_rerank",
     "rerank_top_n",
@@ -36,6 +37,11 @@ SOURCE_FILES = (
     "src/retrieval/pipeline.py",
     "src/retrieval/reranker.py",
     "src/generation/chain.py",
+    "src/generation/memory.py",
+    "src/generation/summarizer.py",
+    "src/generation/token_utils.py",
+    "src/services/chat_model.py",
+    "src/services/ai_services.py",
 )
 
 

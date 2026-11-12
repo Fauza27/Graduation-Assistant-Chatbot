@@ -137,6 +137,36 @@ class TestAIServices:
             assert result["error"] == "Unexpected error"
             assert result["error_type"] == "RuntimeError"
 
+    @patch("src.services.ai_services.get_rag_generator")
+    @patch("src.retrieval.pipeline.run_retrieval")
+    def test_ambiguous_exam_waits_for_scope_then_resumes_original_question(
+        self, mock_run_retrieval, mock_get_rag_generator
+    ):
+        session_id = "test_session_exam_clarification"
+        question = "Kalau sudah dapat persetujuan dosen, berapa hari batas untuk seminar?"
+        mock_run_retrieval.return_value = RetrievalResult([], is_empty=True)
+        mock_get_rag_generator.return_value.generate.return_value = {
+            "answer": "Jawaban untuk seminar KKP.",
+            "sources": [],
+        }
+
+        clarification = chat(question, session_id, username="testuser")
+
+        assert clarification["answer"].endswith("?")
+        assert "KKP" in clarification["answer"]
+        assert clarification["num_docs"] == 0
+        assert clarification["sources"] == []
+        mock_run_retrieval.assert_not_called()
+        mock_get_rag_generator.assert_not_called()
+
+        result = chat("KKP", session_id, username="testuser")
+
+        assert result["answer"] == "Jawaban untuk seminar KKP."
+        assert result["rewrite_method"] == "Rule"
+        resolved = mock_run_retrieval.call_args.kwargs["query"]
+        assert "berapa hari batas untuk seminar" in resolved
+        assert "KKP" in resolved
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

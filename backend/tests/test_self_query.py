@@ -126,6 +126,19 @@ class TestSelfQuerySourceDetection:
             "BAB III BENTUK TUGAS AKHIR NON SKRIPSI"
         )
 
+    def test_explicit_chapter_overrides_keyword_guess(self):
+        parsed = extract_query_components(
+            "Jelaskan BAB IV buku panduan KKP"
+        )
+
+        assert parsed.detected_section == "BAB IV"
+        assert parsed.filters["section"] == "BAB IV >"
+
+    def test_comparing_two_chapters_does_not_filter_to_one(self):
+        parsed = extract_query_components("Bandingkan BAB II dan BAB IV laporan KKP")
+
+        assert "section" not in parsed.filters
+
     def test_skripsi_front_matter_filter_is_suppressed_for_its_metadata(self):
         parsed = extract_query_components(
             "contoh kata pengantar dan daftar isi skripsi"

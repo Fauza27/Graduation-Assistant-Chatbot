@@ -20,7 +20,7 @@ from ragas.metrics._context_precision import LLMContextPrecisionWithoutReference
 from ragas.metrics import SimpleCriteriaScore
 from ragas.llms import LangchainLLMWrapper
 from ragas.embeddings import LangchainEmbeddingsWrapper
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from langchain_openai import OpenAIEmbeddings
 from loguru import logger
 import json
 import math
@@ -30,6 +30,7 @@ from typing import List, Dict, Optional
 from enum import Enum
 
 from config.settings import get_settings
+from src.services.chat_model import create_chat_model
 
 
 # ============================================================
@@ -349,11 +350,7 @@ def evaluate_rag_no_ground_truth(
 
     # --- Setup LLM & Embeddings ---
     evaluator_llm = LangchainLLMWrapper(
-        ChatOpenAI(
-            model=settings.llm_model,
-            api_key=settings.open_api_key,
-            temperature=0,  # Deterministic untuk konsistensi antar run
-        )
+        create_chat_model(settings.llm_model, settings.open_api_key, instrumented=False)
     )
     evaluator_embeddings = LangchainEmbeddingsWrapper(
         OpenAIEmbeddings(

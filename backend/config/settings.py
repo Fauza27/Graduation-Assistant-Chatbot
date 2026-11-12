@@ -45,7 +45,7 @@ class Settings(BaseSettings):
 
     # OpenAI Configuration
     open_api_key: str = Field(..., description="OpenAI API Key")
-    llm_model: str = Field(default="gpt-4o-mini", description="LLM model to use")
+    llm_model: str = Field(default="gpt-6-luna", description="LLM model to use")
     embedding_model: str = Field(default="text-embedding-3-large", description="Embedding model")
     
     # OpenAI Rate Limiting
@@ -66,6 +66,7 @@ class Settings(BaseSettings):
 
     # Retrieval Configuration
     retrieval_top_k: int = Field(default=30, ge=5, le=100, description="Number of chunks to retrieve")
+    reranker_enabled: bool = Field(default=False, description="Use cross-encoder reranking after hybrid search")
     rerank_top_n: int = Field(default=8, ge=3, le=20, description="Number of documents after reranking")
     max_parent_for_rerank: int = Field(default=8, ge=3, le=50, description="Max parents to send to reranker")
     min_parent_for_rerank: int = Field(default=3, ge=1, le=10, description="Min parents required to trigger reranker")
@@ -92,6 +93,7 @@ class Settings(BaseSettings):
     EVALUATION_CANDIDATE_WINDOWS_PER_CASE: int = Field(default=8, ge=3, le=30)
     EVALUATION_CONTEXT_TURNS: int = Field(default=3, ge=0, le=10)
     EVALUATION_AGENT_ENABLED: bool = Field(default=False)
+    ENABLE_RESEARCH_REVIEW: bool = Field(default=False)
 
     # Cross-Encoder Configuration
     cross_encoder_model: str = Field(default="cross-encoder/ms-marco-MiniLM-L-6-v2")
@@ -190,6 +192,12 @@ class Settings(BaseSettings):
                 "MEMORY_SUMMARY_MAX_TOKENS harus lebih kecil dari "
                 "MEMORY_MAX_HISTORY_TOKENS"
             )
+        return self
+
+    @model_validator(mode="after")
+    def validate_research_capture(self) -> "Settings":
+        if self.ENABLE_RESEARCH_REVIEW and not self.ENABLE_REQUEST_METRICS:
+            raise ValueError("ENABLE_RESEARCH_REVIEW memerlukan ENABLE_REQUEST_METRICS=true")
         return self
 
     @model_validator(mode="after")

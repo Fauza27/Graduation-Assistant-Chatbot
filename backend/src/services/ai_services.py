@@ -22,7 +22,10 @@ from src.monitoring.context import (
     set_field,
     start_stage,
 )
-from src.monitoring.errors import OpenAIServiceError, RetrievalError, classify_exception
+from src.monitoring.errors import (
+    OpenAIServiceError, RetrievalError, RequestDeadlineExceeded,
+    SupabaseServiceError, classify_exception,
+)
 from src.monitoring.pipeline_snapshot import capture_pipeline_snapshot
 from src.monitoring.writer import persist_metrics
 from src.services.retrieval_cache import RevisionedRetrievalCache
@@ -109,8 +112,11 @@ def _save_memory_if_needed(
             channel=channel,
             mahasiswa_id=mahasiswa_id,
         )
+    except SessionAccessError:
+        raise
     except Exception as exc:
-        logger.error("Failed to save session {}: {}", session_id, exc)
+        logger.error("Failed to save session {} ({})", session_id, type(exc).__name__)
+        raise SupabaseServiceError("Penyimpanan sesi tidak tersedia") from exc
 
 
 def clear_session(session_id: str) -> bool:
@@ -143,6 +149,14 @@ def _prepare_query_plan_and_memory(
     start_stage("session_load")
     memory = get_or_create_memory(session_id, mahasiswa_id=mahasiswa_id)
     end_stage()
+    # Work on a detached state. Retrieval/generation errors must not leave a
+    # pending question in the live cache or alter the next turn's context.
+    memory = ConversationMemory.from_dict(
+        memory.to_dict(),
+        max_history_tokens=memory.max_history_tokens,
+        min_recent_turns=memory.min_recent_turns,
+        summary_max_tokens=memory.summary_max_tokens,
+    )
 
     start_stage("reformulation")
     try:
@@ -262,7 +276,7 @@ def _generate_answer(
     retrieval_docs: list[dict],
     memory: ConversationMemory,
     session_id: str,
-) -> str:
+) -> dict[str, Any]:
     """Generate answer from LLM with retrieved context and conversation history."""
     start_stage("generation")
     started_at = time.perf_counter()
@@ -282,7 +296,10 @@ def _generate_answer(
 
     elapsed = time.perf_counter() - started_at
     logger.info("[session={}] Generation time [⏱️ {:.2f}s]", session_id, elapsed)
-    return result.get("answer", "")
+    return {
+        "answer": result.get("answer", ""),
+        "sources": _build_sources(result.get("sources", retrieval_docs)),
+    }
 
 
 def _compact_memory_if_needed(memory: ConversationMemory) -> None:
@@ -361,11 +378,13 @@ def _build_sources(documents: list[dict]) -> list[dict[str, Any]]:
             "section": document.get("section", ""),
             "title": document.get("title", ""),
             "parent_id": document.get("parent_id", ""),
+            "domain": document.get("domain", ""),
+            "source": document.get("source", ""),
             "score": document.get(
-                "cross_encoder_score", document.get("best_child_score", 0.0)
+                "cross_encoder_score", document.get("relevance_score", document.get("best_child_score", 0.0))
             ),
             "score_source": document.get("score_source", "cross_encoder"),
-            "pages": document.get("matched_pages", []),
+            "pages": document.get("pages", document.get("matched_pages", [])),
         }
         for document in documents[:3]
     ]
@@ -377,6 +396,11 @@ def _persist_error_metrics(collector: Any, exc: Exception) -> None:
     collector.status = "error"
     collector.error_source = error_source
     collector.error_type = error_type
+    if collector.channel == "website":
+        if isinstance(exc, RequestDeadlineExceeded):
+            collector.http_status = 504
+        elif isinstance(exc, (RetrievalError, OpenAIServiceError, SupabaseServiceError)):
+            collector.http_status = 503
     persist_metrics(collector)
 
 
@@ -436,23 +460,28 @@ def chat(
             mahasiswa_id=mahasiswa_id,
         )
 
-        # 3. Retrieval with thread-safe caching and monitoring preservation
-        retrieval_docs = _get_retrieval_documents(
-            plan=query_plan,
-            collector=collector,
-        )
+        if query_plan.clarification:
+            retrieval_docs = []
+            answer = query_plan.clarification
+            sources_list = []
+            set_field(num_docs_retrieved=0, num_docs_after_rerank=0)
+        else:
+            retrieval_docs = _get_retrieval_documents(
+                plan=query_plan,
+                collector=collector,
+            )
+            generated = _generate_answer(
+                question=question,
+                resolved_question=query_plan.resolved_query,
+                retrieval_docs=retrieval_docs,
+                memory=memory,
+                session_id=session_id,
+            )
+            answer = generated["answer"]
+            sources_list = generated["sources"]
 
-        # 4. LLM Generation
-        answer = _generate_answer(
-            question=question,
-            resolved_question=query_plan.resolved_query,
-            retrieval_docs=retrieval_docs,
-            memory=memory,
-            session_id=session_id,
-        )
-
-        # Prepare top sources metadata
-        sources_list = _build_sources(retrieval_docs)
+        if collector._response_abandoned.is_set():
+            raise RequestDeadlineExceeded("Respons terlambat setelah permintaan berakhir")
 
         # 5 & 6. Persist conversation state & interaction log
         _persist_conversation(
@@ -475,6 +504,9 @@ def chat(
 
         collector.status = "success"
         collector.answer = answer
+        collector.response_sources = sources_list
+        if channel == "website":
+            collector.http_status = 200
         persist_metrics(collector)
 
         return {
@@ -488,7 +520,7 @@ def chat(
     except SessionAccessError:
         # Re-raise SessionAccessError to let global handler convert to HTTP 403
         raise
-    except (RetrievalError, OpenAIServiceError) as exc:
+    except (RetrievalError, OpenAIServiceError, RequestDeadlineExceeded, SupabaseServiceError) as exc:
         _persist_error_metrics(collector, exc)
         raise
     except Exception as exc:
@@ -532,12 +564,12 @@ def preload_models() -> None:
 
     t0 = time.time()
     try:
-        from src.retrieval.reranker import CrossEncoderReranker
+        # Cross-encoder tidak perlu dimuat saat ablation tanpa reranking.
+        if get_settings().reranker_enabled:
+            from src.retrieval.reranker import CrossEncoderReranker
 
-        # 1. Preload Cross-Encoder
-        logger.info("Pre-warming: CrossEncoder")
-        reranker = CrossEncoderReranker()
-        reranker.warmup()
+            logger.info("Pre-warming: CrossEncoder")
+            CrossEncoderReranker().warmup()
 
         # 2. Preload Embedding Model — via cached singleton
         logger.info("Pre-warming: Embedding Model")

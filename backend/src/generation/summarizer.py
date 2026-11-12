@@ -9,8 +9,8 @@ from config.settings import get_settings
 from src.generation.memory import Turn
 from src.generation.token_utils import count_tokens
 from src.monitoring.context import get_current
-from src.monitoring.openai_client import build_instrumented_http_client
 from src.monitoring.pricing import calculate_llm_cost
+from src.services.chat_model import create_chat_model
 
 
 SUMMARY_SYSTEM_PROMPT = """
@@ -79,11 +79,9 @@ class ConversationSummarizer:
 @lru_cache(maxsize=1)
 def get_conversation_summarizer() -> ConversationSummarizer:
     settings = get_settings()
-    llm = ChatOpenAI(
-        model=settings.llm_model,
-        api_key=settings.open_api_key,
-        temperature=0,
+    llm = create_chat_model(
+        settings.llm_model,
+        settings.open_api_key,
         max_tokens=settings.MEMORY_SUMMARY_MAX_TOKENS,
-        http_client=build_instrumented_http_client(),
     )
     return ConversationSummarizer(llm)

@@ -280,6 +280,7 @@ def test_pipeline_records_all_scores_without_changing_final_selection(monkeypatc
     from src.services import ai_services
 
     settings = SimpleNamespace(
+        reranker_enabled=True,
         max_parent_for_rerank=6,
         min_parent_for_rerank=1,
         rerank_top_n=3,

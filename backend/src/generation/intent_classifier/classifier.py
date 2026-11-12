@@ -26,7 +26,7 @@ from loguru import logger
 
 from config.settings import get_settings
 from src.generation.memory import ConversationMemory, IntentType
-from src.monitoring.openai_client import build_instrumented_http_client
+from src.services.chat_model import create_chat_model
 
 TOPIC_SWITCH_SIGNALS = {
     "explicit": [
@@ -485,11 +485,9 @@ def _get_default_llm() -> ChatOpenAI:
 
     settings = get_settings()
 
-    return ChatOpenAI(
-        model=settings.llm_model,
-        http_client=build_instrumented_http_client(),
-        temperature=0,
-        api_key=settings.open_api_key,
+    return create_chat_model(
+        settings.llm_model,
+        settings.open_api_key,
         max_tokens=200,
     )
 

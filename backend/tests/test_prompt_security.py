@@ -1,4 +1,4 @@
-from src.generation.chain import ensure_source_attribution, format_context
+from src.generation.chain import build_sources, format_context
 from src.security.content_safety import contains_suspicious_instruction
 
 
@@ -18,12 +18,36 @@ def test_retrieved_document_cannot_close_context_boundary():
     assert contains_suspicious_instruction(context) is True
 
 
-def test_source_attribution_is_derived_from_retrieval_metadata():
-    answer = ensure_source_attribution(
-        "Mahasiswa wajib memenuhi persyaratan.",
-        [{"content": "...", "source": "panduan_pi.pdf"}],
-    )
-    assert answer.startswith("Sumber: Buku Panduan PI")
+def test_unrelated_answer_does_not_inherit_an_irrelevant_retrieval_source():
+    documents = [{"content": "...", "source": "panduan_pi.pdf"}]
+    assert build_sources(documents, answer="Maaf, pertanyaan itu di luar cakupan panduan.") == []
+    assert build_sources(documents, answer="Sumber: Buku Panduan PI\n\nSyaratnya tertera.")
+    assert build_sources(documents, answer="Syaratnya tertera (Sumber: Buku Panduan PI).")
+    assert build_sources(documents, answer="Berdasarkan Buku Panduan PI, syaratnya tertera.")
+    assert build_sources(documents, answer="Syaratnya tertera. Referensi: Buku Panduan PI.")
+    assert build_sources(documents, answer="Syaratnya tertera.\nSumber:\n- Buku Panduan PI.")
+    assert build_sources(documents, answer="Menurut **Buku Panduan PI, BAB II**, syaratnya tertera.")
+    assert build_sources(documents, answer="**Sumber:** _Panduan PI_, hlm. 7.")
+    assert build_sources(documents, answer="Silakan unggah Buku Panduan PI terlebih dahulu.") == []
+    assert build_sources(documents, answer="Ya. **Buku Panduan PI** menyebutkan ketentuan itu.")
+
+
+def test_comparison_links_each_cited_guide_before_additional_passages():
+    documents = [
+        {"parent_id": "skripsi-1", "domain": "SKRIPSI"},
+        {"parent_id": "pi-1", "domain": "PI"},
+        {"parent_id": "pi-2", "domain": "PI"},
+        {"parent_id": "pi-3", "domain": "PI"},
+        {"parent_id": "non-skripsi-1", "domain": "NON_SKRIPSI"},
+    ]
+    answer = "Sumber **Buku Panduan PI, Bagian A** dan **Buku Panduan NON_SKRIPSI, Bagian B**:"
+
+    assert [source["parent_id"] for source in build_sources(documents, answer=answer)] == [
+        "pi-1", "non-skripsi-1", "pi-2",
+    ]
+    assert build_sources(
+        documents, answer="Apakah yang Anda maksud Buku Panduan PI atau Buku Panduan Non-Skripsi?"
+    ) == []
 
 
 def test_raw_reranker_scores_are_not_exposed_as_document_facts():

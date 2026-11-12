@@ -12,6 +12,7 @@ import pytest
 # Unit tests must never write metrics, sessions, or chat history to the active
 # Supabase project loaded from the developer's .env file.
 os.environ["ENABLE_REQUEST_METRICS"] = "false"
+os.environ["ENABLE_RESEARCH_REVIEW"] = "false"
 os.environ["USE_DATABASE_SESSIONS"] = "false"
 
 

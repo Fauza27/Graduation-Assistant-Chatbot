@@ -7,7 +7,6 @@ from functools import lru_cache
 from typing import Protocol
 
 from langchain_core.messages import HumanMessage, SystemMessage
-from langchain_openai import ChatOpenAI
 
 from config.settings import get_settings
 from src.evaluation_agent.evidence_search import infer_domains
@@ -29,7 +28,7 @@ from src.evaluation_agent.models import (
     QuestionPlanBatch,
     RegressionJudgement,
 )
-from src.monitoring.openai_client import build_instrumented_http_client
+from src.services.chat_model import create_chat_model
 
 
 class EvaluatorModel(Protocol):
@@ -112,12 +111,7 @@ class OpenAIEvaluatorModel:
     def __init__(self, model_name: str | None = None) -> None:
         settings = get_settings()
         self.model_name = model_name or settings.EVALUATION_MODEL or settings.llm_model
-        self._llm = ChatOpenAI(
-            model=self.model_name,
-            api_key=settings.open_api_key,
-            temperature=0,
-            http_client=build_instrumented_http_client(),
-        )
+        self._llm = create_chat_model(self.model_name, settings.open_api_key)
 
     def plan_questions(
         self, cases: list[EvaluationCase], available_domains: list[str]

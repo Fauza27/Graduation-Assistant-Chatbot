@@ -371,6 +371,14 @@ def _detect_section(
     `min_matches_for_filter` matching keywords.
     """
 
+    explicit_chapters = set(re.findall(r"\bbab\s+(i{1,3}|iv|v)\b", query_lower))
+    if explicit_chapters and not re.search(r"\b(?:buku|panduan)\b", query_lower):
+        return None, "low"
+    if len(explicit_chapters) == 1:
+        return f"BAB {next(iter(explicit_chapters)).upper()}", "high"
+    if len(explicit_chapters) > 1:
+        return None, "low"  # A comparison must retain both chapters.
+
     if not SECTION_KEYWORDS:
         return None, "low"
 

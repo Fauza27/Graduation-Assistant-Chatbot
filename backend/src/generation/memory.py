@@ -175,7 +175,12 @@ class ConversationMemory:
             ),
         )
 
-        self.summary = truncate_to_tokens(summary.strip(), available_summary_tokens)
+        compacted_summary = truncate_to_tokens(summary.strip(), available_summary_tokens)
+        if not compacted_summary:
+            # The most recent exchange can itself exceed the budget. Keep the
+            # old evidence until a non-empty summary can replace it safely.
+            return
+        self.summary = compacted_summary
         self._turns = remaining
 
     def get_history_for_llm(
